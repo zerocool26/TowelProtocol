@@ -1,0 +1,49 @@
+policyId: "svc-003"
+version: "1.0.0"
+name: "Disable Retail Demo Service"
+category: Services
+description: |
+  Disables the RetailDemo service which enables retail demo mode for store displays.
+  Not needed outside retail scenarios and can be safely disabled.
+mechanism: Service
+mechanismDetails:
+  type: ServiceConfig
+  serviceName: "RetailDemo"
+  displayName: "Retail Demo Service"
+  startupType: "Disabled"
+  stopService: true
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set service to Manual and start if needed"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Retail demo mode will not function"
+    severity: Low
+    details: "Only relevant for retail store display units"
+verificationCommand: "sc query RetailDemo"
+expectedOutput: "STATE: STOPPED, START_TYPE: DISABLED"
+references:
+  - "https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/retail-demo-experience"
+tags:
+  - "service"
+  - "retail"
+  - "bloatware"
+  - "low-risk"
+notes: null
+enabledByDefault: true
+includedInProfiles:
+  - "Balanced"
+  - "Hardened"
+  - "MaximumPrivacy"

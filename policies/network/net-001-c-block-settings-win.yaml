@@ -1,0 +1,148 @@
+# ============================================================================
+# Policy: net-001-c - Block settings-win.data.microsoft.com
+# ============================================================================
+# ATOMIC FIREWALL POLICY: Controls ONE specific endpoint
+# Part of telemetry endpoint blocking - each endpoint is separately selectable
+# ============================================================================
+
+policyId: "net-001-c"
+version: "1.0.0"
+name: "Block settings-win.data.microsoft.com (Settings Sync Endpoint)"
+category: Network
+
+description: |
+  Blocks outbound connections to settings-win.data.microsoft.com via Windows Firewall.
+
+  This endpoint is used by Windows to sync your settings across devices when
+  signed in with a Microsoft Account. This includes themes, passwords, language
+  preferences, and other personalization settings.
+
+  ATOMIC CONTROL: This policy creates ONE firewall rule for ONE endpoint.
+  Settings sync can be controlled at granular level by blocking this endpoint
+  while keeping other features functional.
+
+mechanism: Firewall
+
+mechanismDetails:
+  type: FirewallRule
+  ruleGrouping: Individual
+
+  endpoint:
+    hostname: "settings-win.data.microsoft.com"
+    description: "Windows settings synchronization endpoint"
+    criticality: "Feature-specific"
+    knownBreakage: "Settings sync across devices will not work"
+    category: "Telemetry"
+    port: null  # All ports
+    protocol: "Both"  # TCP and UDP
+    direction: "Outbound"
+
+  firewallRule:
+    displayName: "PHF Block - settings-win.data.microsoft.com"
+    description: "Privacy Hardening Framework - Block settings sync endpoint"
+    direction: "Outbound"
+    action: "Block"
+    protocol: "Any"
+    remoteAddress: "settings-win.data.microsoft.com"
+    group: "PrivacyHardeningFramework"
+    enabled: true
+
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+
+revertMechanism: |
+  Remove the firewall rule using Windows Firewall or this tool.
+  The rule is tagged with Group="PrivacyHardeningFramework" for easy identification.
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  skuRestrictions: []
+
+dependencies: []
+
+knownBreakage:
+  - scenario: "Settings Sync Across Devices"
+    severity: "Medium"
+    description: |
+      Your Windows settings will not sync across devices. If you use multiple
+      Windows devices with the same Microsoft Account, you'll need to manually
+      configure settings on each device.
+    affectedComponents: ["Settings Sync", "Cloud Settings"]
+
+  - scenario: "Personalization Sync"
+    severity: "Medium"
+    description: |
+      Themes, wallpapers, colors, and other personalization settings won't sync.
+      Each device will maintain its own separate personalization settings.
+    affectedComponents: ["Theme Sync", "Personalization"]
+
+  - scenario: "Passwords and Credentials Sync"
+    severity: "High"
+    description: |
+      Saved passwords and Wi-Fi credentials may not sync across devices.
+      You may need to re-enter passwords on each device.
+    affectedComponents: ["Credential Sync", "Wi-Fi Password Sync"]
+
+verificationCommand: |
+  netsh advfirewall firewall show rule name="PHF Block - settings-win.data.microsoft.com"
+
+expectedOutput: |
+  Rule Name:                            PHF Block - settings-win.data.microsoft.com
+  Enabled:                              Yes
+  Direction:                            Out
+  Action:                               Block
+
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+  - "https://docs.microsoft.com/en-us/windows/privacy/windows-endpoints"
+
+tags:
+  - firewall
+  - network
+  - telemetry
+  - endpoint-blocking
+  - settings-sync
+  - privacy
+  - atomic-policy
+  - per-endpoint-control
+
+notes: |
+  ATOMIC FIREWALL CONTROL:
+
+  This endpoint specifically handles settings synchronization.
+
+  PRIVACY CONSIDERATION:
+  - Settings sync uploads your preferences to Microsoft cloud
+  - This data can reveal usage patterns and behaviors
+  - Blocking prevents cloud storage of your settings
+  - Trade-off: Convenience vs Privacy
+
+  USER DECISION MATRIX:
+
+  Block if you:
+  - Don't use multiple Windows devices
+  - Prefer manual configuration
+  - Don't want settings stored in cloud
+  - Value privacy over convenience
+
+  Keep unblocked if you:
+  - Use multiple Windows devices frequently
+  - Want seamless experience across devices
+  - Don't mind cloud-stored settings
+  - Value convenience over privacy
+
+  GRANULAR CONTROL:
+  You can block settings sync (this policy) while keeping:
+  - General telemetry (controlled by other policies)
+  - OneDrive sync (separate endpoint)
+  - Account sync (separate endpoint)
+
+  Each endpoint is independently controllable.
+
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true

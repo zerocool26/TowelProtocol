@@ -1,0 +1,53 @@
+policyId: "task-005"
+version: "1.0.0"
+name: "Disable Kernel CEIP Task"
+category: Telemetry
+description: |
+  Disables the KernelCeipTask which collects kernel-level system information
+  and performance data for the Customer Experience Improvement Program.
+  Sends low-level system telemetry to Microsoft.
+mechanism: ScheduledTask
+mechanismDetails:
+  type: ScheduledTask
+  taskPath: "\\Microsoft\\Windows\\Customer Experience Improvement Program\\KernelCeipTask"
+  action: "Disable"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Re-enable the scheduled task"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Kernel performance data not collected"
+    severity: Low
+    details: "No impact on system performance or stability"
+  - scenario: "Low-level system telemetry not sent to Microsoft"
+    severity: Low
+    details: "This is the intended privacy outcome"
+verificationCommand: "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Customer Experience Improvement Program\\' -TaskName 'KernelCeipTask'"
+expectedOutput: "State: Disabled"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization"
+tags:
+  - "task"
+  - "telemetry"
+  - "ceip"
+  - "kernel"
+  - "privacy"
+  - "low-risk"
+notes: "Collects kernel-level telemetry. Safe to disable."
+enabledByDefault: true
+includedInProfiles:
+  - "Standard"
+  - "Hardened"
+  - "MaximumPrivacy"

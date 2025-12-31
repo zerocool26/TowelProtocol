@@ -1,0 +1,53 @@
+policyId: "ai-001"
+version: "1.0.0"
+name: "Disable Windows Recall (Copilot+ PCs)"
+category: AI
+description: |
+  Disables the Windows Recall feature on Copilot+ PCs. Recall continuously captures
+  screenshots of user activity and uses on-device AI to index and search them.
+  This policy prevents that data collection entirely.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI"
+  valueName: "DisableAIDataAnalysis"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Unsupported
+riskLevel: Low
+reversible: true
+revertMechanism: "Delete registry value or set to 0"
+applicability:
+  minBuild: 26100
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+  excludedSkus: []
+  deviceRequirement: "Copilot+ PC with NPU (Snapdragon X Elite/Plus or equivalent)"
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Windows Recall feature unavailable (intended effect)"
+    severity: Low
+    details: "This is the desired outcome, not a bug"
+verificationCommand: "reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI /v DisableAIDataAnalysis"
+expectedOutput: "0x1"
+references:
+  - "https://support.microsoft.com/en-us/windows/recall-privacy-and-control"
+tags:
+  - "ai"
+  - "recall"
+  - "privacy"
+  - "unsupported"
+  - "copilot-plus"
+notes: |
+  ⚠ UNSUPPORTED: This registry path is not officially documented by Microsoft as of Dec 2024.
+  May break or change in future Windows updates. Monitor for official Group Policy in future releases.
+enabledByDefault: true
+includedInProfiles:
+  - "Balanced"
+  - "Hardened"
+  - "MaximumPrivacy"

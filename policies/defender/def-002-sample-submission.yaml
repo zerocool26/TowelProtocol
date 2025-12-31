@@ -1,0 +1,57 @@
+policyId: "def-002"
+version: "1.0.0"
+name: "Disable Automatic Sample Submission"
+category: Defender
+description: |
+  Disables automatic submission of file samples to Microsoft for malware analysis.
+  Windows Defender will prompt before sending samples instead of automatic upload.
+  Protects privacy but requires manual approval for suspicious file analysis.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Spynet"
+  valueName: "SubmitSamplesConsent"
+  valueType: DWord
+  valueData: 2
+  expectedValue: "0x00000002"
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: "Set SubmitSamplesConsent to 1 (automatic submission)"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies:
+  - policyId: "def-001"
+    reason: "Sample submission requires cloud protection to be functional"
+    optional: true
+knownBreakage:
+  - scenario: "Automatic malware sample upload disabled"
+    severity: Medium
+    details: "User must manually approve sample submissions"
+  - scenario: "Slower threat response from Microsoft"
+    severity: Low
+    details: "New threats take longer to analyze without automatic samples"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Spynet' -Name SubmitSamplesConsent"
+expectedOutput: "SubmitSamplesConsent: 2 (Always prompt)"
+references:
+  - "https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/configure-block-at-first-sight-microsoft-defender-antivirus"
+tags:
+  - "defender"
+  - "privacy"
+  - "samples"
+  - "medium-risk"
+notes: "Value 2 = Always prompt, 0 = Never send, 1 = Auto send safe samples, 3 = Auto send all samples"
+enabledByDefault: true
+includedInProfiles:
+  - "Standard"
+  - "Hardened"
+  - "MaximumPrivacy"

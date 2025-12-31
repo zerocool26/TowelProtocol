@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="PrivacyHardeningUI.Controls.IconHelper">
+
+  <TextBlock x:Name="PART_Icon"
+             Classes="icon"
+             Text="{Binding Name, Mode=OneWay}"
+             FontSize="16"
+             VerticalAlignment="Center"
+             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+
+</UserControl>

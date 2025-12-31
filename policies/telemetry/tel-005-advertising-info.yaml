@@ -1,0 +1,88 @@
+# ============================================================================
+# Policy: tel-005 - Disable Advertising ID
+# ============================================================================
+# ATOMIC POLICY: Controls Windows Advertising ID feature
+# Prevents apps from using advertising ID for personalized ads
+# ============================================================================
+
+policyId: "tel-005"
+version: "1.0.0"
+name: "Disable Windows Advertising ID"
+category: Telemetry
+
+description: |
+  Prevents Windows from generating and using an Advertising ID for personalized ads.
+
+  The Advertising ID is a unique identifier that apps can use to track your activity
+  across different apps and websites for targeted advertising purposes.
+
+  ATOMIC CONTROL: This policy controls ONLY the Advertising ID feature.
+  Other privacy settings (like tracking prevention in browsers) are controlled
+  by separate policies.
+
+mechanism: Registry
+
+mechanismDetails:
+  type: RegistryValue
+  hive: HKCU
+  path: "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo"
+  valueName: "Enabled"
+  expectedValue: 0  # 0 = Disabled, 1 = Enabled
+  valueType: DWord
+
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+
+revertMechanism: |
+  Set the registry value back to 1 or delete the key to restore Windows default (Enabled).
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  skuRestrictions: []
+
+dependencies: []
+
+knownBreakage:
+  - scenario: "Personalized App Advertisements"
+    severity: "Low"
+    description: |
+      Apps will not be able to use your advertising ID for personalized ads.
+      You may see more generic ads instead of targeted ones. This is generally
+      considered a privacy improvement, not a functional breakage.
+    affectedComponents: ["Windows Store Apps", "Third-party Apps"]
+
+verificationCommand: |
+  reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v Enabled
+
+expectedOutput: |
+  Enabled    REG_DWORD    0x0
+
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#bkmk-priv-feedback"
+
+tags:
+  - telemetry
+  - advertising
+  - privacy
+  - tracking
+  - atomic-policy
+
+notes: |
+  PRIVACY BENEFIT:
+  - Prevents cross-app tracking via advertising ID
+  - Reduces targeted advertising effectiveness
+  - Limits data collection for advertising purposes
+
+  USER CONTROL:
+  - Simple on/off for this specific feature
+  - No dependencies on other policies
+  - Fully reversible
+  - No known functional breakage
+
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true

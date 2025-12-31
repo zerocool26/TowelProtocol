@@ -1,0 +1,108 @@
+# ============================================================================
+# Policy: tel-004-b - Disable Publishing User Activities
+# ============================================================================
+# ATOMIC POLICY: Controls ONE specific registry key for Activity History.
+# Part of the Activity History feature set, broken into individual policies
+# for granular user control.
+# ============================================================================
+
+policyId: "tel-004-b"
+version: "1.0.0"
+name: "Disable Publishing User Activities"
+category: Telemetry
+
+description: |
+  Prevents Windows from publishing your activity history to Microsoft Account.
+
+  This setting controls whether your local activities (documents, websites, apps)
+  are shared with your Microsoft Account for cross-device synchronization.
+
+  ATOMIC CONTROL: This policy controls ONLY the PublishUserActivities registry value.
+  Local activity collection (tel-004-a) and cloud uploading (tel-004-c) are controlled
+  separately, giving you fine-grained control over each aspect.
+
+mechanism: Registry
+
+mechanismDetails:
+  type: RegistryValue
+  hive: HKLM
+  path: "SOFTWARE\\Policies\\Microsoft\\Windows\\System"
+  valueName: "PublishUserActivities"
+  expectedValue: 0  # 0 = Disabled, 1 = Enabled
+  valueType: DWord
+
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+
+revertMechanism: |
+  Set the registry value back to 1 or delete the key to restore Windows default (Enabled).
+
+applicability:
+  minBuild: 17134  # Windows 10 1803
+  maxBuild: null
+  skuRestrictions: []
+
+dependencies:
+  - policyId: "tel-004-a"
+    reason: |
+      If Activity Feed is disabled, publishing activities has no effect (there are
+      no activities to publish). Consider disabling Activity Feed first.
+    type: Recommended
+    userCanOverride: true
+    overrideWarning: |
+      You're disabling activity publishing but leaving activity collection enabled.
+      Activities will still be tracked locally but not synced to Microsoft Account.
+    optional: true
+    autoSelect: false
+
+knownBreakage:
+  - scenario: "Cross-Device Activity Continuation"
+    severity: "Medium"
+    description: |
+      Activities won't sync to other devices. Features like "Continue on PC" from
+      phone to PC or vice versa will not work.
+    affectedComponents: ["Timeline Cross-Device", "Continue on PC", "Your Phone"]
+
+  - scenario: "Microsoft Account Activity History"
+    severity: "Low"
+    description: |
+      Your Microsoft Account privacy dashboard won't show activity history from
+      this device.
+    affectedComponents: ["Microsoft Account Privacy Dashboard"]
+
+verificationCommand: |
+  reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v PublishUserActivities
+
+expectedOutput: |
+  PublishUserActivities    REG_DWORD    0x0
+
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#bkmk-act-history"
+
+tags:
+  - telemetry
+  - activity-history
+  - timeline
+  - privacy
+  - microsoft-account
+  - cross-device-sync
+  - atomic-policy
+
+notes: |
+  GRANULAR CONTROL: This is part 2 of 3 atomic policies for Activity History:
+  - tel-004-a: Activity Feed - Local activity tracking
+  - tel-004-b: Publishing User Activities (this policy) - Sharing with MS Account
+  - tel-004-c: Uploading User Activities - Uploading to Microsoft cloud
+
+  DEPENDENCY NOTES:
+  - This policy shows how dependencies work with user override capability
+  - The dependency on tel-004-a is RECOMMENDED but not REQUIRED
+  - User can choose to disable publishing while keeping local tracking
+  - User receives a warning explaining the implications
+
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true

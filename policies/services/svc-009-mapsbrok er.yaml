@@ -1,0 +1,51 @@
+policyId: "svc-009"
+version: "1.0.0"
+name: "Disable Downloaded Maps Manager"
+category: Services
+description: |
+  Disables MapsBroker service which manages downloaded offline maps for the Maps app.
+  Safe to disable if you don't use Windows Maps application.
+mechanism: Service
+mechanismDetails:
+  type: ServiceConfig
+  serviceName: "MapsBroker"
+  displayName: "Downloaded Maps Manager"
+  startupType: "Disabled"
+  stopService: true
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set service to Automatic"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Windows Maps app offline maps will not function"
+    severity: Low
+    details: "Use Google Maps or other navigation apps instead"
+  - scenario: "Map downloads will fail"
+    severity: Low
+    details: "Online maps still work in browsers"
+verificationCommand: "sc query MapsBroker"
+expectedOutput: "STATE: STOPPED, START_TYPE: DISABLED"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+tags:
+  - "service"
+  - "maps"
+  - "bloatware"
+  - "low-risk"
+notes: null
+enabledByDefault: true
+includedInProfiles:
+  - "Hardened"
+  - "MaximumPrivacy"

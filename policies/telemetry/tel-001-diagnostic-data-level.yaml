@@ -1,0 +1,173 @@
+# ============================================================================
+# Policy: tel-001 - Configure Windows Diagnostic Data Level
+# ============================================================================
+# This is an ATOMIC, GRANULAR policy that controls ONE specific privacy setting.
+# User has FULL CONTROL over which value to select from all available options.
+# ============================================================================
+
+policyId: "tel-001"
+version: "1.0.0"
+name: "Configure Diagnostic Data Level"
+category: Telemetry
+
+description: |
+  Controls the amount of diagnostic and usage data sent to Microsoft.
+
+  This setting determines what information Windows collects and sends to Microsoft
+  to help improve the operating system, apps, and services. Lower values increase
+  privacy but may reduce Microsoft's ability to troubleshoot issues and improve Windows.
+
+  GRANULAR CONTROL: You can select ANY of the 4 available levels below.
+  Each level is explained in detail with requirements and implications.
+
+  Note: "Security" level (0) requires Enterprise or Education edition.
+
+mechanism: Registry
+
+mechanismDetails:
+  type: RegistryValue
+  hive: HKLM
+  path: "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection"
+  valueName: "AllowTelemetry"
+  valueType: DWord
+
+  # ALL possible values exposed to user with full details
+  allowedValues:
+    - value: 0
+      label: "Security"
+      description: |
+        Minimal data required for security only. Sends only data essential to keep
+        Windows secure (Windows Defender, Windows Update). This is the most private
+        option but is ONLY available on Windows Enterprise and Education editions.
+      requirements:
+        sku: ["Enterprise", "Education", "EnterpriseN", "EducationN"]
+      recommendedForPrivacy: true
+      knownLimitations: |
+        - Not available on Home or Professional editions
+        - May limit some diagnostic features
+        - Windows Update may have reduced functionality
+
+    - value: 1
+      label: "Basic"
+      description: |
+        Basic device info, quality-related data, and app compatibility information.
+        Includes device info, quality metrics, app compatibility data, and Windows
+        Defender information. This is the MINIMUM level for Home and Professional.
+      requirementsuk: ["All"]
+      recommendedForPrivacy: true
+      knownLimitations: |
+        - Still sends basic device information to Microsoft
+        - Some features may not work optimally
+
+    - value: 2
+      label: "Enhanced"
+      description: |
+        Includes Basic data plus usage data about how Windows and apps are used,
+        how they perform, advanced reliability data, and data from both the Basic
+        and Full levels that's required for Windows Analytics.
+      requirements:
+        sku: ["All"]
+      recommendedForPrivacy: false
+      knownLimitations: |
+        - Sends detailed usage patterns to Microsoft
+        - May include app usage statistics
+
+    - value: 3
+      label: "Full"
+      description: |
+        Includes Enhanced data plus crash dumps, diagnostic logs, memory snapshots,
+        and other diagnostic information. This is the DEFAULT Windows setting and
+        sends the MOST data to Microsoft.
+      requirements:
+        sku: ["All"]
+      recommendedForPrivacy: false
+      knownLimitations: |
+        - Sends extensive diagnostic data including crash dumps
+        - May include personal information in crash dumps
+        - Provides least privacy protection
+
+  # Default suggestion (but USER MUST choose)
+  defaultSelection: 1
+
+  # User MUST explicitly select a value - no auto-apply
+  userMustConfirm: true
+
+  # Show current value for comparison
+  showCurrentValue: true
+
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+
+revertMechanism: |
+  Change the registry value back to its previous setting or delete the registry
+  key to restore Windows default (Full - value 3).
+
+applicability:
+  minBuild: 10240  # Windows 10 RTM
+  maxBuild: null   # All future builds
+  skuRestrictions:
+    - note: "Value 0 (Security) requires Enterprise or Education"
+      affectedValue: 0
+      requiredSku: ["Enterprise", "Education"]
+
+# NO dependencies - this is an atomic policy
+dependencies: []
+
+knownBreakage:
+  - scenario: "Windows Analytics / Endpoint Analytics"
+    severity: "Medium"
+    description: |
+      Setting to Basic (1) or Security (0) will prevent Windows Analytics and
+      Microsoft Endpoint Analytics from functioning correctly. Organizations using
+      these services should use Enhanced (2) or Full (3).
+    affectedComponents: ["Windows Analytics", "Endpoint Analytics"]
+
+  - scenario: "Diagnostic Data Viewer"
+    severity: "Low"
+    description: |
+      The Diagnostic Data Viewer app shows what data is being sent. With Security (0)
+      or Basic (1), less data will be visible in this viewer.
+    affectedComponents: ["Diagnostic Data Viewer"]
+
+verificationCommand: |
+  reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v AllowTelemetry
+
+expectedOutput: |
+  AllowTelemetry    REG_DWORD    0x1
+  (Value will match whatever user selected: 0, 1, 2, or 3)
+
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization"
+  - "https://learn.microsoft.com/en-us/windows/privacy/windows-diagnostic-data"
+  - "https://admx.help/?Category=Windows_10_2016&Policy=Microsoft.Policies.DataCollection::AllowTelemetry"
+
+tags:
+  - telemetry
+  - diagnostic-data
+  - privacy
+  - data-collection
+  - microsoft-data
+  - atomic-policy
+  - user-selectable
+
+notes: |
+  GRANULAR CONTROL NOTES:
+  - This policy exposes ALL 4 possible values to the user
+  - Each value has detailed description, requirements, and known limitations
+  - User MUST choose a value explicitly - no defaults are applied
+  - Current system value is shown for comparison
+  - SKU compatibility is checked before allowing certain values
+
+  IMPORTANT: The "Security" level (0) is ONLY available on:
+  - Windows 10/11 Enterprise
+  - Windows 10/11 Education
+
+  Attempting to set it on Home or Professional will fail or be ignored by Windows.
+
+# CRITICAL: Following granular control requirements
+enabledByDefault: false  # User must explicitly enable
+includedInProfiles: []   # User adds to profiles manually
+autoApply: false        # NEVER auto-apply
+requiresConfirmation: true  # ALWAYS require confirmation
+showInUI: true          # ALWAYS visible

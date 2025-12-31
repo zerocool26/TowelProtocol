@@ -1,0 +1,57 @@
+policyId: "net-003"
+version: "1.0.0"
+name: "Disable Network Connectivity Status Indicator (NCSI)"
+category: Network
+description: |
+  Disables NCSI which checks internet connectivity by connecting to Microsoft servers
+  (www.msftconnecttest.com). Prevents Windows from constantly pinging Microsoft to
+  verify internet connection status. May cause network status icon to show limited
+  connectivity even when internet is working.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\NetworkConnectivityStatusIndicator"
+  valueName: "NoActiveProbe"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: "Set NoActiveProbe to 0 or delete the value"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Network connectivity icon may show incorrect status"
+    severity: Medium
+    details: "May display 'No Internet' even when connected"
+  - scenario: "Captive portal detection disabled"
+    severity: Medium
+    details: "Public Wi-Fi login pages may not auto-open"
+  - scenario: "Some apps may fail to detect internet connectivity"
+    severity: Medium
+    details: "Apps relying on Windows network status API affected"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\NetworkConnectivityStatusIndicator' -Name NoActiveProbe"
+expectedOutput: "NoActiveProbe: 1"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#14-network-connection-status-indicator"
+  - "https://techcommunity.microsoft.com/t5/networking-blog/ncsi-and-the-network-status-icon/ba-p/339470"
+tags:
+  - "network"
+  - "privacy"
+  - "connectivity"
+  - "medium-risk"
+notes: "⚠ May cause network icon confusion. Alternative: redirect NCSI to local server instead"
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"

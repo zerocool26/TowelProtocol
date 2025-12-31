@@ -1,0 +1,55 @@
+policyId: "tel-003"
+version: "1.0.0"
+name: "Disable Activity History and Timeline"
+category: Telemetry
+description: |
+  Disables Windows Activity History which tracks application usage and sends data to
+  Microsoft. Also disables the Timeline feature which syncs activity across devices.
+  This prevents Windows from collecting data about which apps you use and when.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\System"
+  valueName: "EnableActivityFeed"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Delete registry value or set to 1"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Timeline feature will not function"
+    severity: Low
+    details: "Timeline was already removed in Windows 11, this prevents legacy code"
+  - scenario: "Activity history will not sync across devices"
+    severity: Low
+    details: "Intended behavior for privacy"
+verificationCommand: "reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\System /v EnableActivityFeed"
+expectedOutput: "0x0"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#activity-feed"
+tags:
+  - "telemetry"
+  - "privacy"
+  - "activity-history"
+  - "timeline"
+  - "supported"
+notes: null
+enabledByDefault: true
+includedInProfiles:
+  - "Balanced"
+  - "Hardened"
+  - "MaximumPrivacy"

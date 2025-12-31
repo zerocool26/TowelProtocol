@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Color palette -->
+  <!-- Refer to light/dark theme resource files (deprecated) -->
+  <!-- This file is retained for backwards compatibility; please use ThemeResources.Light.axaml or ThemeResources.Dark.axaml -->
+
+  <!-- Styles are provided in a separate Styles/ControlStyles.axaml file -->
+
+</ResourceDictionary>

@@ -1,0 +1,244 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PrivacyHardeningUI.ViewModels"
+             xmlns:controls="using:PrivacyHardeningUI.Controls"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="PrivacyHardeningUI.Views.PolicySelectionView"
+             x:DataType="vm:PolicySelectionViewModel">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <!-- Add any view-specific resources here -->
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+        <!-- Filter Controls Row -->
+        <Border Grid.Row="0" Padding="16" Background="{StaticResource PanelBrush}">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto" RowDefinitions="Auto,Auto">
+
+                <!-- Category Filter -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Category:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <ComboBox Grid.Row="0" Grid.Column="1"
+                          ItemsSource="{Binding Categories}"
+                          SelectedItem="{Binding SelectedCategory}"
+                          MinWidth="200" Margin="0,0,16,0"
+                          AutomationProperties.Name="Category Filter"
+                          TabIndex="10">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource EnumToStringConverter}}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <!-- Show Only Applicable Checkbox -->
+                <CheckBox Grid.Row="0" Grid.Column="2"
+                          Content="Show Only Applicable"
+                          IsChecked="{Binding ShowOnlyApplicable}"
+                          Margin="0,0,16,0"
+                          VerticalAlignment="Center"
+                          AutomationProperties.Name="Show Only Applicable"
+                          TabIndex="11"/>
+
+                <!-- Show Only Selected Checkbox -->
+                <CheckBox Grid.Row="0" Grid.Column="3"
+                          Content="Show Only Selected"
+                          IsChecked="{Binding ShowOnlySelected}"
+                          VerticalAlignment="Center"
+                          AutomationProperties.Name="Show Only Selected"
+                          TabIndex="12"/>
+
+                <!-- Search Box -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Search:" VerticalAlignment="Center" Margin="0,8,8,0"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"
+                         Text="{Binding SearchText}"
+                         Watermark="Search by name, description, or policy ID..."
+                         Margin="0,8,0,0"
+                         AutomationProperties.Name="Policy Search"
+                         TabIndex="13"/>
+            </Grid>
+        </Border>
+
+        <!-- Quick Selection Buttons Row -->
+        <Border Grid.Row="1" Padding="16,8" Background="{StaticResource SurfaceBrush}">
+                <WrapPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                <Button Content="Load Policies" Command="{Binding LoadPoliciesCommand}" Margin="0,0,8,0" AutomationProperties.Name="Load Policies" TabIndex="20"/>
+                <Button Content="Select All" Command="{Binding SelectAllCommand}" Margin="0,0,8,0" AutomationProperties.Name="Select All" TabIndex="21"/>
+                <Button Content="Select None" Command="{Binding SelectNoneCommand}" Margin="0,0,8,0" AutomationProperties.Name="Select None" TabIndex="22"/>
+                <Button Content="Low Risk Only" Command="{Binding SelectByRiskCommand}" CommandParameter="Low" Margin="0,0,8,0" AutomationProperties.Name="Select Low Risk" TabIndex="23"/>
+                <Button Content="Medium Risk and Below" Command="{Binding SelectByRiskCommand}" CommandParameter="Medium" Margin="0,0,8,0" AutomationProperties.Name="Select Medium Risk" TabIndex="24"/>
+                <Button Content="High Risk and Below" Command="{Binding SelectByRiskCommand}" CommandParameter="High" Margin="0,0,8,0" AutomationProperties.Name="Select High Risk" TabIndex="25"/>
+            </WrapPanel>
+        </Border>
+
+        <!-- Policies List -->
+        <ScrollViewer Grid.Row="2">
+            <ListBox ItemsSource="{Binding FilteredPolicies}" Margin="8"
+                     AutomationProperties.Name="Policies List"
+                     TabIndex="40">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Classes="card">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+
+                                <!-- Checkbox -->
+                                <CheckBox Grid.Column="0"
+                                          IsChecked="{Binding IsSelected}"
+                                          VerticalAlignment="Top"
+                                          Margin="0,4,16,0"/>
+
+                                <!-- Policy Details -->
+                                <StackPanel Grid.Column="1" Spacing="8">
+                                    <!-- Header Row -->
+                                    <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                                        <TextBlock Grid.Column="0" Text="{Binding Name}"
+                                                   FontSize="16" FontWeight="Bold"/>
+                                        <Border Grid.Column="1"
+                                                Background="{Binding RiskLevel, Converter={StaticResource RiskLevelToBrushConverter}}"
+                                                CornerRadius="3" Padding="8,2" Margin="8,0">
+                                            <TextBlock Text="{Binding RiskLevel, Converter={StaticResource EnumToStringConverter}}"
+                                                       Foreground="White" FontSize="12" FontWeight="Bold"/>
+                                        </Border>
+                                        <Border Grid.Column="2"
+                                                Background="{DynamicResource SystemBaseMediumColor}"
+                                                CornerRadius="3" Padding="8,2" Margin="8,0">
+                                            <TextBlock Text="{Binding Category, Converter={StaticResource EnumToStringConverter}}"
+                                                       FontSize="12"/>
+                                        </Border>
+                                        <Border Grid.Column="3"
+                                                Background="{StaticResource PanelBrush}"
+                                                CornerRadius="3" Padding="8,2" Margin="8,0"
+                                                IsVisible="{Binding Reversible, Converter={StaticResource InverseBoolConverter}}">
+                                            <TextBlock Text="IRREVERSIBLE"
+                                                       Foreground="Red" FontSize="12" FontWeight="Bold"/>
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- Policy ID -->
+                                    <TextBlock Text="{Binding PolicyId}"
+                                               FontSize="11" Opacity="0.7" FontFamily="Consolas"/>
+
+                                    <!-- Description -->
+                                    <TextBlock Text="{Binding Description}"
+                                               TextWrapping="Wrap" FontSize="14"/>
+
+                                    <!-- Mechanism -->
+                                    <StackPanel Orientation="Horizontal" Spacing="4"
+                                                IsVisible="{Binding Mechanism, Converter={StaticResource NullToVisibilityConverter}}">
+                                        <TextBlock Text="Mechanism:" FontWeight="Bold" FontSize="12"/>
+                                        <TextBlock Text="{Binding Mechanism, Converter={StaticResource EnumToStringConverter}}"
+                                                   FontSize="12"/>
+                                    </StackPanel>
+
+                                    <!-- Known Breakage -->
+                                    <Border Background="#FFF3CD" BorderBrush="#FFD700" BorderThickness="1"
+                                            CornerRadius="3" Padding="8" Margin="0,4"
+                                            IsVisible="{Binding KnownBreakage, Converter={StaticResource NullToVisibilityConverter}}">
+                                        <StackPanel Spacing="4" Orientation="Horizontal">
+                                            <Border Width="18" Height="18" Background="#FFD700" CornerRadius="3" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                            <StackPanel>
+                                                <TextBlock Text="Known Breakage:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Text="{Binding KnownBreakage}"
+                                                           TextWrapping="Wrap" FontSize="12"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Dependencies -->
+                                    <StackPanel Orientation="Horizontal" Spacing="4"
+                                                IsVisible="{Binding Dependencies.Length, Converter={StaticResource CountToVisibilityConverter}}">
+                                        <TextBlock Text="Dependencies:" FontWeight="Bold" FontSize="12"/>
+                                        <TextBlock Text="{Binding Dependencies.Length}" FontSize="12"/>
+                                        <TextBlock Text="policies" FontSize="12"/>
+                                    </StackPanel>
+
+                                    <!-- References -->
+                                    <StackPanel IsVisible="{Binding References, Converter={StaticResource NullToVisibilityConverter}}"
+                                                Spacing="2">
+                                        <TextBlock Text="References:" FontWeight="Bold" FontSize="12"/>
+                                        <ItemsControl ItemsSource="{Binding References}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding}" FontSize="11"
+                                                               Foreground="Blue" TextDecorations="Underline"
+                                                               Margin="16,0,0,2"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+
+                                    <!-- Notes -->
+                                    <StackPanel IsVisible="{Binding Notes, Converter={StaticResource NullToVisibilityConverter}}"
+                                                Spacing="2">
+                                        <TextBlock Text="Notes:" FontWeight="Bold" FontSize="12"/>
+                                        <TextBlock Text="{Binding Notes}" FontSize="12"
+                                                   TextWrapping="Wrap" Opacity="0.8" Margin="16,0,0,0"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Applicable Badge -->
+                                <Border Grid.Column="2"
+                                        Background="Green" CornerRadius="16"
+                                        Padding="12,4" VerticalAlignment="Top" Margin="16,0,0,0"
+                                        IsVisible="{Binding IsApplicable}">
+                                    <controls:IconHelper Name="check_circle" FontSize="18" Foreground="White" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </ScrollViewer>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="3" Background="{DynamicResource SystemChromeLowColor}"
+                BorderBrush="{DynamicResource SystemBaseMediumColor}"
+                BorderThickness="0,1,0,0" Padding="16,8">
+            <Grid ColumnDefinitions="*,Auto">
+                <!-- Error Message -->
+                <TextBlock Grid.Column="0"
+                           Text="{Binding ErrorMessage}"
+                           Foreground="Red"
+                           IsVisible="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}"/>
+
+                <!-- Stats -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16"
+                            IsVisible="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=Inverse}">
+                    <TextBlock>
+                        <Run Text="Total Policies:"/>
+                        <Run Text="{Binding AllPolicies.Count}" FontWeight="Bold"/>
+                    </TextBlock>
+                    <TextBlock>
+                        <Run Text="Filtered:"/>
+                        <Run Text="{Binding FilteredPolicies.Count}" FontWeight="Bold"/>
+                    </TextBlock>
+                    <TextBlock>
+                        <Run Text="Selected:"/>
+                        <Run Text="{Binding FilteredPolicies.Count}" FontWeight="Bold" Foreground="Green"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Loading Overlay -->
+        <Panel Grid.RowSpan="4" IsVisible="{Binding IsLoading}"
+               Background="#80000000">
+            <Border Background="White" CornerRadius="8" Padding="32"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel Spacing="16" HorizontalAlignment="Center">
+                    <ProgressBar IsIndeterminate="True" Width="200"/>
+                    <TextBlock Text="Loading policies..." HorizontalAlignment="Center" FontSize="14"/>
+                </StackPanel>
+            </Border>
+        </Panel>
+    </Grid>
+</UserControl>

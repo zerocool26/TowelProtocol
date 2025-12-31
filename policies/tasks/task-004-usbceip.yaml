@@ -1,0 +1,53 @@
+policyId: "task-004"
+version: "1.0.0"
+name: "Disable USB CEIP"
+category: Telemetry
+description: |
+  Disables the UsbCeip task which collects Universal Serial Bus (USB) related
+  statistics and information about your computer. Sends USB device usage data
+  to the Windows Device Experience Program.
+mechanism: ScheduledTask
+mechanismDetails:
+  type: ScheduledTask
+  taskPath: "\\Microsoft\\Windows\\Customer Experience Improvement Program\\UsbCeip"
+  action: "Disable"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Re-enable the scheduled task"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "USB device usage statistics not collected"
+    severity: Low
+    details: "USB devices continue to function normally"
+  - scenario: "Device Experience Program data not sent"
+    severity: Low
+    details: "This is the intended privacy outcome"
+verificationCommand: "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Customer Experience Improvement Program\\' -TaskName 'UsbCeip'"
+expectedOutput: "State: Disabled"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+tags:
+  - "task"
+  - "telemetry"
+  - "ceip"
+  - "usb"
+  - "privacy"
+  - "low-risk"
+notes: "Collects USB device telemetry. Safe to disable."
+enabledByDefault: true
+includedInProfiles:
+  - "Standard"
+  - "Hardened"
+  - "MaximumPrivacy"

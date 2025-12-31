@@ -1,0 +1,49 @@
+policyId: "svc-004"
+version: "1.0.0"
+name: "Disable Windows Error Reporting Service"
+category: Services
+description: |
+  Disables the WerSvc (Windows Error Reporting Service) which collects and sends
+  error reports and crash dumps to Microsoft. Companion to tel-006 registry policy.
+mechanism: Service
+mechanismDetails:
+  type: ServiceConfig
+  serviceName: "WerSvc"
+  displayName: "Windows Error Reporting Service"
+  startupType: "Disabled"
+  stopService: true
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set service to Manual and start if needed"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Error reports and crash dumps will not be sent to Microsoft"
+    severity: Low
+    details: "Local troubleshooting still possible via Event Viewer"
+verificationCommand: "sc query WerSvc"
+expectedOutput: "STATE: STOPPED, START_TYPE: DISABLED"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#windows-error-reporting"
+tags:
+  - "service"
+  - "telemetry"
+  - "privacy"
+  - "error-reporting"
+notes: "Works best when combined with tel-006 registry policy"
+enabledByDefault: true
+includedInProfiles:
+  - "Balanced"
+  - "Hardened"
+  - "MaximumPrivacy"

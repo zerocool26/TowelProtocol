@@ -1,0 +1,54 @@
+policyId: "tel-006"
+version: "1.0.0"
+name: "Disable Windows Error Reporting"
+category: Telemetry
+description: |
+  Disables Windows Error Reporting (WER) which sends crash dumps and error reports to
+  Microsoft. While useful for diagnostics, these reports can contain sensitive data.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Error Reporting"
+  valueName: "Disabled"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Delete registry value or set to 0"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Error reports will not be sent to Microsoft"
+    severity: Low
+    details: "Troubleshooting application crashes may be more difficult"
+  - scenario: "WerSvc service can be disabled separately for full effect"
+    severity: Low
+    details: "See policy svc-004"
+verificationCommand: "reg query \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Error Reporting\" /v Disabled"
+expectedOutput: "0x1"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#windows-error-reporting"
+tags:
+  - "telemetry"
+  - "privacy"
+  - "error-reporting"
+  - "crash-dumps"
+  - "supported"
+notes: null
+enabledByDefault: true
+includedInProfiles:
+  - "Balanced"
+  - "Hardened"
+  - "MaximumPrivacy"

@@ -1,0 +1,140 @@
+# ============================================================================
+# Policy: net-001-e - Block telecommand.telemetry.microsoft.com
+# ============================================================================
+# ATOMIC FIREWALL POLICY: Controls ONE specific endpoint
+# Part of telemetry endpoint blocking - each endpoint is separately selectable
+# ============================================================================
+
+policyId: "net-001-e"
+version: "1.0.0"
+name: "Block telecommand.telemetry.microsoft.com (Remote Commands)"
+category: Network
+
+description: |
+  Blocks outbound connections to telecommand.telemetry.microsoft.com via Windows Firewall.
+
+  This endpoint is used by Windows to receive remote commands and configurations
+  from Microsoft. It's part of the telemetry system that allows Microsoft to
+  remotely configure telemetry collection behavior.
+
+  ATOMIC CONTROL: This policy creates ONE firewall rule for ONE endpoint.
+  Prevents remote telemetry configuration changes from Microsoft servers.
+
+mechanism: Firewall
+
+mechanismDetails:
+  type: FirewallRule
+  ruleGrouping: Individual
+
+  endpoint:
+    hostname: "telecommand.telemetry.microsoft.com"
+    description: "Telemetry remote command and configuration endpoint"
+    criticality: "Non-essential"
+    knownBreakage: "Remote telemetry configuration updates prevented"
+    category: "Telemetry"
+    port: null  # All ports
+    protocol: "Both"  # TCP and UDP
+    direction: "Outbound"
+
+  firewallRule:
+    displayName: "PHF Block - telecommand.telemetry.microsoft.com"
+    description: "Privacy Hardening Framework - Block telecommand endpoint"
+    direction: "Outbound"
+    action: "Block"
+    protocol: "Any"
+    remoteAddress: "telecommand.telemetry.microsoft.com"
+    group: "PrivacyHardeningFramework"
+    enabled: true
+
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+
+revertMechanism: |
+  Remove the firewall rule using Windows Firewall or this tool.
+  The rule is tagged with Group="PrivacyHardeningFramework" for easy identification.
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  skuRestrictions: []
+
+dependencies: []
+
+knownBreakage:
+  - scenario: "Remote Telemetry Configuration"
+    severity: "Low"
+    description: |
+      Microsoft will not be able to remotely configure or modify telemetry
+      collection settings on your device. Your local telemetry settings
+      remain under your control only.
+    affectedComponents: ["Telemetry Configuration", "Remote Commands"]
+
+  - scenario: "Dynamic Telemetry Adjustments"
+    severity: "Low"
+    description: |
+      Microsoft sometimes uses telecommand to temporarily increase or decrease
+      telemetry collection for specific investigations. These dynamic
+      adjustments will not occur on your system.
+    affectedComponents: ["Dynamic Telemetry"]
+
+verificationCommand: |
+  netsh advfirewall firewall show rule name="PHF Block - telecommand.telemetry.microsoft.com"
+
+expectedOutput: |
+  Rule Name:                            PHF Block - telecommand.telemetry.microsoft.com
+  Enabled:                              Yes
+  Direction:                            Out
+  Action:                               Block
+
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+  - "https://docs.microsoft.com/en-us/windows/privacy/windows-endpoints"
+
+tags:
+  - firewall
+  - network
+  - telemetry
+  - endpoint-blocking
+  - telecommand
+  - remote-control
+  - privacy
+  - atomic-policy
+  - per-endpoint-control
+
+notes: |
+  ATOMIC FIREWALL CONTROL:
+
+  PRIVACY IMPLICATION:
+  This endpoint is particularly important from a privacy perspective because
+  it allows Microsoft to remotely change what telemetry data is collected
+  from your system WITHOUT your explicit consent.
+
+  Blocking this endpoint ensures that:
+  - Telemetry settings YOU configure remain in effect
+  - Microsoft cannot remotely enable additional data collection
+  - You maintain complete control over telemetry behavior
+
+  RECOMMENDED FOR:
+  - Users who want guaranteed control over telemetry
+  - Privacy-conscious users who don't want remote configuration changes
+  - Users who have carefully configured telemetry settings
+
+  NOT RECOMMENDED FOR:
+  - Enterprise users whose IT department uses remote telemetry management
+  - Users participating in Windows Insider Program (may need dynamic telemetry)
+
+  GRANULAR CONTROL:
+  This is separate from:
+  - Data upload endpoints (vortex, watson)
+  - Settings sync (settings-win)
+  - Crash analysis (oca)
+
+  You can block telecommand while allowing data uploads, or vice versa.
+  Complete flexibility based on your privacy requirements.
+
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true

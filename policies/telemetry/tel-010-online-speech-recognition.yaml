@@ -1,0 +1,54 @@
+policyId: "tel-010"
+version: "1.0.0"
+name: "Disable Online Speech Recognition"
+category: Telemetry
+description: |
+  Prevents Windows from sending voice data to Microsoft's cloud services for speech
+  recognition. Forces offline-only speech recognition. Protects audio privacy.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\InputPersonalization"
+  valueName: "AllowInputPersonalization"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: "Delete registry value or set to 1"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Online speech recognition unavailable"
+    severity: Medium
+    details: "Cortana and voice assistants may not function properly"
+  - scenario: "Speech-to-text accuracy reduced to offline models"
+    severity: Medium
+    details: "Cloud models are more accurate than local"
+verificationCommand: "reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\InputPersonalization /v AllowInputPersonalization"
+expectedOutput: "0x0"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#speech-inking-and-typing"
+tags:
+  - "telemetry"
+  - "privacy"
+  - "speech-recognition"
+  - "voice"
+  - "audio"
+  - "supported"
+notes: "⚠ This will impact voice assistant functionality"
+enabledByDefault: false
+includedInProfiles:
+  - "Hardened"
+  - "MaximumPrivacy"

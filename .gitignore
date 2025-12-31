@@ -1,0 +1,39 @@
+# Build outputs
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# NuGet
+*.nupkg
+.packages/
+
+# Dist artifacts
+dist/
+
+# JetBrains
+*.iml
+
+# Temporary files
+*.tmp
+
+# PowerShell Module
+*.psm1
+
+# Local settings
+.env

@@ -1,0 +1,59 @@
+policyId: "task-009"
+version: "1.0.0"
+name: "Disable Windows Error Reporting Queue"
+category: Telemetry
+description: |
+  Disables QueueReporting task which uploads queued Windows Error Reporting (WER)
+  crash dumps and error reports to Microsoft servers. Part of diagnostic data collection.
+mechanism: ScheduledTask
+mechanismDetails:
+  type: ScheduledTask
+  taskPath: "\\Microsoft\\Windows\\Windows Error Reporting\\QueueReporting"
+  action: "Disable"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Re-enable the scheduled task"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies:
+  - policyId: "tel-006"
+    reason: "Complements Windows Error Reporting service disable"
+    type: "Complementary"
+    optional: true
+knownBreakage:
+  - scenario: "Error reports not sent to Microsoft"
+    severity: Low
+    details: "This is the intended privacy outcome"
+  - scenario: "Application crash reports queued but not uploaded"
+    severity: Low
+    details: "Local crash dumps remain available for debugging"
+  - scenario: "Automatic problem solution lookup disabled"
+    severity: Low
+    details: "Manual troubleshooting required for errors"
+verificationCommand: "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Windows Error Reporting\\' -TaskName 'QueueReporting'"
+expectedOutput: "State: Disabled"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization"
+  - "https://learn.microsoft.com/en-us/windows/win32/wer/windows-error-reporting"
+tags:
+  - "task"
+  - "telemetry"
+  - "error-reporting"
+  - "privacy"
+  - "low-risk"
+notes: "Prevents upload of crash dumps to Microsoft. Local dumps still generated."
+enabledByDefault: true
+includedInProfiles:
+  - "Standard"
+  - "Hardened"
+  - "MaximumPrivacy"

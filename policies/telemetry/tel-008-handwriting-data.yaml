@@ -1,0 +1,100 @@
+# ============================================================================
+# Policy: tel-008 - Disable Handwriting Data Collection
+# ============================================================================
+# ATOMIC POLICY: Controls handwriting and typing data collection
+# Prevents Microsoft from collecting handwriting samples
+# ============================================================================
+
+policyId: "tel-008"
+version: "1.0.0"
+name: "Disable Handwriting Data Collection"
+category: Telemetry
+
+description: |
+  Prevents Windows from collecting handwriting samples and typing patterns.
+
+  Windows can collect data about your handwriting and typing to improve
+  text recognition and personalization. This policy prevents that data
+  collection.
+
+  ATOMIC CONTROL: This policy controls ONLY handwriting/typing data collection.
+  Speech recognition (tel-009) and inking settings are controlled separately.
+
+mechanism: Registry
+
+mechanismDetails:
+  type: RegistryValue
+  hive: HKCU
+  path: "SOFTWARE\\Microsoft\\InputPersonalization"
+  valueName: "RestrictImplicitInkCollection"
+  expectedValue: 1  # 1 = Restricted (no collection), 0 = Allowed
+  valueType: DWord
+
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+
+revertMechanism: |
+  Set the registry value back to 0 or delete the key to restore Windows default
+  (collection enabled).
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  skuRestrictions: []
+
+dependencies: []
+
+knownBreakage:
+  - scenario: "Handwriting Recognition Improvement"
+    severity: "Low"
+    description: |
+      Windows handwriting recognition will not improve based on your personal
+      handwriting patterns. Recognition accuracy may be slightly lower for
+      unusual handwriting styles.
+    affectedComponents: ["Windows Ink", "Touch Keyboard", "Handwriting Recognition"]
+
+  - scenario: "Personalized Text Suggestions"
+    severity: "Low"
+    description: |
+      Text suggestions will not be personalized based on your typing patterns.
+      You'll see generic suggestions instead of ones tailored to your writing style.
+    affectedComponents: ["Touch Keyboard", "SwiftKey Integration"]
+
+verificationCommand: |
+  reg query "HKCU\SOFTWARE\Microsoft\InputPersonalization" /v RestrictImplicitInkCollection
+
+expectedOutput: |
+  RestrictImplicitInkCollection    REG_DWORD    0x1
+
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#bkmk-priv-ink"
+
+tags:
+  - telemetry
+  - handwriting
+  - typing
+  - ink
+  - privacy
+  - atomic-policy
+
+notes: |
+  PRIVACY BENEFIT:
+  - Prevents collection of handwriting samples (potentially unique identifier)
+  - Stops typing pattern analysis
+  - Limits personalization data collection
+
+  ATOMIC CONTROL:
+  This is ONE of several input-related privacy policies:
+  - tel-008: Handwriting data (this policy)
+  - tel-009: Speech recognition (separate)
+  - Future: Keyboard layout learning (separate)
+
+  User can disable handwriting collection while keeping speech recognition,
+  or any combination that meets their needs.
+
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true

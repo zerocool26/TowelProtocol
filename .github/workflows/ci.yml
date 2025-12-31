@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore
+      run: dotnet restore "PrivacyHardeningFramework.sln"
+
+    - name: Build
+      run: dotnet build "PrivacyHardeningFramework.sln" -c Release --no-restore
+
+    - name: Test
+      run: dotnet test "PrivacyHardeningFramework.sln" -c Release --no-build --verbosity normal
+
+    - name: Package elevated helper
+      shell: powershell
+      run: |
+        pwsh -NoProfile -Command "& { .\scripts\package_elevated_helper.ps1 -Configuration Release }"
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: PrivacyHardeningElevated
+        path: dist/PrivacyHardeningElevated.zip

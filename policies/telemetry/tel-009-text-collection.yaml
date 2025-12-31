@@ -1,0 +1,51 @@
+policyId: "tel-009"
+version: "1.0.0"
+name: "Disable Text Input Collection"
+category: Telemetry
+description: |
+  Prevents Windows from collecting text input data for personalization. Companion
+  policy to tel-008 that specifically targets text (vs handwriting) collection.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\InputPersonalization"
+  valueName: "RestrictImplicitTextCollection"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Delete registry value or set to 0"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Text prediction less personalized"
+    severity: Low
+    details: "No learning from your typing patterns"
+verificationCommand: "reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\InputPersonalization /v RestrictImplicitTextCollection"
+expectedOutput: "0x1"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#inking-and-typing-personalization"
+tags:
+  - "telemetry"
+  - "privacy"
+  - "typing"
+  - "personalization"
+  - "supported"
+notes: null
+enabledByDefault: true
+includedInProfiles:
+  - "Balanced"
+  - "Hardened"
+  - "MaximumPrivacy"

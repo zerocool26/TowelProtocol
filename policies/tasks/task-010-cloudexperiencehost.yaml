@@ -1,0 +1,54 @@
+policyId: "task-010"
+version: "1.0.0"
+name: "Disable Cloud Experience Host CreateObject Task"
+category: Telemetry
+description: |
+  Disables the CreateObjectTask which is part of the Cloud Experience Host that
+  manages cloud-powered features, OneDrive integration, and Windows 11 out-of-box
+  experience (OOBE) cloud content. Reduces cloud service telemetry.
+mechanism: ScheduledTask
+mechanismDetails:
+  type: ScheduledTask
+  taskPath: "\\Microsoft\\Windows\\CloudExperienceHost\\CreateObjectTask"
+  action: "Disable"
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: "Re-enable the scheduled task"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Windows OOBE cloud features may not work during setup"
+    severity: Medium
+    details: "Affects new device setup experience only"
+  - scenario: "Some cloud-powered Start Menu suggestions disabled"
+    severity: Low
+    details: "This is the intended privacy outcome"
+  - scenario: "Cloud Experience Host telemetry not sent"
+    severity: Low
+    details: "This is the intended privacy outcome"
+verificationCommand: "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\CloudExperienceHost\\' -TaskName 'CreateObjectTask'"
+expectedOutput: "State: Disabled"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+tags:
+  - "task"
+  - "telemetry"
+  - "cloud"
+  - "oobe"
+  - "medium-risk"
+notes: "⚠ May affect OOBE on new installations. Safe to disable post-setup."
+enabledByDefault: false
+includedInProfiles:
+  - "Hardened"
+  - "MaximumPrivacy"

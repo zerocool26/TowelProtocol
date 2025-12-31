@@ -1,0 +1,53 @@
+policyId: "task-001"
+version: "1.0.0"
+name: "Disable Microsoft Compatibility Appraiser"
+category: Telemetry
+description: |
+  Disables the Microsoft Compatibility Appraiser scheduled task which collects
+  program telemetry data if opted-in to the Microsoft Customer Experience Improvement Program.
+  This task sends detailed hardware and software inventory to Microsoft.
+mechanism: ScheduledTask
+mechanismDetails:
+  type: ScheduledTask
+  taskPath: "\\Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser"
+  action: "Disable"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Re-enable the scheduled task"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Windows Update compatibility checks may be delayed"
+    severity: Low
+    details: "Windows Update will still function normally"
+  - scenario: "Telemetry about application compatibility not sent to Microsoft"
+    severity: Low
+    details: "This is the intended privacy outcome"
+verificationCommand: "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Application Experience\\' -TaskName 'Microsoft Compatibility Appraiser'"
+expectedOutput: "State: Disabled"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization"
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+tags:
+  - "task"
+  - "telemetry"
+  - "ceip"
+  - "compatibility"
+  - "low-risk"
+notes: "Part of Windows diagnostic data collection. Safe to disable for privacy."
+enabledByDefault: true
+includedInProfiles:
+  - "Standard"
+  - "Hardened"
+  - "MaximumPrivacy"

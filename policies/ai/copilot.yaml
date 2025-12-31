@@ -1,0 +1,48 @@
+policyId: "ai-002"
+version: "1.0.0"
+name: "Disable Windows Copilot"
+category: AI
+description: |
+  Disables the Windows Copilot assistant in Windows 11. Prevents the AI assistant
+  from appearing in the taskbar and system tray.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsCopilot"
+  valueName: "TurnOffWindowsCopilot"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Delete registry value or set to 0"
+applicability:
+  minBuild: 22621
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Windows Copilot feature unavailable"
+    severity: Low
+    details: "Intended behavior"
+verificationCommand: "reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsCopilot /v TurnOffWindowsCopilot"
+expectedOutput: "0x1"
+references:
+  - "https://learn.microsoft.com/en-us/windows/client-management/manage-windows-copilot"
+tags:
+  - "ai"
+  - "copilot"
+  - "ux"
+  - "supported"
+notes: null
+enabledByDefault: true
+includedInProfiles:
+  - "Hardened"
+  - "MaximumPrivacy"

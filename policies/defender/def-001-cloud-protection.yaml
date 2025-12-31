@@ -1,0 +1,57 @@
+policyId: "def-001"
+version: "1.0.0"
+name: "Disable Windows Defender Cloud Protection"
+category: Defender
+description: |
+  Disables Windows Defender Cloud Protection (MAPS - Microsoft Active Protection Service).
+  Prevents sending file samples and metadata to Microsoft cloud for malware analysis.
+  Reduces privacy exposure but may decrease detection of new/unknown threats.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Spynet"
+  valueName: "SpynetReporting"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: High
+reversible: true
+revertMechanism: "Set SpynetReporting to 2 (Advanced membership)"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Education"
+  excludedSkus:
+    - "Home"
+  deviceRequirement: "Windows Defender must be present"
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Cloud-based malware detection disabled"
+    severity: High
+    details: "New/unknown malware may not be detected until signature updates"
+  - scenario: "Real-time threat intelligence unavailable"
+    severity: High
+    details: "Defender relies only on local signatures"
+  - scenario: "Automatic sample submission disabled"
+    severity: Medium
+    details: "Suspicious files not analyzed by Microsoft"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Spynet' -Name SpynetReporting"
+expectedOutput: "SpynetReporting: 0"
+references:
+  - "https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/cloud-protection-microsoft-defender-antivirus"
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+tags:
+  - "defender"
+  - "privacy"
+  - "cloud"
+  - "high-risk"
+  - "security-trade-off"
+notes: "⚠️ High risk: Significantly reduces malware detection capabilities. Only disable if using third-party antivirus."
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"

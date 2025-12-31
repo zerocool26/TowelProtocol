@@ -1,0 +1,49 @@
+policyId: "ux-001"
+version: "1.0.0"
+name: "Disable Widgets (News and Interests)"
+category: UX
+description: |
+  Disables the Widgets panel (formerly News and Interests) on the Windows 11 taskbar.
+  Prevents widgets from loading and transmitting usage data.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Dsh"
+  valueName: "AllowNewsAndInterests"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Delete registry value or set to 1"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Widgets panel unavailable"
+    severity: Low
+    details: "Intended behavior"
+verificationCommand: "reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\Dsh /v AllowNewsAndInterests"
+expectedOutput: "0x0"
+references:
+  - "https://learn.microsoft.com/en-us/windows/configuration/manage-tips-and-suggestions"
+tags:
+  - "ux"
+  - "widgets"
+  - "privacy"
+  - "supported"
+notes: null
+enabledByDefault: true
+includedInProfiles:
+  - "Balanced"
+  - "Hardened"
+  - "MaximumPrivacy"

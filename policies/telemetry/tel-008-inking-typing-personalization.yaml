@@ -1,0 +1,55 @@
+policyId: "tel-008"
+version: "1.0.0"
+name: "Disable Inking and Typing Personalization"
+category: Telemetry
+description: |
+  Prevents Windows from collecting inking and typing data to personalize
+  handwriting recognition and text input. This data includes everything you write.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\InputPersonalization"
+  valueName: "RestrictImplicitInkCollection"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Delete registry value or set to 0"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Handwriting recognition may be less accurate"
+    severity: Low
+    details: "No personalization based on your writing style"
+  - scenario: "Text prediction may be less personalized"
+    severity: Low
+    details: "Generic suggestions instead of personalized"
+verificationCommand: "reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\InputPersonalization /v RestrictImplicitInkCollection"
+expectedOutput: "0x1"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#inking-and-typing-personalization"
+tags:
+  - "telemetry"
+  - "privacy"
+  - "handwriting"
+  - "typing"
+  - "personalization"
+  - "supported"
+notes: "Also set RestrictImplicitTextCollection to 1 for full effect (see tel-009)"
+enabledByDefault: true
+includedInProfiles:
+  - "Balanced"
+  - "Hardened"
+  - "MaximumPrivacy"

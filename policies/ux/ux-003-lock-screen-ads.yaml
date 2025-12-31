@@ -1,0 +1,59 @@
+policyId: "ux-003"
+version: "1.0.0"
+name: "Disable Lock Screen Ads and Tips"
+category: UX
+description: |
+  Disables Windows Spotlight on the lock screen which displays background images,
+  tips, tricks, and advertisements from Microsoft. Sets lock screen to a static
+  picture instead of dynamic content that phones home.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKCU\\Software\\Policies\\Microsoft\\Windows\\CloudContent"
+  valueName: "DisableWindowsSpotlightFeatures"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set DisableWindowsSpotlightFeatures to 0"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Windows Spotlight lock screen images disabled"
+    severity: Low
+    details: "Lock screen shows static background instead of rotating images"
+  - scenario: "Lock screen tips and fun facts disabled"
+    severity: Low
+    details: "No Microsoft-curated content on lock screen"
+  - scenario: "Lock screen ads disabled"
+    severity: Low
+    details: "This is the intended outcome"
+verificationCommand: "Get-ItemProperty -Path 'HKCU:\\Software\\Policies\\Microsoft\\Windows\\CloudContent' -Name DisableWindowsSpotlightFeatures"
+expectedOutput: "DisableWindowsSpotlightFeatures: 1"
+references:
+  - "https://learn.microsoft.com/en-us/windows/configuration/windows-spotlight"
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+tags:
+  - "ux"
+  - "privacy"
+  - "ads"
+  - "spotlight"
+  - "low-risk"
+notes: "Also disables suggested apps and tips in Settings app"
+enabledByDefault: true
+includedInProfiles:
+  - "Standard"
+  - "Hardened"
+  - "MaximumPrivacy"

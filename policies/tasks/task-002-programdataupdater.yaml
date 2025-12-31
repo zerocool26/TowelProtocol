@@ -1,0 +1,50 @@
+policyId: "task-002"
+version: "1.0.0"
+name: "Disable ProgramDataUpdater"
+category: Telemetry
+description: |
+  Disables the ProgramDataUpdater task which collects program telemetry information
+  and uploads usage data to Microsoft for application experience improvement.
+mechanism: ScheduledTask
+mechanismDetails:
+  type: ScheduledTask
+  taskPath: "\\Microsoft\\Windows\\Application Experience\\ProgramDataUpdater"
+  action: "Disable"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Re-enable the scheduled task"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Program usage statistics not collected"
+    severity: Low
+    details: "No functional impact on applications"
+  - scenario: "Application Experience service data outdated"
+    severity: Low
+    details: "Does not affect system stability"
+verificationCommand: "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Application Experience\\' -TaskName 'ProgramDataUpdater'"
+expectedOutput: "State: Disabled"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization"
+tags:
+  - "task"
+  - "telemetry"
+  - "privacy"
+  - "low-risk"
+notes: "Collects program usage data for telemetry. Safe to disable."
+enabledByDefault: true
+includedInProfiles:
+  - "Standard"
+  - "Hardened"
+  - "MaximumPrivacy"

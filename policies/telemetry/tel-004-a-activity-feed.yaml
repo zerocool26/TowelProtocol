@@ -1,0 +1,96 @@
+# ============================================================================
+# Policy: tel-004-a - Disable Activity Feed
+# ============================================================================
+# ATOMIC POLICY: Controls ONE specific registry key for Activity History.
+# Part of the Activity History feature set, broken into individual policies
+# for granular user control.
+# ============================================================================
+
+policyId: "tel-004-a"
+version: "1.0.0"
+name: "Disable Activity Feed"
+category: Telemetry
+
+description: |
+  Disables the Activity Feed component of Windows Timeline.
+
+  The Activity Feed tracks your activities across apps and services, including
+  documents you open, websites you visit, and tasks you work on. This specific
+  setting controls whether this activity information is collected locally.
+
+  ATOMIC CONTROL: This policy controls ONLY the EnableActivityFeed registry value.
+  Other Activity History components (Publishing, Uploading) are controlled by
+  separate policies (tel-004-b, tel-004-c) that you can enable independently.
+
+mechanism: Registry
+
+mechanismDetails:
+  type: RegistryValue
+  hive: HKLM
+  path: "SOFTWARE\\Policies\\Microsoft\\Windows\\System"
+  valueName: "EnableActivityFeed"
+  expectedValue: 0  # 0 = Disabled, 1 = Enabled
+  valueType: DWord
+
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+
+revertMechanism: |
+  Set the registry value back to 1 or delete the key to restore Windows default (Enabled).
+
+applicability:
+  minBuild: 17134  # Windows 10 1803 (when Timeline was introduced)
+  maxBuild: null
+  skuRestrictions: []
+
+dependencies: []
+
+knownBreakage:
+  - scenario: "Windows Timeline Feature"
+    severity: "Medium"
+    description: |
+      Disabling Activity Feed will prevent Windows Timeline from tracking your
+      activities. The Timeline view (Win+Tab) will still show virtual desktops
+      but won't show your activity history.
+    affectedComponents: ["Windows Timeline", "Task View"]
+
+  - scenario: "Cross-Device Activity Sync"
+    severity: "Low"
+    description: |
+      Your activities won't sync across devices even if you have a Microsoft
+      account configured.
+    affectedComponents: ["Microsoft Account Sync", "Timeline Sync"]
+
+verificationCommand: |
+  reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v EnableActivityFeed
+
+expectedOutput: |
+  EnableActivityFeed    REG_DWORD    0x0
+
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#bkmk-act-history"
+  - "https://admx.help/?Category=Windows_10_2016&Policy=Microsoft.Policies.System::EnableActivityFeed"
+
+tags:
+  - telemetry
+  - activity-history
+  - timeline
+  - privacy
+  - atomic-policy
+  - user-activity-tracking
+
+notes: |
+  GRANULAR CONTROL: This is part 1 of 3 atomic policies for Activity History:
+  - tel-004-a: Activity Feed (this policy) - Local activity tracking
+  - tel-004-b: Publishing User Activities - Sharing activities with Microsoft Account
+  - tel-004-c: Uploading User Activities - Uploading to Microsoft cloud
+
+  You can enable ANY combination of these three policies based on your needs.
+  For complete Activity History privacy, enable all three.
+
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true

@@ -1,0 +1,52 @@
+policyId: "tel-004"
+version: "1.0.0"
+name: "Disable Advertising ID"
+category: Telemetry
+description: |
+  Prevents Windows from generating and using an advertising ID to track you across apps.
+  The advertising ID is used for targeted advertising and user profiling. Disabling this
+  enhances privacy by preventing cross-app tracking.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\AdvertisingInfo"
+  valueName: "DisabledByGroupPolicy"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Delete registry value or set to 0"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Personalized ads in apps will not work (this is desired)"
+    severity: Low
+    details: "Apps may show generic ads instead of targeted ones"
+verificationCommand: "reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\AdvertisingInfo /v DisabledByGroupPolicy"
+expectedOutput: "0x1"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#advertising-id"
+tags:
+  - "telemetry"
+  - "privacy"
+  - "advertising"
+  - "tracking"
+  - "supported"
+notes: null
+enabledByDefault: true
+includedInProfiles:
+  - "Balanced"
+  - "Hardened"
+  - "MaximumPrivacy"

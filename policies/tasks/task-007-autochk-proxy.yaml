@@ -1,0 +1,51 @@
+policyId: "task-007"
+version: "1.0.0"
+name: "Disable Autochk Proxy"
+category: Telemetry
+description: |
+  Disables the Proxy task in the Autochk folder which collects and uploads
+  disk volume information to Microsoft. Part of Windows diagnostic data collection.
+mechanism: ScheduledTask
+mechanismDetails:
+  type: ScheduledTask
+  taskPath: "\\Microsoft\\Windows\\Autochk\\Proxy"
+  action: "Disable"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Re-enable the scheduled task"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Disk volume telemetry not sent to Microsoft"
+    severity: Low
+    details: "This is the intended privacy outcome"
+  - scenario: "Automatic disk checking (chkdsk) remains functional"
+    severity: Low
+    details: "Only data collection is disabled, not disk repair"
+verificationCommand: "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Autochk\\' -TaskName 'Proxy'"
+expectedOutput: "State: Disabled"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization"
+tags:
+  - "task"
+  - "telemetry"
+  - "disk"
+  - "privacy"
+  - "low-risk"
+notes: "Collects disk volume telemetry. Chkdsk remains functional."
+enabledByDefault: true
+includedInProfiles:
+  - "Standard"
+  - "Hardened"
+  - "MaximumPrivacy"

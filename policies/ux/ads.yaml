@@ -1,0 +1,52 @@
+policyId: "ux-002"
+version: "1.0.0"
+name: "Disable Windows Consumer Features (Ads/App Suggestions)"
+category: Ads
+description: |
+  Disables consumer features including Start menu app suggestions, lock screen ads,
+  and unwanted pre-installed apps. Prevents Microsoft from pushing promotional content.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent"
+  valueName: "DisableWindowsConsumerFeatures"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Delete registry value or set to 0"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+  excludedSkus:
+    - "Home"
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Start menu app suggestions disappear"
+    severity: Low
+    details: "Intended behavior"
+  - scenario: "Lock screen tips and ads removed"
+    severity: Low
+    details: "Intended behavior"
+verificationCommand: "reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent /v DisableWindowsConsumerFeatures"
+expectedOutput: "0x1"
+references:
+  - "https://learn.microsoft.com/en-us/windows/configuration/preinstalled-apps-windows-client-os"
+tags:
+  - "ads"
+  - "privacy"
+  - "ux"
+  - "supported"
+notes: "Enterprise and Pro SKUs only. Not available on Home edition."
+enabledByDefault: true
+includedInProfiles:
+  - "Balanced"
+  - "Hardened"
+  - "MaximumPrivacy"

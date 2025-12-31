@@ -1,0 +1,59 @@
+policyId: "ux-004"
+version: "1.0.0"
+name: "Disable Start Menu Suggestions and Ads"
+category: UX
+description: |
+  Disables app suggestions and promotional content in the Start Menu.
+  Prevents Microsoft from showing recommended apps, recently added apps,
+  and promotional tiles in the Start Menu. Gives you full control over
+  Start Menu content without Microsoft-curated suggestions.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager"
+  valueName: "SubscribedContent-338388Enabled"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set SubscribedContent-338388Enabled to 1"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "App suggestions in Start Menu disabled"
+    severity: Low
+    details: "No recommended apps shown in Start Menu"
+  - scenario: "Promotional content removed"
+    severity: Low
+    details: "This is the intended outcome"
+  - scenario: "Recently added apps section may be empty"
+    severity: Low
+    details: "Can manually pin apps to Start Menu"
+verificationCommand: "Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager' -Name SubscribedContent-338388Enabled"
+expectedOutput: "SubscribedContent-338388Enabled: 0"
+references:
+  - "https://learn.microsoft.com/en-us/windows/configuration/start-layout-troubleshoot"
+tags:
+  - "ux"
+  - "privacy"
+  - "ads"
+  - "start-menu"
+  - "low-risk"
+notes: "Multiple registry values control Start Menu content. This is the primary one."
+enabledByDefault: true
+includedInProfiles:
+  - "Standard"
+  - "Hardened"
+  - "MaximumPrivacy"

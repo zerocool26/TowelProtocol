@@ -1,0 +1,59 @@
+policyId: "ux-006"
+version: "1.0.0"
+name: "Disable Tailored Experiences with Diagnostic Data"
+category: UX
+description: |
+  Prevents Microsoft from using your diagnostic data to provide personalized tips,
+  ads, and recommendations. Disables tailored experiences that customize Windows
+  based on your usage patterns and telemetry data.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKCU\\Software\\Policies\\Microsoft\\Windows\\CloudContent"
+  valueName: "DisableTailoredExperiencesWithDiagnosticData"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set DisableTailoredExperiencesWithDiagnosticData to 0"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Personalized Windows tips disabled"
+    severity: Low
+    details: "Generic tips shown instead of usage-based recommendations"
+  - scenario: "Diagnostic data not used for personalization"
+    severity: Low
+    details: "This is the intended privacy outcome"
+  - scenario: "Tailored ads in Windows disabled"
+    severity: Low
+    details: "Generic ads shown instead (if ads not fully disabled)"
+verificationCommand: "Get-ItemProperty -Path 'HKCU:\\Software\\Policies\\Microsoft\\Windows\\CloudContent' -Name DisableTailoredExperiencesWithDiagnosticData"
+expectedOutput: "DisableTailoredExperiencesWithDiagnosticData: 1"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/changes-to-windows-diagnostic-data-collection"
+  - "https://support.microsoft.com/en-us/windows/windows-settings-privacy-28e91e80-fe6c-0e8a-6e82-ac3e47c38aa6"
+tags:
+  - "ux"
+  - "privacy"
+  - "telemetry"
+  - "personalization"
+  - "low-risk"
+notes: "Complements diagnostic data policies by preventing personalization based on telemetry"
+enabledByDefault: true
+includedInProfiles:
+  - "Standard"
+  - "Hardened"
+  - "MaximumPrivacy"

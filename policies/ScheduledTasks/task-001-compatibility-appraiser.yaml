@@ -1,0 +1,232 @@
+# ============================================================================
+# Policy: task-001 - Configure Microsoft Compatibility Appraiser Task
+# ============================================================================
+# GRANULAR TASK CONTROL: Multiple action options beyond simple disable
+# User chooses HOW to handle this task with full understanding of consequences
+# ============================================================================
+
+policyId: "task-001"
+version: "1.0.0"
+name: "Configure Microsoft Compatibility Appraiser Scheduled Task"
+category: ScheduledTasks
+
+description: |
+  Configure the Microsoft Compatibility Appraiser scheduled task with granular control.
+
+  This task collects program telemetry information (if opted-in to the Microsoft
+  Customer Experience Improvement Program) and assesses compatibility of applications
+  with newer versions of Windows.
+
+  GRANULAR CONTROL: Choose from multiple actions:
+  1. Disable (reversible, keeps task definition)
+  2. Delete (permanent removal, requires restore point to undo)
+  3. Modify Triggers (keep task but prevent it from running)
+  4. Export Only (save task definition without changes)
+
+  Each action has different implications for reversibility and system impact.
+
+mechanism: ScheduledTask
+
+mechanismDetails:
+  type: ScheduledTaskConfiguration
+  taskPath: "\\Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser"
+  taskDisplayName: "Microsoft Compatibility Appraiser"
+
+  # GRANULAR ACTION OPTIONS
+  # User selects which action to take
+
+  actionOptions:
+    userSelectable: true
+    helpText: |
+      Choose how to handle this scheduled task. Each option has different
+      implications for privacy, reversibility, and system functionality.
+
+    options:
+      - value: "Disable"
+        label: "Disable Task"
+        description: |
+          Disable the task so it won't run automatically. The task definition
+          remains in the system and can be re-enabled later through Task Scheduler
+          or this tool. This is the safest and most reversible option.
+
+          Privacy Impact: HIGH - Task won't collect compatibility data
+          Reversibility: FULL - Can be re-enabled anytime
+          System Impact: MINIMAL - Task definition remains
+        reversible: true
+        requiresConfirmation: false
+
+      - value: "Delete"
+        label: "Delete Task Permanently"
+        description: |
+          Permanently delete the task definition from the system. The task will
+          be completely removed and cannot be easily restored. Windows Updates
+          may recreate the task in the future.
+
+          Privacy Impact: MAXIMUM - Task completely removed
+          Reversibility: PARTIAL - Requires restore point or Windows repair
+          System Impact: MODERATE - Task definition lost
+        reversible: false
+        requiresConfirmation: true
+        confirmationWarning: |
+          WARNING: Deleting this task is permanent and cannot be easily undone.
+          Windows may recreate the task during major updates. Create a restore
+          point before proceeding. Are you sure you want to permanently delete
+          this task?
+
+      - value: "ModifyTriggers"
+        label: "Disable All Triggers"
+        description: |
+          Keep the task but remove/disable all triggers. The task definition
+          remains but it will never run automatically. This allows manual execution
+          if needed while preventing automatic runs.
+
+          Privacy Impact: HIGH - Task won't run automatically
+          Reversibility: HIGH - Triggers can be restored
+          System Impact: LOW - Task exists but dormant
+        reversible: true
+        requiresConfirmation: false
+
+      - value: "ExportOnly"
+        label: "Export Definition Only (No Changes)"
+        description: |
+          Export the task definition to XML file for backup purposes without
+          making any changes. Useful for documentation or manual modification.
+
+          Privacy Impact: NONE - No changes made
+          Reversibility: N/A - No changes made
+          System Impact: NONE - No changes made
+        reversible: true
+        requiresConfirmation: false
+
+    userMustChoose: true
+    recommendedAction: "Disable"
+
+  # TRIGGER OPTIONS (if user selects ModifyTriggers)
+  triggerOptions:
+    - triggerId: "DailyTrigger"
+      description: "Runs daily at 3:00 AM"
+      currentlyEnabled: true
+      userCanDisable: true
+      triggerType: "Daily"
+      schedule: "Daily at 3:00 AM"
+
+    - triggerId: "OnIdleTrigger"
+      description: "Runs when system is idle"
+      currentlyEnabled: true
+      userCanDisable: true
+      triggerType: "OnIdle"
+      schedule: "When system is idle for 10 minutes"
+
+    - triggerId: "BootTrigger"
+      description: "Runs at system startup"
+      currently Enabled: false
+      userCanDisable: true
+      triggerType: "OnBoot"
+      schedule: "At system startup"
+
+  # EXPORT OPTIONS
+  exportOptions:
+    exportTaskDefinition: true
+    defaultExportPath: "%USERPROFILE%\\Documents\\PrivacyHardening\\TaskBackups"
+    exportFormat: "XML"
+
+supportStatus: Supported
+riskLevel: Low
+reversible: true  # Depends on action chosen
+
+revertMechanism: |
+  Reversibility depends on action taken:
+  - Disable: Re-enable via Task Scheduler or this tool
+  - Delete: Restore from System Restore point or wait for Windows Update
+  - ModifyTriggers: Re-enable triggers via Task Scheduler
+  - ExportOnly: No revert needed (no changes made)
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  skuRestrictions: []
+
+dependencies: []
+
+knownBreakage:
+  - scenario: "Windows Update Compatibility Checks"
+    severity: "Low"
+    description: |
+      Disabling this task may prevent Windows from providing compatibility warnings
+      before major updates. You won't receive proactive notifications about app
+      compatibility issues with newer Windows versions.
+    affectedComponents: ["Windows Update", "Windows Insider Program", "Compatibility Checks"]
+
+  - scenario: "Application Compatibility Database"
+    severity: "Low"
+    description: |
+      Microsoft won't receive compatibility telemetry from your system, which may
+      result in delayed compatibility fixes for apps you use.
+    affectedComponents: ["Microsoft Compatibility Database"]
+
+verificationCommand: |
+  schtasks /Query /TN "\\Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser"
+
+expectedOutput: |
+  TaskName:  \\Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser
+  Status:    Disabled
+  (or "ERROR: The system cannot find the file specified" if deleted)
+
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+
+tags:
+  - scheduled-task
+  - telemetry
+  - compatibility-appraiser
+  - ceip
+  - privacy
+  - granular-control
+  - multi-action
+  - user-selectable
+
+notes: |
+  GRANULAR TASK CONTROL DEMONSTRATION:
+
+  This policy showcases advanced task control options:
+
+  1. MULTIPLE ACTIONS: 4 different ways to handle the task
+     - Each with different privacy/reversibility trade-offs
+     - User makes informed choice based on their needs
+
+  2. TRIGGER MANAGEMENT: If ModifyTriggers selected:
+     - User can disable individual triggers
+     - 3 triggers shown with details
+     - Fine-grained control over when task might run
+
+  3. BACKUP INTEGRATION:
+     - Task definition can be exported before changes
+     - XML backup for manual restoration if needed
+     - Export-only option for documentation
+
+  4. RISK TRANSPARENCY:
+     - Each action shows reversibility level
+     - Confirmation required for permanent changes
+     - Clear warnings about consequences
+
+  EXAMPLE USE CASES:
+
+  Maximum Privacy + Reversibility:
+  → Choose "Disable" - Completely safe, fully reversible
+
+  Maximum Privacy + Permanent:
+  → Choose "Delete" - Task completely removed
+
+  Selective Control:
+  → Choose "ModifyTriggers" - Disable daily trigger, keep idle trigger
+
+  Documentation:
+  → Choose "ExportOnly" - Save definition for review
+
+  USER DECIDES the exact approach based on their privacy vs reversibility preference.
+
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true

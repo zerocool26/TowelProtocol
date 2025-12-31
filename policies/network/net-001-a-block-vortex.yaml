@@ -1,0 +1,119 @@
+# ============================================================================
+# Policy: net-001-a - Block vortex.data.microsoft.com
+# ============================================================================
+# ATOMIC FIREWALL POLICY: Controls ONE specific endpoint
+# Part of telemetry endpoint blocking - each endpoint is separately selectable
+# ============================================================================
+
+policyId: "net-001-a"
+version: "1.0.0"
+name: "Block vortex.data.microsoft.com (Telemetry Endpoint)"
+category: Network
+
+description: |
+  Blocks outbound connections to vortex.data.microsoft.com via Windows Firewall.
+
+  This endpoint is used by Microsoft for telemetry data uploads. Blocking it
+  prevents diagnostic and usage data from being sent to Microsoft servers.
+
+  ATOMIC CONTROL: This policy creates ONE firewall rule for ONE endpoint.
+  You can select which telemetry endpoints to block individually rather than
+  blocking all endpoints at once. See related policies (net-001-b, net-001-c, etc.)
+  for other telemetry endpoints.
+
+mechanism: Firewall
+
+mechanismDetails:
+  type: FirewallRule
+  ruleGrouping: Individual
+
+  endpoint:
+    hostname: "vortex.data.microsoft.com"
+    description: "Primary telemetry data upload endpoint"
+    criticality: "Non-essential"
+    knownBreakage: "None known - purely for telemetry"
+    category: "Telemetry"
+    port: null  # All ports
+    protocol: "Both"  # TCP and UDP
+    direction: "Outbound"
+
+  firewallRule:
+    displayName: "PHF Block - vortex.data.microsoft.com"
+    description: "Privacy Hardening Framework - Block telemetry endpoint"
+    direction: "Outbound"
+    action: "Block"
+    protocol: "Any"
+    remoteAddress: "vortex.data.microsoft.com"
+    group: "PrivacyHardeningFramework"  # For easy identification/removal
+    enabled: true
+
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+
+revertMechanism: |
+  Remove the firewall rule using Windows Firewall or this tool.
+  The rule is tagged with Group="PrivacyHardeningFramework" for easy identification.
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  skuRestrictions: []
+
+dependencies: []
+
+knownBreakage: []  # No known functionality breakage
+
+verificationCommand: |
+  netsh advfirewall firewall show rule name="PHF Block - vortex.data.microsoft.com"
+
+expectedOutput: |
+  Rule Name:                            PHF Block - vortex.data.microsoft.com
+  Enabled:                              Yes
+  Direction:                            Out
+  Action:                               Block
+
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+  - "https://docs.microsoft.com/en-us/windows/privacy/windows-endpoints"
+
+tags:
+  - firewall
+  - network
+  - telemetry
+  - endpoint-blocking
+  - vortex
+  - atomic-policy
+  - per-endpoint-control
+
+notes: |
+  ATOMIC FIREWALL CONTROL:
+
+  This demonstrates per-endpoint firewall control. Benefits:
+
+  1. SELECTIVITY: Block only specific endpoints you're concerned about
+  2. GRANULARITY: Each endpoint has its own policy with details
+  3. REVERSIBILITY: Easy to unblock individual endpoints
+  4. TRANSPARENCY: Know exactly what you're blocking
+
+  RELATED POLICIES:
+  - net-001-b: Block watson.telemetry.microsoft.com
+  - net-001-c: Block settings-win.data.microsoft.com
+  - net-001-d: Block oca.telemetry.microsoft.com
+  ... (50+ endpoint policies available)
+
+  ALTERNATIVE APPROACHES:
+  Instead of creating one policy that blocks all 50+ endpoints,
+  we give you 50+ individual policies. You decide which endpoints to block.
+
+  WHY THIS APPROACH?
+  - Some endpoints may be needed for specific functionality
+  - You may trust some MS services but not others
+  - Troubleshooting is easier (unblock one endpoint vs all)
+  - Full transparency about what's being blocked
+
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true

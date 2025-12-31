@@ -1,0 +1,59 @@
+policyId: "svc-007"
+version: "1.0.0"
+name: "Disable Connected Devices Platform User Service"
+category: Services
+description: |
+  Disables CDPUserSvc which enables connected devices scenarios like Phone Link,
+  nearby sharing, and cross-device experiences. Enhances privacy by preventing
+  device discovery and data sharing.
+mechanism: Service
+mechanismDetails:
+  type: ServiceConfig
+  serviceName: "CDPUserSvc"
+  displayName: "Connected Devices Platform User Service"
+  startupType: "Disabled"
+  stopService: true
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: "Set service to Automatic"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Phone Link (Your Phone) app will not work"
+    severity: Medium
+    details: "Cannot link Android/iPhone to PC"
+  - scenario: "Nearby Sharing disabled"
+    severity: Medium
+    details: "Use USB or network file sharing instead"
+  - scenario: "Cross-device clipboard sync broken"
+    severity: Medium
+    details: "Clipboard remains local only"
+  - scenario: "Timeline and activity sync disabled"
+    severity: Low
+    details: "Timeline already deprecated in Windows 11"
+verificationCommand: "sc query CDPUserSvc"
+expectedOutput: "STATE: STOPPED, START_TYPE: DISABLED"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+tags:
+  - "service"
+  - "privacy"
+  - "connected-devices"
+  - "phone-link"
+  - "medium-risk"
+notes: "⚠ Breaks Phone Link and nearby sharing features"
+enabledByDefault: false
+includedInProfiles:
+  - "Hardened"
+  - "MaximumPrivacy"

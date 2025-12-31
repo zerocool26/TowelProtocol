@@ -1,0 +1,51 @@
+policyId: "net-001"
+version: "1.0.0"
+name: "Block Telemetry Endpoints via Firewall"
+category: Network
+description: |
+  Creates Windows Firewall outbound block rules for known Microsoft telemetry endpoints.
+  Provides defense-in-depth against telemetry transmission even if services are running.
+  Uses documented hostnames from Microsoft's own privacy documentation.
+mechanism: PowerShell
+mechanismDetails:
+  type: PowerShellScript
+  scriptPath: "scripts/Network/Apply-FirewallRules.ps1"
+  requiresSignature: true
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: "Remove firewall rules with DisplayName matching 'PHF_Telemetry_Block*'"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Windows Update may occasionally fail or require retry"
+    severity: Medium
+    details: "Some update endpoints overlap with telemetry infrastructure"
+  - scenario: "Diagnostic troubleshooters may not work"
+    severity: Low
+    details: "Troubleshooters often use telemetry endpoints"
+verificationCommand: "Get-NetFirewallRule -DisplayName 'PHF_Telemetry_Block*' | Measure-Object"
+expectedOutput: "Count > 0"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+tags:
+  - "network"
+  - "firewall"
+  - "telemetry"
+  - "defense-in-depth"
+notes: |
+  ⚠ Firewall rules may be bypassed by system-level processes or VPNs.
+  Consider enterprise-level DNS filtering for comprehensive blocking.
+enabledByDefault: false
+includedInProfiles:
+  - "Hardened"
+  - "MaximumPrivacy"

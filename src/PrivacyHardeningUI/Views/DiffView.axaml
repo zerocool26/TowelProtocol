@@ -1,0 +1,137 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PrivacyHardeningUI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="PrivacyHardeningUI.Views.DiffView"
+             x:DataType="vm:DiffViewModel">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Header with Compare Button -->
+        <Border Grid.Row="0" Padding="16" Background="{DynamicResource SystemChromeLowColor}">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Before/After Comparison" FontSize="20" FontWeight="Bold"/>
+                    <TextBlock Text="Preview what will change before applying policies"
+                               FontSize="12" Opacity="0.7" Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <Button Grid.Column="1" Content="Generate Diff"
+                        Command="{Binding GenerateDiffCommand}"
+                        IsEnabled="{Binding !IsGenerating}"
+                        HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Padding="24,8" FontSize="14" FontWeight="Bold"/>
+            </Grid>
+        </Border>
+
+        <!-- Diff Results List -->
+        <ScrollViewer Grid.Row="1">
+            <ItemsControl ItemsSource="{Binding DiffItems}" Margin="8">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{DynamicResource SystemChromeLowColor}"
+                                BorderBrush="{DynamicResource SystemBaseMediumColor}"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="16"
+                                Margin="0,0,0,8">
+                            <Grid RowDefinitions="Auto,Auto,Auto,Auto">
+
+                                <!-- Policy Header -->
+                                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="{Binding PolicyId}" FontSize="16" FontWeight="Bold"/>
+                                        <TextBlock Text="{Binding PolicyId}" FontSize="11" Opacity="0.7"
+                                                   FontFamily="Consolas"/>
+                                    </StackPanel>
+
+                                    <!-- Change Type Badge -->
+                                    <Border Grid.Column="1"
+                                            CornerRadius="3" Padding="12,4" Margin="8,0,0,0"
+                                            VerticalAlignment="Top">
+                                        <Border.Background>
+                                            <SolidColorBrush Color="{Binding ChangeType, Converter={StaticResource ChangeTypeToColorConverter}}"/>
+                                        </Border.Background>
+                                        <TextBlock Text="{Binding ChangeType, Converter={StaticResource EnumToStringConverter}}"
+                                                   Foreground="White" FontSize="12" FontWeight="Bold"/>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Separator -->
+                                <Rectangle Grid.Row="1" Height="1"
+                                           Fill="{DynamicResource SystemBaseMediumColor}"
+                                           Margin="0,12"/>
+
+                                <!-- Before State -->
+                                <StackPanel Grid.Row="2" Spacing="4">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <TextBlock Grid.Column="0" Text="BEFORE:" FontSize="12" FontWeight="Bold"
+                                                   Foreground="Red" Width="80"/>
+                                        <Border Grid.Column="1" Background="#FFEBEE"
+                                                BorderBrush="Red" BorderThickness="1"
+                                                CornerRadius="3" Padding="8">
+                                            <TextBlock Text="{Binding BeforeValue}" FontFamily="Consolas" FontSize="11"
+                                                       TextWrapping="Wrap"/>
+                                        </Border>
+                                    </Grid>
+                                </StackPanel>
+
+                                <!-- After State -->
+                                <StackPanel Grid.Row="3" Spacing="4" Margin="0,8,0,0">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <TextBlock Grid.Column="0" Text="AFTER:" FontSize="12" FontWeight="Bold"
+                                                   Foreground="Green" Width="80"/>
+                                        <Border Grid.Column="1" Background="#E8F5E9"
+                                                BorderBrush="Green" BorderThickness="1"
+                                                CornerRadius="3" Padding="8">
+                                            <TextBlock Text="{Binding AfterValue}" FontFamily="Consolas" FontSize="11"
+                                                       TextWrapping="Wrap"/>
+                                        </Border>
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="2" Background="{DynamicResource SystemChromeLowColor}"
+                BorderBrush="{DynamicResource SystemBaseMediumColor}"
+                BorderThickness="0,1,0,0" Padding="16,8">
+            <Grid ColumnDefinitions="*,Auto">
+                <!-- Error Message -->
+                <TextBlock Grid.Column="0"
+                           Text="{Binding ErrorMessage}"
+                           Foreground="Red"
+                           IsVisible="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}"/>
+
+                <!-- Stats -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16"
+                            IsVisible="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=Inverse}">
+                    <TextBlock>
+                        <Run Text="Total Changes:"/>
+                        <Run Text="{Binding DiffItems.Count}" FontWeight="Bold"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Generating Overlay -->
+        <Panel Grid.RowSpan="3" IsVisible="{Binding IsGenerating}"
+               Background="#80000000">
+            <Border Background="White" CornerRadius="8" Padding="32"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel Spacing="16" HorizontalAlignment="Center">
+                    <ProgressBar IsIndeterminate="True" Width="200"/>
+                    <TextBlock Text="Generating diff..." HorizontalAlignment="Center" FontSize="14"/>
+                    <TextBlock Text="Analyzing current state and selected policies"
+                               HorizontalAlignment="Center" FontSize="12" Opacity="0.7"/>
+                </StackPanel>
+            </Border>
+        </Panel>
+    </Grid>
+</UserControl>

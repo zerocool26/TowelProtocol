@@ -1,0 +1,54 @@
+policyId: "tel-012"
+version: "1.0.0"
+name: "Disable Microsoft Account Sign-In Prompts"
+category: Privacy
+description: |
+  Prevents Windows from repeatedly prompting users to sign in with a Microsoft account.
+  Reduces pressure to link local accounts to Microsoft cloud services.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System"
+  valueName: "NoConnectedUser"
+  valueType: DWord
+  valueData: 3
+  expectedValue: "0x00000003"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Delete registry value or set to 0"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Microsoft account sign-in prompts suppressed"
+    severity: Low
+    details: "Intended behavior - users can still manually add Microsoft accounts"
+  - scenario: "Some Store apps may prompt for Microsoft account"
+    severity: Low
+    details: "App-specific behavior, not affected by this policy"
+verificationCommand: "reg query HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System /v NoConnectedUser"
+expectedOutput: "0x3"
+references:
+  - "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-accounts"
+tags:
+  - "privacy"
+  - "microsoft-account"
+  - "ux"
+  - "prompts"
+  - "supported"
+notes: "Value 3 = Users cannot add Microsoft accounts or connect local accounts to Microsoft accounts"
+enabledByDefault: true
+includedInProfiles:
+  - "Balanced"
+  - "Hardened"
+  - "MaximumPrivacy"

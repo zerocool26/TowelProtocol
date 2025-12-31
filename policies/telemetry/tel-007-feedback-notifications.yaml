@@ -1,0 +1,51 @@
+policyId: "tel-007"
+version: "1.0.0"
+name: "Disable Windows Feedback Notifications"
+category: Telemetry
+description: |
+  Prevents Windows from asking you to provide feedback via notifications. Also disables
+  the automatic submission of feedback data.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection"
+  valueName: "DoNotShowFeedbackNotifications"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Delete registry value or set to 0"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Windows will not request feedback from users"
+    severity: Low
+    details: "Intended behavior for enterprise environments"
+verificationCommand: "reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection /v DoNotShowFeedbackNotifications"
+expectedOutput: "0x1"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization"
+tags:
+  - "telemetry"
+  - "privacy"
+  - "feedback"
+  - "notifications"
+  - "supported"
+notes: null
+enabledByDefault: true
+includedInProfiles:
+  - "Balanced"
+  - "Hardened"
+  - "MaximumPrivacy"

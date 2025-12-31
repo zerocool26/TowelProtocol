@@ -1,0 +1,116 @@
+# ============================================================================
+# Policy: tel-004-c - Disable Uploading User Activities
+# ============================================================================
+# ATOMIC POLICY: Controls ONE specific registry key for Activity History.
+# Part of the Activity History feature set, broken into individual policies
+# for granular user control.
+# ============================================================================
+
+policyId: "tel-004-c"
+version: "1.0.0"
+name: "Disable Uploading User Activities"
+category: Telemetry
+
+description: |
+  Prevents Windows from uploading your activity history to Microsoft cloud.
+
+  This setting controls whether activities collected on this device are uploaded
+  to Microsoft's cloud servers. This is the final step in the activity data flow:
+  Collection (tel-004-a) → Publishing to Account (tel-004-b) → Uploading to Cloud (this).
+
+  ATOMIC CONTROL: This policy controls ONLY the UploadUserActivities registry value.
+  You have independent control over local collection and account publishing.
+
+mechanism: Registry
+
+mechanismDetails:
+  type: RegistryValue
+  hive: HKLM
+  path: "SOFTWARE\\Policies\\Microsoft\\Windows\\System"
+  valueName: "UploadUserActivities"
+  expectedValue: 0  # 0 = Disabled, 1 = Enabled
+  valueType: DWord
+
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+
+revertMechanism: |
+  Set the registry value back to 1 or delete the key to restore Windows default (Enabled).
+
+applicability:
+  minBuild: 17134  # Windows 10 1803
+  maxBuild: null
+  skuRestrictions: []
+
+dependencies:
+  - policyId: "tel-004-b"
+    reason: |
+      Uploading requires activities to be published to Microsoft Account first.
+      If PublishUserActivities is disabled, this setting has no effect.
+    type: Recommended
+    userCanOverride: true
+    overrideWarning: |
+      You're disabling cloud upload but activities may still be published to your
+      Microsoft Account locally. For complete privacy, also enable tel-004-b.
+    optional: true
+    autoSelect: false
+
+knownBreakage:
+  - scenario: "Cloud-Synced Activity History"
+    severity: "Medium"
+    description: |
+      Your activity history won't be stored in Microsoft's cloud. You won't be
+      able to view your activities from account.microsoft.com or access them after
+      reinstalling Windows.
+    affectedComponents: ["Microsoft Account Cloud Storage", "Activity History Portal"]
+
+  - scenario: "Cortana Cross-Device Suggestions"
+    severity: "Low"
+    description: |
+      Cortana (if enabled) won't be able to provide suggestions based on your
+      activity across devices.
+    affectedComponents: ["Cortana", "Windows Search"]
+
+verificationCommand: |
+  reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v UploadUserActivities
+
+expectedOutput: |
+  UploadUserActivities    REG_DWORD    0x0
+
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#bkmk-act-history"
+
+tags:
+  - telemetry
+  - activity-history
+  - timeline
+  - privacy
+  - cloud-sync
+  - microsoft-cloud
+  - atomic-policy
+
+notes: |
+  GRANULAR CONTROL: This is part 3 of 3 atomic policies for Activity History:
+  - tel-004-a: Activity Feed - Local activity tracking
+  - tel-004-b: Publishing User Activities - Sharing with MS Account
+  - tel-004-c: Uploading User Activities (this policy) - Uploading to cloud
+
+  COMPLETE PRIVACY CONFIGURATION:
+  For complete Activity History privacy, enable all three policies:
+  1. tel-004-a: Stops local collection
+  2. tel-004-b: Stops sharing with Microsoft Account
+  3. tel-004-c: Stops cloud uploads
+
+  However, you have the FLEXIBILITY to enable any combination:
+  - Only tel-004-c: Track locally and sync to account, but don't upload to cloud
+  - Only tel-004-a + tel-004-c: No local tracking, no cloud, but account sync allowed
+  - Any other combination based on your specific privacy requirements
+
+  This is TRUE GRANULAR CONTROL - you decide exactly what happens with your data.
+
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true

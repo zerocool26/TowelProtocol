@@ -1,0 +1,119 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="using:PrivacyHardeningUI.Views"
+        xmlns:controls="using:PrivacyHardeningUI.Controls"
+        xmlns:vm="using:PrivacyHardeningUI.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+        x:Class="PrivacyHardeningUI.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="Windows 11 Privacy Hardening Framework"
+        MinWidth="1200" MinHeight="800">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Title Bar -->
+        <Border Grid.Row="0" Background="{StaticResource PanelBrush}" Padding="18">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0">
+                    <TextBlock Classes="title" Text="Windows 11 Privacy Hardening Framework" />
+                    <TextBlock Classes="subtitle" Text="Granular control, auditable changes, and full reversibility" Margin="0,6,0,0" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button Command="{Binding ToggleThemeCommand}" ToolTip.Tip="Toggle Light/Dark theme"
+                            AutomationProperties.Name="Toggle Theme"
+                            TabIndex="10">Theme</Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Content -->
+        <TabControl Grid.Row="1" Margin="8" SelectedIndex="{Binding SelectedTabIndex}">
+
+            <!-- Policy Selection Tab -->
+            <TabItem Header="Policy Selection">
+                <TabItem.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <controls:IconHelper Name="folder" FontSize="16" />
+                            <TextBlock Text="Policy Selection"/>
+                            <TextBlock Text="Policy Selection"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </TabItem.HeaderTemplate>
+                <views:PolicySelectionView DataContext="{Binding PolicySelection}"/>
+            </TabItem>
+
+            <!-- Audit Tab -->
+            <TabItem Header="Audit">
+                <TabItem.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <controls:IconHelper Name="search" FontSize="16" />
+                            <TextBlock Text="Audit"/>
+                            <TextBlock Text="Audit"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </TabItem.HeaderTemplate>
+                <views:AuditView DataContext="{Binding Audit}"/>
+            </TabItem>
+
+            <!-- Diff View Tab -->
+            <TabItem Header="Diff View">
+                <TabItem.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <controls:IconHelper Name="bar_chart" FontSize="16" />
+                            <TextBlock Text="Diff View"/>
+                            <TextBlock Text="Diff View"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </TabItem.HeaderTemplate>
+                <views:DiffView DataContext="{Binding Diff}"/>
+            </TabItem>
+
+        </TabControl>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="2" Background="{StaticResource PanelBrush}"
+            Padding="16,8" BorderBrush="{StaticResource PanelBrush}"
+            BorderThickness="0,1,0,0">
+            <Grid ColumnDefinitions="*,Auto">
+
+                <TextBlock Grid.Column="0"
+                          Text="{Binding StatusMessage}"
+                          VerticalAlignment="Center"
+                          Opacity="0.7"/>
+
+                  <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                      <Button Content="Run Audit"
+                          Command="{Binding RunAuditCommand}"
+                          IsEnabled="{Binding !IsProcessing}"
+                          AutomationProperties.Name="Run Audit"
+                          TabIndex="30"/>
+                      <Button Content="Apply Selected"
+                          Command="{Binding ApplySelectedPoliciesCommand}"
+                          Classes="accent"
+                          IsEnabled="{Binding !IsProcessing}"
+                          AutomationProperties.Name="Apply Selected Policies"
+                          TabIndex="31"/>
+                  </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Processing Overlay -->
+        <Panel Grid.RowSpan="3"
+               IsVisible="{Binding IsProcessing}"
+               Background="#80000000">
+            <Border Background="White" CornerRadius="8" Padding="32"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel Spacing="16" HorizontalAlignment="Center">
+                    <ProgressBar IsIndeterminate="True" Width="200"/>
+                    <TextBlock Text="Processing..." HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </Panel>
+    </Grid>
+</Window>

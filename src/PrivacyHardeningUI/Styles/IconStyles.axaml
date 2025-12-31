@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Icon style placeholder. Uses system icon font by default; can be replaced with bundled font later. -->
+  <Style Selector="TextBlock.icon">
+    <Setter Property="FontFamily" Value="{StaticResource AppIconFontFamily}" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+    <Setter Property="Margin" Value="0,0,6,0" />
+  </Style>
+
+</Styles>

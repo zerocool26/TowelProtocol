@@ -1,0 +1,174 @@
+# ============================================================================
+# Policy: tel-007 - Configure Windows Feedback Frequency
+# ============================================================================
+# PARAMETERIZED POLICY: Multiple value options for feedback prompts
+# User chooses exact frequency (not just on/off)
+# ============================================================================
+
+policyId: "tel-007"
+version: "1.0.0"
+name: "Configure Windows Feedback Frequency"
+category: Telemetry
+
+description: |
+  Configure how often Windows asks for feedback about your experience.
+
+  Windows periodically prompts users to provide feedback through surveys
+  and the Feedback Hub. This setting controls the frequency of these prompts.
+
+  GRANULAR CONTROL: Choose from 5 different frequency levels, from Never
+  to Always. Each option provides different balance between privacy and
+  helping Microsoft improve Windows.
+
+mechanism: Registry
+
+mechanismDetails:
+  type: RegistryValue
+  hive: HKCU
+  path: "SOFTWARE\\Microsoft\\Siuf\\Rules"
+  valueName: "NumberOfSIUFInPeriod"
+  valueType: DWord
+
+  # PARAMETERIZED OPTIONS: User selects exact frequency
+  allowedValues:
+    - value: 0
+      label: "Never"
+      description: |
+        Windows will never prompt you for feedback. You can still provide
+        feedback manually through the Feedback Hub if you choose.
+
+        Privacy Impact: MAXIMUM - No unsolicited data requests
+        User Experience: No interruptions from feedback prompts
+        Microsoft Benefit: None (no feedback collected)
+      requirements: []
+      recommendedForPrivacy: true
+      knownLimitations: null
+
+    - value: 1
+      label: "Automatically (Windows decides)"
+      description: |
+        Windows determines when to ask for feedback based on system events
+        and usage patterns. Default Windows behavior.
+
+        Privacy Impact: LOW - Automated feedback prompts
+        User Experience: Occasional interruptions
+        Microsoft Benefit: High (can target feedback requests)
+      requirements: []
+      recommendedForPrivacy: false
+      knownLimitations: "Frequency is determined by Microsoft, not predictable"
+
+    - value: 2
+      label: "Once per week"
+      description: |
+        Windows will prompt for feedback at most once per week.
+
+        Privacy Impact: MEDIUM - Limited feedback requests
+        User Experience: Predictable, infrequent prompts
+        Microsoft Benefit: Moderate (regular but limited feedback)
+      requirements: []
+      recommendedForPrivacy: false
+      knownLimitations: null
+
+    - value: 3
+      label: "Once per month"
+      description: |
+        Windows will prompt for feedback at most once per month.
+
+        Privacy Impact: MEDIUM-HIGH - Minimal feedback requests
+        User Experience: Very infrequent prompts
+        Microsoft Benefit: Low (infrequent feedback)
+      requirements: []
+      recommendedForPrivacy: false
+      knownLimitations: null
+
+    - value: 4
+      label: "Rarely"
+      description: |
+        Windows will rarely prompt for feedback (less than once per month).
+
+        Privacy Impact: HIGH - Very rare feedback requests
+        User Experience: Almost no prompts
+        Microsoft Benefit: Minimal (very rare feedback)
+      requirements: []
+      recommendedForPrivacy: true
+      knownLimitations: null
+
+  defaultSelection: 0  # Never (most private)
+  userMustConfirm: true
+  showCurrentValue: true
+  helpText: |
+    Choose how often you want Windows to ask for feedback. Setting to "Never"
+    prevents all automatic feedback prompts while still allowing you to provide
+    feedback manually if you choose.
+
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+
+revertMechanism: |
+  Set the registry value back to 1 (Automatically) or delete the key to restore
+  Windows default behavior.
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  skuRestrictions: []
+
+dependencies: []
+
+knownBreakage:
+  - scenario: "Feedback Prompts"
+    severity: "None"
+    description: |
+      Setting to "Never" means you won't receive feedback prompts, but this
+      is the intended behavior. You can still access Feedback Hub manually.
+    affectedComponents: ["Feedback Hub Prompts"]
+
+verificationCommand: |
+  reg query "HKCU\SOFTWARE\Microsoft\Siuf\Rules" /v NumberOfSIUFInPeriod
+
+expectedOutput: |
+  NumberOfSIUFInPeriod    REG_DWORD    0x0
+  (Value depends on user selection: 0=Never, 1=Auto, 2=Weekly, 3=Monthly, 4=Rarely)
+
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#bkmk-priv-feedback"
+
+tags:
+  - telemetry
+  - feedback
+  - privacy
+  - siuf
+  - parameterized-policy
+  - user-selectable
+
+notes: |
+  PARAMETERIZED CONTROL DEMONSTRATION:
+
+  This policy showcases parameterized control with 5 distinct options:
+  - NOT just "enable/disable feedback"
+  - Instead: Choose EXACT frequency that matches your preference
+
+  USER SCENARIOS:
+
+  Maximum Privacy User:
+  → Select "Never" (0) - No unsolicited feedback requests
+
+  Moderate Privacy User:
+  → Select "Once per month" (3) - Occasional feedback, predictable
+
+  Windows Enthusiast:
+  → Select "Automatically" (1) - Help Microsoft improve Windows
+
+  Balanced User:
+  → Select "Rarely" (4) - Almost never prompted but not completely disabled
+
+  GRANULAR CONTROL:
+  You decide the EXACT balance between privacy and feedback participation.
+  Not a simple on/off toggle - 5 different levels of control.
+
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true

@@ -1,0 +1,57 @@
+policyId: "ai-004"
+version: "1.0.0"
+name: "Disable Connected Search (Web Results)"
+category: AI
+description: |
+  Disables the ability for Windows Search to use web/Bing results. Companion to ai-003
+  that ensures search stays completely local. Prevents search query telemetry.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search"
+  valueName: "ConnectedSearchUseWeb"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Delete registry value or set to 1"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies:
+  - policyId: "ai-003"
+    reason: "Complements Bing search disable for complete local search"
+    type: Recommended
+    userCanOverride: true
+    optional: true
+    autoSelect: true
+knownBreakage:
+  - scenario: "No web/Bing results in search"
+    severity: Low
+    details: "Search is local-only"
+verificationCommand: "reg query \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search\" /v ConnectedSearchUseWeb"
+expectedOutput: "0x0"
+references:
+  - "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-search"
+tags:
+  - "ai"
+  - "bing"
+  - "search"
+  - "privacy"
+  - "supported"
+notes: null
+enabledByDefault: true
+includedInProfiles:
+  - "Balanced"
+  - "Hardened"
+  - "MaximumPrivacy"

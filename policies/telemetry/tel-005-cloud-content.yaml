@@ -1,0 +1,56 @@
+policyId: "tel-005"
+version: "1.0.0"
+name: "Disable Cloud Content and Settings Sync"
+category: Telemetry
+description: |
+  Prevents Windows from syncing your settings, themes, passwords, and other data to
+  Microsoft's cloud. Enhances privacy by keeping all settings local-only.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\SettingSync"
+  valueName: "DisableSettingSync"
+  valueType: DWord
+  valueData: 2
+  expectedValue: "0x00000002"
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: "Delete registry value or set to 0"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Settings will not sync across devices"
+    severity: Medium
+    details: "You must manually configure each Windows device"
+  - scenario: "Passwords/credentials will not sync"
+    severity: Medium
+    details: "Use a third-party password manager instead"
+  - scenario: "Theme and personalization will not sync"
+    severity: Low
+    details: "Manual theme setup required on each device"
+verificationCommand: "reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\SettingSync /v DisableSettingSync"
+expectedOutput: "0x2"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#settings-sync"
+tags:
+  - "telemetry"
+  - "privacy"
+  - "cloud-sync"
+  - "settings"
+  - "supported"
+notes: "Value 2 = Force disable. Value 1 = User can choose. Value 0 = Allow."
+enabledByDefault: false
+includedInProfiles:
+  - "Hardened"
+  - "MaximumPrivacy"

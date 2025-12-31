@@ -1,0 +1,54 @@
+policyId: "svc-008"
+version: "1.0.0"
+name: "Disable Windows Push Notifications Service"
+category: Services
+description: |
+  Disables WpnService which handles push notifications from apps and services.
+  Prevents cloud-based notifications and reduces telemetry from notification tracking.
+mechanism: Service
+mechanismDetails:
+  type: ServiceConfig
+  serviceName: "WpnService"
+  displayName: "Windows Push Notifications System Service"
+  startupType: "Disabled"
+  stopService: true
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: "Set service to Automatic"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "App push notifications will not work"
+    severity: Medium
+    details: "Email, messaging, and app alerts broken"
+  - scenario: "Live Tiles will not update (legacy Windows 10 feature)"
+    severity: Low
+    details: "Not applicable in Windows 11"
+  - scenario: "Toast notifications from cloud services broken"
+    severity: Medium
+    details: "Local app notifications may still work"
+verificationCommand: "sc query WpnService"
+expectedOutput: "STATE: STOPPED, START_TYPE: DISABLED"
+references:
+  - "https://learn.microsoft.com/en-us/windows/uwp/design/shell/tiles-and-notifications/windows-push-notification-services--wns--overview"
+tags:
+  - "service"
+  - "privacy"
+  - "notifications"
+  - "push"
+  - "medium-risk"
+notes: "⚠ Disables all push notifications from apps and cloud services"
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"

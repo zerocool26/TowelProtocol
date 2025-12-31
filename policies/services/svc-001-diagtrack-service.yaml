@@ -1,0 +1,278 @@
+# ============================================================================
+# Policy: svc-001 - Configure DiagTrack Service
+# ============================================================================
+# GRANULAR SERVICE CONTROL: User can configure EACH aspect independently
+# This is NOT a simple "disable service" - user has full parameter control
+# ============================================================================
+
+policyId: "svc-001"
+version: "1.0.0"
+name: "Configure DiagTrack Service (Connected User Experiences and Telemetry)"
+category: Services
+
+description: |
+  Configure the DiagTrack service with granular control over multiple parameters.
+
+  The DiagTrack service (also known as "Connected User Experiences and Telemetry")
+  is responsible for collecting and sending diagnostic and usage data to Microsoft.
+
+  GRANULAR CONTROL: Instead of just "disable service", you can configure:
+  1. Startup Type (Automatic, Manual, Disabled, Automatic-Delayed)
+  2. Service Action (Leave running, Stop, Stop and Disable)
+  3. Recovery Options (Keep existing, Disable auto-restart)
+
+  Each parameter is independently selectable with full explanations.
+
+mechanism: Service
+
+mechanismDetails:
+  type: ServiceConfiguration
+  serviceName: "DiagTrack"
+  displayName: "Connected User Experiences and Telemetry"
+
+  # GRANULAR CONFIGURATION OPTIONS
+  # User selects EACH aspect independently
+
+  configurableOptions:
+    # OPTION 1: Startup Type
+    startupType:
+      userSelectable: true
+      helpText: |
+        Controls when and how the service starts. This determines whether the service
+        runs automatically at boot, can be started manually, or is completely disabled.
+
+      options:
+        - value: "Automatic"
+          label: "Automatic"
+          description: |
+            Service starts automatically at system boot. This is the Windows default.
+            Telemetry collection will run continuously.
+          reversible: true
+          requiresConfirmation: false
+
+        - value: "AutomaticDelayed"
+          label: "Automatic (Delayed Start)"
+          description: |
+            Service starts automatically but with a delay after boot (typically 2 minutes).
+            Reduces boot time impact but still allows telemetry collection.
+          reversible: true
+          requiresConfirmation: false
+
+        - value: "Manual"
+          label: "Manual"
+          description: |
+            Service can be started manually or by other services/applications that depend on it.
+            Telemetry won't run automatically but can be triggered.
+          reversible: true
+          requiresConfirmation: false
+
+        - value: "Disabled"
+          label: "Disabled"
+          description: |
+            Service cannot start at all. Provides maximum privacy but may impact some
+            Windows features. This is the recommended option for privacy-focused users.
+          reversible: true
+          requiresConfirmation: true
+          confirmationWarning: |
+            Disabling DiagTrack will prevent all telemetry collection. Windows Update
+            may be slower to check for updates, and some troubleshooting features won't work.
+
+      # Show current system value for comparison
+      currentValue: "Automatic"  # Will be dynamically retrieved
+
+      # Recommendation (informational only - user decides)
+      recommendedValue: "Disabled"
+
+      # User MUST choose
+      userMustChoose: true
+
+    # OPTION 2: Service Action
+    serviceAction:
+      userSelectable: true
+      helpText: |
+        Controls what action to take on the currently running service.
+        This is independent of the startup type setting.
+
+      options:
+        - value: "NoAction"
+          label: "No Action"
+          description: |
+            Only change the startup type. Don't stop the service if it's currently running.
+            Service will continue running until next reboot.
+          reversible: true
+          requiresConfirmation: false
+
+        - value: "Stop"
+          label: "Stop Service"
+          description: |
+            Stop the service immediately if it's running. Service will restart on next
+            boot based on the startup type you selected.
+          reversible: true
+          requiresConfirmation: false
+
+        - value: "StopAndDisable"
+          label: "Stop and Disable"
+          description: |
+            Stop the service immediately AND set startup type to Disabled.
+            This is the most privacy-focused option. Service won't run until you manually
+            change these settings.
+          reversible: true
+          requiresConfirmation: true
+          confirmationWarning: |
+            This will immediately stop telemetry collection and prevent it from restarting.
+            Some Windows features may not work correctly.
+
+      currentValue: "Running"  # Will be dynamically retrieved
+      recommendedValue: "StopAndDisable"
+      userMustChoose: true
+
+    # OPTION 3: Recovery Options
+    recoveryOptions:
+      userSelectable: true
+      helpText: |
+        Controls what Windows does if the service fails or crashes.
+        This setting affects service reliability vs privacy trade-offs.
+
+      options:
+        - value: "KeepExisting"
+          label: "Keep Existing Recovery Settings"
+          description: |
+            Don't modify the service's failure recovery settings. If the service crashes,
+            Windows will handle it according to existing configuration (typically auto-restart).
+          reversible: true
+          requiresConfirmation: false
+
+        - value: "DisableRecovery"
+          label: "Disable Automatic Recovery"
+          description: |
+            Configure the service to NOT automatically restart on failure. If DiagTrack
+            crashes or stops unexpectedly, it will remain stopped until manually started
+            or system reboot (depending on startup type).
+          reversible: true
+          requiresConfirmation: false
+
+        - value: "TakeNoAction"
+          label: "Set Recovery Action to 'Take No Action'"
+          description: |
+            Explicitly configure Windows to take no action if the service fails.
+            Most privacy-focused option for recovery settings.
+          reversible: true
+          requiresConfirmation: false
+
+      currentValue: "RestartService"  # Will be dynamically retrieved
+      recommendedValue: "TakeNoAction"
+      userMustChoose: false  # Optional - can skip this
+
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+
+revertMechanism: |
+  Use Service Manager (services.msc) or this tool to:
+  1. Set startup type back to Automatic
+  2. Start the service
+  3. Reset recovery options to "Restart the Service"
+
+  Or revert through this tool using the change log.
+
+applicability:
+  minBuild: 10240  # Windows 10 RTM
+  maxBuild: null
+  skuRestrictions: []
+
+dependencies: []
+
+knownBreakage:
+  - scenario: "Windows Update Performance"
+    severity: "Low"
+    description: |
+      Disabling DiagTrack may cause Windows Update to be slower when checking for
+      updates. The impact is minimal (few seconds delay).
+    affectedComponents: ["Windows Update"]
+
+  - scenario: "Windows Troubleshooters"
+    severity: "Medium"
+    description: |
+      Some Windows troubleshooters rely on diagnostic data. They may report
+      "unable to gather diagnostic information" when DiagTrack is disabled.
+    affectedComponents: ["Windows Troubleshooters", "Problem Reporting"]
+
+  - scenario: "Microsoft Store Updates"
+    severity: "Low"
+    description: |
+      Microsoft Store app updates may be slightly slower or require manual checks.
+    affectedComponents: ["Microsoft Store"]
+
+  - scenario: "Windows Error Reporting"
+    severity: "Low"
+    description: |
+      Crash reports won't be sent to Microsoft, which may impact their ability
+      to fix bugs in Windows or apps.
+    affectedComponents: ["Windows Error Reporting"]
+
+verificationCommand: |
+  sc query DiagTrack
+  sc qc DiagTrack
+
+expectedOutput: |
+  STATE              : 1  STOPPED
+  START_TYPE         : 4   DISABLED
+
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization"
+  - "https://learn.microsoft.com/en-us/windows/privacy/basic-level-windows-diagnostic-events-and-fields"
+
+tags:
+  - service
+  - telemetry
+  - diagtrack
+  - connected-user-experiences
+  - privacy
+  - diagnostic-data
+  - granular-control
+  - multi-parameter
+
+notes: |
+  GRANULAR CONTROL DEMONSTRATION:
+
+  This policy shows the FULL power of granular service control:
+
+  1. STARTUP TYPE: 4 options (Automatic, Delayed, Manual, Disabled)
+     - Each with detailed description
+     - Each with reversibility info
+     - Each with confirmation requirements
+
+  2. SERVICE ACTION: 3 options (NoAction, Stop, StopAndDisable)
+     - Independent of startup type
+     - Allows nuanced configurations
+     - User can stop service without changing startup type
+
+  3. RECOVERY OPTIONS: 3 options (Keep, Disable, TakeNoAction)
+     - Controls failure handling
+     - Provides additional privacy hardening
+     - Optional (can be skipped)
+
+  EXAMPLE CONFIGURATIONS:
+
+  Maximum Privacy:
+  - Startup Type: Disabled
+  - Service Action: StopAndDisable
+  - Recovery: TakeNoAction
+
+  Moderate Privacy (allow manual start):
+  - Startup Type: Manual
+  - Service Action: Stop
+  - Recovery: KeepExisting
+
+  Minimal Impact (just delay):
+  - Startup Type: AutomaticDelayed
+  - Service Action: NoAction
+  - Recovery: KeepExisting
+
+  USER HAS COMPLETE CONTROL over the exact configuration.
+
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true

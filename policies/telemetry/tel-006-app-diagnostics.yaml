@@ -1,0 +1,92 @@
+# ============================================================================
+# Policy: tel-006 - Disable App Diagnostic Access
+# ============================================================================
+# ATOMIC POLICY: Controls app access to diagnostic information
+# Prevents apps from accessing diagnostic data about other apps
+# ============================================================================
+
+policyId: "tel-006"
+version: "1.0.0"
+name: "Disable App Diagnostic Access"
+category: Telemetry
+
+description: |
+  Prevents apps from accessing diagnostic information about other running apps.
+
+  This privacy setting controls whether apps can access diagnostic information
+  (crash dumps, error logs, performance data) from other apps on your system.
+
+  ATOMIC CONTROL: This policy controls ONLY app diagnostic access.
+  System-level diagnostic data collection (tel-001) is controlled separately.
+
+mechanism: Registry
+
+mechanismDetails:
+  type: RegistryValue
+  hive: HKCU
+  path: "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Privacy"
+  valueName: "TailoredExperiencesWithDiagnosticDataEnabled"
+  expectedValue: 0  # 0 = Disabled, 1 = Enabled
+  valueType: DWord
+
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+
+revertMechanism: |
+  Set the registry value back to 1 or delete the key to restore Windows default (Enabled).
+
+applicability:
+  minBuild: 17134  # Windows 10 1803
+  maxBuild: null
+  skuRestrictions: []
+
+dependencies: []
+
+knownBreakage:
+  - scenario: "Windows Tips and Suggestions"
+    severity: "Low"
+    description: |
+      Windows will not provide personalized tips and suggestions based on your
+      app usage patterns. You'll see more generic tips instead.
+    affectedComponents: ["Windows Tips", "Settings Suggestions"]
+
+  - scenario: "App Recommendations"
+    severity: "Low"
+    description: |
+      Windows may not provide app recommendations based on your diagnostic data.
+      App suggestions in Start Menu may be less relevant.
+    affectedComponents: ["Start Menu", "Microsoft Store"]
+
+verificationCommand: |
+  reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy" /v TailoredExperiencesWithDiagnosticDataEnabled
+
+expectedOutput: |
+  TailoredExperiencesWithDiagnosticDataEnabled    REG_DWORD    0x0
+
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#bkmk-priv-feedback"
+
+tags:
+  - telemetry
+  - app-diagnostics
+  - privacy
+  - tailored-experiences
+  - atomic-policy
+
+notes: |
+  PRIVACY BENEFIT:
+  - Prevents apps from accessing diagnostic data about other apps
+  - Reduces profiling based on app usage patterns
+  - Limits tailored experiences based on diagnostics
+
+  GRANULAR CONTROL:
+  - This is separate from system-level diagnostic data (tel-001)
+  - User can disable app access while keeping system diagnostics
+  - Or vice versa - complete flexibility
+
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true

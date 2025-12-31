@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- TextBlock base -->
+  <Style Selector="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.title">
+    <Setter Property="FontSize" Value="22" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+
+  <Style Selector="TextBlock.subtitle">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+  </Style>
+
+  <!-- Button styles -->
+  <Style Selector="Button">
+    <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="CornerRadius" Value="6" />
+  </Style>
+
+  <Style Selector="Button.accent">
+    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+    <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+  </Style>
+
+  <!-- Card style for list items -->
+  <Style Selector="Border.card">
+    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource PanelBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="14" />
+    <Setter Property="Margin" Value="0,0,0,8" />
+    <Setter Property="RenderTransform">
+      <Setter.Value>
+        <TranslateTransform X="0" Y="0" />
+      </Setter.Value>
+    </Setter>
+    <Setter Property="Transitions">
+      <Setter.Value>
+        <Transitions>
+          <DoubleTransition Property="Opacity" Duration="0:0:0.12" />
+        </Transitions>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style Selector="Border.card:pointerover">
+    <Setter Property="RenderTransform">
+      <Setter.Value>
+        <TranslateTransform X="0" Y="-6" />
+      </Setter.Value>
+    </Setter>
+    <Setter Property="Opacity" Value="0.98" />
+    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+  </Style>
+
+  <Style Selector="ListBoxItem">
+    <Setter Property="Padding" Value="6" />
+    <Setter Property="Focusable" Value="True" />
+  </Style>
+
+  <Style Selector="ListBoxItem:focus">
+    <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+</Styles>

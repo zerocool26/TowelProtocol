@@ -1,0 +1,140 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PrivacyHardeningUI.ViewModels"
+             xmlns:controls="using:PrivacyHardeningUI.Controls"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="PrivacyHardeningUI.Views.AuditView"
+             x:DataType="vm:AuditViewModel">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Header with Run Button -->
+        <Border Grid.Row="0" Padding="16" Background="{StaticResource PanelBrush}">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="System Audit" FontSize="20" FontWeight="Bold"/>
+                    <TextBlock Text="Check which privacy policies are currently active on your system"
+                               FontSize="12" Opacity="0.7" Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <Button Grid.Column="1" Content="Run Audit"
+                    Command="{Binding RunAuditCommand}"
+                    IsEnabled="{Binding !IsRunning}"
+                    HorizontalAlignment="Right" VerticalAlignment="Center"
+                    Padding="24,8" FontSize="14" FontWeight="Bold"
+                    AutomationProperties.Name="Run Audit"
+                    TabIndex="10"/>
+            </Grid>
+        </Border>
+
+        <!-- Audit Results List -->
+        <ScrollViewer Grid.Row="1">
+            <ListBox ItemsSource="{Binding AuditItems}" Margin="8"
+                     AutomationProperties.Name="Audit Results List"
+                     TabIndex="20">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Classes="card">
+                                <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto">
+
+                                <!-- Status Icon -->
+                                <Border Grid.Row="0" Grid.Column="0" Grid.RowSpan="3"
+                                        Width="48" Height="48"
+                                        CornerRadius="24"
+                                        VerticalAlignment="Top" Margin="0,0,16,0"
+                                        Background="{StaticResource AccentBrush}">
+                                    <controls:IconHelper Name="check_circle"
+                                               Foreground="White" FontSize="20"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+
+                                <!-- Policy Name and ID -->
+                                <StackPanel Grid.Row="0" Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="{Binding PolicyId}" FontSize="16" FontWeight="Bold"/>
+                                    <TextBlock Text="{Binding PolicyId}" FontSize="11" Opacity="0.7"
+                                               FontFamily="Consolas"/>
+                                </StackPanel>
+
+                                <!-- Status Badge -->
+                                <Border Grid.Row="0" Grid.Column="2"
+                                        CornerRadius="3" Padding="12,4" Margin="8,0,0,0"
+                                        VerticalAlignment="Top">
+                                    <Border.Background>
+                                        <SolidColorBrush Color="{Binding IsApplied, Converter={StaticResource BoolToColorConverter}}"/>
+                                    </Border.Background>
+                                    <TextBlock Text="{Binding IsApplied, Converter={StaticResource BoolToStatusTextConverter}}"
+                                               Foreground="White" FontSize="12" FontWeight="Bold"/>
+                                </Border>
+
+                                <!-- Expected Value -->
+                                <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                            Margin="0,8,0,0" Spacing="2"
+                                            IsVisible="{Binding ExpectedValue, Converter={StaticResource NullToVisibilityConverter}}">
+                                    <TextBlock Text="Expected Value:" FontSize="12" FontWeight="Bold"/>
+                                    <Border Background="{DynamicResource SystemChromeMediumLowColor}"
+                                            CornerRadius="3" Padding="8" Margin="16,0,0,0">
+                                        <TextBlock Text="{Binding ExpectedValue}" FontFamily="Consolas" FontSize="11"/>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Actual Value -->
+                                <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+                                            Margin="0,8,0,0" Spacing="2"
+                                            IsVisible="{Binding ActualValue, Converter={StaticResource NullToVisibilityConverter}}">
+                                    <TextBlock Text="Actual Value:" FontSize="12" FontWeight="Bold"/>
+                                    <Border Background="{DynamicResource SystemChromeMediumLowColor}"
+                                            CornerRadius="3" Padding="8" Margin="16,0,0,0">
+                                        <TextBlock Text="{Binding ActualValue}" FontFamily="Consolas" FontSize="11"/>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </ScrollViewer>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="2" Background="{DynamicResource SystemChromeLowColor}"
+                BorderBrush="{DynamicResource SystemBaseMediumColor}"
+                BorderThickness="0,1,0,0" Padding="16,8">
+            <Grid ColumnDefinitions="*,Auto">
+                <!-- Error Message -->
+                <TextBlock Grid.Column="0"
+                           Text="{Binding ErrorMessage}"
+                           Foreground="Red"
+                           IsVisible="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}"/>
+
+                <!-- Stats -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16"
+                            IsVisible="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=Inverse}">
+                    <TextBlock>
+                        <Run Text="Total Audited:"/>
+                        <Run Text="{Binding AuditItems.Count}" FontWeight="Bold"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Running Overlay -->
+        <Panel Grid.RowSpan="3" IsVisible="{Binding IsRunning}"
+               Background="#80000000">
+            <Border Background="White" CornerRadius="8" Padding="32"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel Spacing="16" HorizontalAlignment="Center">
+                    <ProgressBar IsIndeterminate="True" Width="200"/>
+                    <TextBlock Text="Running audit..." HorizontalAlignment="Center" FontSize="14"/>
+                    <TextBlock Text="This may take a few moments"
+                               HorizontalAlignment="Center" FontSize="12" Opacity="0.7"/>
+                </StackPanel>
+            </Border>
+        </Panel>
+    </Grid>
+</UserControl>

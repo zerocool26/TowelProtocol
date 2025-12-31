@@ -1,0 +1,53 @@
+policyId: "tel-002"
+version: "1.0.0"
+name: "Disable Connected User Experiences and Telemetry"
+category: Telemetry
+description: |
+  Disables the Connected User Experiences and Telemetry service (DiagTrack).
+  This service handles telemetry collection and transmission. Disabling it can
+  break Windows Store updates, some Defender features, and optional cloud-connected features.
+mechanism: Service
+mechanismDetails:
+  type: ServiceConfig
+  serviceName: "DiagTrack"
+  startupType: "Disabled"
+  stopService: true
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: "Set service startup to Automatic and start service"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Education"
+    - "Pro"
+    - "Home"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Microsoft Store may fail to download or update apps"
+    severity: High
+    details: "Store relies on DiagTrack for telemetry and connectivity checks"
+  - scenario: "Windows Defender cloud protection may be degraded"
+    severity: Medium
+    details: "Cloud-delivered protection and sample submission affected"
+  - scenario: "Windows Update troubleshooting features unavailable"
+    severity: Low
+    details: null
+verificationCommand: "sc query DiagTrack"
+expectedOutput: "STATE: STOPPED"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+tags:
+  - "telemetry"
+  - "service"
+  - "privacy"
+  - "medium-risk"
+notes: "⚠ WARNING: May break Windows Store and some Defender cloud features. Test thoroughly."
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"

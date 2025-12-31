@@ -1,0 +1,60 @@
+policyId: "net-002"
+version: "1.0.0"
+name: "Disable Delivery Optimization P2P"
+category: Network
+description: |
+  Disables Delivery Optimization peer-to-peer (P2P) sharing for Windows Updates.
+  Prevents your PC from uploading/downloading update files to/from other PCs on
+  the internet. Updates will only be downloaded from Microsoft servers. Reduces
+  bandwidth usage and privacy exposure.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DeliveryOptimization"
+  valueName: "DODownloadMode"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set DODownloadMode to 1 (LAN only) or 3 (internet P2P)"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Windows Update P2P downloads disabled"
+    severity: Low
+    details: "Updates download only from Microsoft servers, may be slower"
+  - scenario: "Store app P2P delivery disabled"
+    severity: Low
+    details: "Apps download only from Microsoft CDN"
+  - scenario: "Increased internet bandwidth usage"
+    severity: Low
+    details: "No local network caching of updates"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DeliveryOptimization' -Name DODownloadMode"
+expectedOutput: "DODownloadMode: 0 (HTTP only, no peering)"
+references:
+  - "https://learn.microsoft.com/en-us/windows/deployment/update/waas-delivery-optimization"
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+tags:
+  - "network"
+  - "privacy"
+  - "updates"
+  - "p2p"
+  - "low-risk"
+notes: "Value 0 = HTTP only, 1 = LAN only, 2 = Group (domain), 3 = Internet, 99 = Simple (no limits)"
+enabledByDefault: true
+includedInProfiles:
+  - "Standard"
+  - "Hardened"
+  - "MaximumPrivacy"

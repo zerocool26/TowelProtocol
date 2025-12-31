@@ -1,0 +1,52 @@
+policyId: "task-006"
+version: "1.0.0"
+name: "Disable Disk Diagnostic Data Collector"
+category: Telemetry
+description: |
+  Disables the Microsoft-Windows-DiskDiagnosticDataCollector task which collects
+  general disk and volume information for computers participating in the Windows
+  Customer Experience Program. Sends disk usage and health data to Microsoft.
+mechanism: ScheduledTask
+mechanismDetails:
+  type: ScheduledTask
+  taskPath: "\\Microsoft\\Windows\\DiskDiagnostic\\Microsoft-Windows-DiskDiagnosticDataCollector"
+  action: "Disable"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Re-enable the scheduled task"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Disk diagnostic data not collected"
+    severity: Low
+    details: "Disk health monitoring via SMART still works"
+  - scenario: "Proactive disk failure warnings may be reduced"
+    severity: Low
+    details: "Use third-party tools like CrystalDiskInfo for monitoring"
+verificationCommand: "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\DiskDiagnostic\\' -TaskName 'Microsoft-Windows-DiskDiagnosticDataCollector'"
+expectedOutput: "State: Disabled"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+tags:
+  - "task"
+  - "telemetry"
+  - "disk"
+  - "diagnostics"
+  - "low-risk"
+notes: "Collects disk telemetry. Local SMART monitoring remains functional."
+enabledByDefault: true
+includedInProfiles:
+  - "Standard"
+  - "Hardened"
+  - "MaximumPrivacy"

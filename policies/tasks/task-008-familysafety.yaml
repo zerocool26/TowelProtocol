@@ -1,0 +1,55 @@
+policyId: "task-008"
+version: "1.0.0"
+name: "Disable Family Safety Monitor"
+category: Telemetry
+description: |
+  Disables FamilySafetyMonitor and FamilySafetyRefreshTask which upload
+  family safety usage reports and activity data to Microsoft cloud services.
+  Used for parental control activity reporting.
+mechanism: ScheduledTask
+mechanismDetails:
+  type: ScheduledTask
+  taskPath: "\\Microsoft\\Windows\\Shell\\FamilySafetyMonitor"
+  action: "Disable"
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: "Re-enable the scheduled task"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Family Safety activity reports will not upload"
+    severity: Medium
+    details: "Parental control web dashboard will show outdated data"
+  - scenario: "Screen time monitoring may not function"
+    severity: Medium
+    details: "Local restrictions still apply, only reporting is broken"
+  - scenario: "Activity notifications to parents disabled"
+    severity: Medium
+    details: "Parents won't receive real-time activity alerts"
+verificationCommand: "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Shell\\' -TaskName 'FamilySafetyMonitor'"
+expectedOutput: "State: Disabled"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+  - "https://support.microsoft.com/en-us/account-billing/what-is-microsoft-family-safety-b6280c9d-38d7-82ff-0e4f-a6cb7e659344"
+tags:
+  - "task"
+  - "telemetry"
+  - "family-safety"
+  - "parental-controls"
+  - "medium-risk"
+notes: "⚠ Breaks cloud-based parental control reporting. Safe for non-family accounts."
+enabledByDefault: false
+includedInProfiles:
+  - "Hardened"
+  - "MaximumPrivacy"

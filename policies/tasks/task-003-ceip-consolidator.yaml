@@ -1,0 +1,53 @@
+policyId: "task-003"
+version: "1.0.0"
+name: "Disable CEIP Consolidator"
+category: Telemetry
+description: |
+  Disables the Customer Experience Improvement Program (CEIP) Consolidator task.
+  This task collects and sends detailed system usage data, error reports, and
+  performance metrics to Microsoft. Critical for privacy hardening.
+mechanism: ScheduledTask
+mechanismDetails:
+  type: ScheduledTask
+  taskPath: "\\Microsoft\\Windows\\Customer Experience Improvement Program\\Consolidator"
+  action: "Disable"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Re-enable the scheduled task"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "CEIP data not sent to Microsoft"
+    severity: Low
+    details: "This is the intended privacy outcome"
+  - scenario: "Some Windows features may not receive usage-based improvements"
+    severity: Low
+    details: "No functional impact on system operation"
+verificationCommand: "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Customer Experience Improvement Program\\' -TaskName 'Consolidator'"
+expectedOutput: "State: Disabled"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+  - "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/jj618322(v=ws.11)"
+tags:
+  - "task"
+  - "telemetry"
+  - "ceip"
+  - "privacy"
+  - "low-risk"
+notes: "Primary CEIP data collection task. Essential to disable for privacy."
+enabledByDefault: true
+includedInProfiles:
+  - "Standard"
+  - "Hardened"
+  - "MaximumPrivacy"

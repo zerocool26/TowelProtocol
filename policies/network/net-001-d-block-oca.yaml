@@ -1,0 +1,132 @@
+# ============================================================================
+# Policy: net-001-d - Block oca.telemetry.microsoft.com
+# ============================================================================
+# ATOMIC FIREWALL POLICY: Controls ONE specific endpoint
+# Part of telemetry endpoint blocking - each endpoint is separately selectable
+# ============================================================================
+
+policyId: "net-001-d"
+version: "1.0.0"
+name: "Block oca.telemetry.microsoft.com (Online Crash Analysis)"
+category: Network
+
+description: |
+  Blocks outbound connections to oca.telemetry.microsoft.com via Windows Firewall.
+
+  This endpoint is used for Online Crash Analysis (OCA). When applications crash,
+  Windows can send crash data to this endpoint for automated analysis and to
+  receive known solutions.
+
+  ATOMIC CONTROL: This policy creates ONE firewall rule for ONE endpoint.
+  Separate from watson endpoint (net-001-b) which handles full crash dump uploads.
+
+mechanism: Firewall
+
+mechanismDetails:
+  type: FirewallRule
+  ruleGrouping: Individual
+
+  endpoint:
+    hostname: "oca.telemetry.microsoft.com"
+    description: "Online Crash Analysis (OCA) endpoint"
+    criticality: "Non-essential"
+    knownBreakage: "Automated crash analysis and solution delivery affected"
+    category: "Telemetry"
+    port: null  # All ports
+    protocol: "Both"  # TCP and UDP
+    direction: "Outbound"
+
+  firewallRule:
+    displayName: "PHF Block - oca.telemetry.microsoft.com"
+    description: "Privacy Hardening Framework - Block OCA endpoint"
+    direction: "Outbound"
+    action: "Block"
+    protocol: "Any"
+    remoteAddress: "oca.telemetry.microsoft.com"
+    group: "PrivacyHardeningFramework"
+    enabled: true
+
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+
+revertMechanism: |
+  Remove the firewall rule using Windows Firewall or this tool.
+  The rule is tagged with Group="PrivacyHardeningFramework" for easy identification.
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  skuRestrictions: []
+
+dependencies: []
+
+knownBreakage:
+  - scenario: "Automated Crash Analysis"
+    severity: "Low"
+    description: |
+      Windows won't be able to perform online crash analysis. Crash signature
+      matching and automated solution lookup will not work.
+    affectedComponents: ["Windows Error Reporting", "Problem Reports"]
+
+  - scenario: "Known Solution Delivery"
+    severity: "Low"
+    description: |
+      You won't automatically receive known solutions to application crashes
+      from Microsoft's crash database.
+    affectedComponents: ["Solution Center", "Problem Reporting"]
+
+verificationCommand: |
+  netsh advfirewall firewall show rule name="PHF Block - oca.telemetry.microsoft.com"
+
+expectedOutput: |
+  Rule Name:                            PHF Block - oca.telemetry.microsoft.com
+  Enabled:                              Yes
+  Direction:                            Out
+  Action:                               Block
+
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+  - "https://docs.microsoft.com/en-us/windows/privacy/windows-endpoints"
+
+tags:
+  - firewall
+  - network
+  - telemetry
+  - endpoint-blocking
+  - oca
+  - crash-analysis
+  - atomic-policy
+  - per-endpoint-control
+
+notes: |
+  ATOMIC FIREWALL CONTROL:
+
+  DIFFERENCE FROM WATSON ENDPOINT:
+  - watson.telemetry.microsoft.com (net-001-b): Full crash dump uploads
+  - oca.telemetry.microsoft.com (this policy): Crash signature analysis
+
+  You can block one or both based on your privacy preference.
+
+  GRANULAR CONTROL EXAMPLE:
+  - Block OCA but allow Watson: Get automated analysis without dump uploads
+  - Block Watson but allow OCA: Send signatures without full crash data
+  - Block both: Maximum privacy, no crash data sent
+  - Block neither: Maximum functionality, full crash reporting
+
+  USER CHOOSES the exact combination that meets their needs.
+
+  PRIVACY BENEFIT:
+  - Prevents crash metadata from being analyzed by Microsoft
+  - Stops automated crash signature matching
+  - Limits profiling based on crash patterns
+
+  FUNCTIONALITY TRADE-OFF:
+  - Won't receive automated solutions to known crashes
+  - Manual troubleshooting required for application crashes
+
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true

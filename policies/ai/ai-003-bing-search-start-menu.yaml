@@ -1,0 +1,56 @@
+policyId: "ai-003"
+version: "1.0.0"
+name: "Disable Bing Search in Start Menu"
+category: AI
+description: |
+  Disables Bing web search integration in the Windows 11 Start Menu search box.
+  Prevents search queries from being sent to Microsoft's servers. Search will only
+  show local results (files, apps, settings).
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search"
+  valueName: "DisableWebSearch"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Delete registry value or set to 0"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Web search results will not appear in Start Menu"
+    severity: Low
+    details: "Only local files, apps, and settings will be searchable"
+  - scenario: "Bing search suggestions disabled"
+    severity: Low
+    details: "Intended behavior for privacy"
+verificationCommand: "reg query \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search\" /v DisableWebSearch"
+expectedOutput: "0x1"
+references:
+  - "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-search#disablewebsearch"
+tags:
+  - "ai"
+  - "bing"
+  - "search"
+  - "privacy"
+  - "start-menu"
+  - "supported"
+notes: "Also set ConnectedSearchUseWeb=0 for additional effect (see ai-004)"
+enabledByDefault: true
+includedInProfiles:
+  - "Balanced"
+  - "Hardened"
+  - "MaximumPrivacy"

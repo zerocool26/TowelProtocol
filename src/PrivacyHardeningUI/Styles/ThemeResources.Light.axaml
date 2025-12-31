@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Light color palette -->
+  <Color x:Key="AccentColor">#0078D4</Color>
+  <Color x:Key="AccentHoverColor">#005A9E</Color>
+  <Color x:Key="SurfaceColor">#FFFFFFFF</Color>
+  <Color x:Key="PanelColor">#FFF3F4F6</Color>
+  <Color x:Key="TextPrimaryColor">#FF111827</Color>
+  <Color x:Key="TextSecondaryColor">#8A9099</Color>
+
+  <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+  <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}" />
+  <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
+  <SolidColorBrush x:Key="PanelBrush" Color="{StaticResource PanelColor}" />
+  <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
+  <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
+
+  <!-- Font family: prefer bundled Inter fonts if present (avares syntax), fallback to system fonts -->
+  <FontFamily x:Key="AppFontFamily">avares://PrivacyHardeningUI/Assets/Fonts/Inter-Regular.ttf#Inter, "Segoe UI Variable", "Segoe UI", system-ui</FontFamily>
+
+  <!-- Icon font family: place a bundled icon font .ttf in Assets/Fonts and it will be used; fallback to system icons on Windows -->
+  <FontFamily x:Key="AppIconFontFamily">avares://PrivacyHardeningUI/Assets/Fonts/MaterialSymbolsOutlined.ttf#Material Symbols Outlined, Segoe MDL2 Assets, Segoe UI Symbol</FontFamily>
+
+</ResourceDictionary>

@@ -1,0 +1,122 @@
+# ============================================================================
+# Policy: tel-009 - Disable Online Speech Recognition
+# ============================================================================
+# ATOMIC POLICY: Controls cloud-based speech recognition
+# Prevents speech data from being sent to Microsoft cloud services
+# ============================================================================
+
+policyId: "tel-009"
+version: "1.0.0"
+name: "Disable Online Speech Recognition"
+category: Telemetry
+
+description: |
+  Prevents Windows from sending speech data to Microsoft cloud services for
+  online speech recognition.
+
+  Windows can use cloud-based speech recognition for improved accuracy and
+  features like Cortana. This policy prevents speech audio from being sent
+  to Microsoft servers.
+
+  ATOMIC CONTROL: This policy controls ONLY online speech recognition.
+  - Local speech recognition continues to work
+  - Handwriting data (tel-008) is controlled separately
+  - Cortana has additional separate policies
+
+mechanism: Registry
+
+mechanismDetails:
+  type: RegistryValue
+  hive: HKCU
+  path: "SOFTWARE\\Microsoft\\Speech_OneCore\\Settings\\OnlineSpeechPrivacy"
+  valueName: "HasAccepted"
+  expectedValue: 0  # 0 = Disabled, 1 = Enabled
+  valueType: DWord
+
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+
+revertMechanism: |
+  Set the registry value back to 1 or delete the key to restore Windows default
+  (online speech recognition enabled).
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  skuRestrictions: []
+
+dependencies: []
+
+knownBreakage:
+  - scenario: "Cortana Cloud Features"
+    severity: "High"
+    description: |
+      Cortana's cloud-powered features will not work. This includes web searches,
+      smart home control, and complex natural language queries. Local Cortana
+      features may still function.
+    affectedComponents: ["Cortana", "Voice Assistant"]
+
+  - scenario: "Speech Recognition Accuracy"
+    severity: "Medium"
+    description: |
+      Cloud-based speech recognition typically has better accuracy than local
+      recognition. You may experience lower accuracy, especially for complex
+      phrases or accented speech.
+    affectedComponents: ["Voice Typing", "Dictation", "Voice Commands"]
+
+  - scenario: "Multilingual Speech"
+    severity: "Medium"
+    description: |
+      Cloud recognition supports more languages and dialects. Some languages
+      may not work well or at all with local-only recognition.
+    affectedComponents: ["Voice Typing in Multiple Languages"]
+
+verificationCommand: |
+  reg query "HKCU\SOFTWARE\Microsoft\Speech_OneCore\Settings\OnlineSpeechPrivacy" /v HasAccepted
+
+expectedOutput: |
+  HasAccepted    REG_DWORD    0x0
+
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#bkmk-priv-speech"
+
+tags:
+  - telemetry
+  - speech
+  - voice
+  - cortana
+  - privacy
+  - cloud-services
+  - atomic-policy
+
+notes: |
+  PRIVACY BENEFIT:
+  - Prevents speech audio from being sent to Microsoft cloud
+  - Stops cloud-based voice profiling
+  - Keeps voice data local only
+
+  FUNCTIONALITY TRADE-OFF:
+  - Cloud recognition is more accurate but less private
+  - Local recognition is less accurate but more private
+  - USER DECIDES which is more important for their use case
+
+  GRANULAR CONTROL:
+  This is separate from:
+  - Handwriting data collection (tel-008)
+  - Cortana web search policies
+  - General telemetry settings (tel-001)
+
+  User can disable cloud speech while keeping other features,
+  or create custom combinations based on their needs.
+
+  IMPORTANT NOTE:
+  This disables ONLINE speech recognition. Local speech recognition
+  (running on your device) will still work, albeit with potentially
+  lower accuracy.
+
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true

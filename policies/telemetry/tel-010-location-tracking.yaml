@@ -1,0 +1,120 @@
+# ============================================================================
+# Policy: tel-010 - Disable Location Tracking
+# ============================================================================
+# ATOMIC POLICY: Controls Windows location services
+# Prevents Windows and apps from accessing location data
+# ============================================================================
+
+policyId: "tel-010"
+version: "1.0.0"
+name: "Disable Windows Location Tracking"
+category: Telemetry
+
+description: |
+  Prevents Windows and apps from accessing your device's location.
+
+  Windows can determine your location using GPS, Wi-Fi networks, cellular towers,
+  and IP address. This policy disables location services system-wide.
+
+  ATOMIC CONTROL: This policy controls the master location switch.
+  Per-app location permissions would be controlled by separate policies
+  (not yet implemented).
+
+mechanism: Registry
+
+mechanismDetails:
+  type: RegistryValue
+  hive: HKLM
+  path: "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\location"
+  valueName: "Value"
+  expectedValue: "Deny"  # "Allow" or "Deny"
+  valueType: String
+
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+
+revertMechanism: |
+  Set the registry value back to "Allow" to restore location services.
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  skuRestrictions: []
+
+dependencies: []
+
+knownBreakage:
+  - scenario: "Location-Based Apps"
+    severity: "High"
+    description: |
+      Apps that rely on location (Maps, Weather, navigation, location-based
+      reminders) will not function properly. They won't be able to determine
+      your current location.
+    affectedComponents: ["Maps", "Weather", "Cortana Location Reminders", "Find My Device"]
+
+  - scenario: "Location History"
+    severity: "Medium"
+    description: |
+      Windows Timeline and location history features will not work. You won't
+      be able to see where you've been or get location-based suggestions.
+    affectedComponents: ["Timeline", "Location History"]
+
+  - scenario: "Geofencing and Location Triggers"
+    severity: "Medium"
+    description: |
+      Any automation or tasks triggered by entering/leaving locations will
+      not work.
+    affectedComponents: ["Location-Based Automation", "Geofencing Apps"]
+
+  - scenario: "Emergency Location Services"
+    severity: "Critical"
+    description: |
+      Emergency services may not be able to automatically determine your
+      location during emergency calls. You would need to verbally communicate
+      your location.
+    affectedComponents: ["Emergency Calling Location"]
+
+verificationCommand: |
+  reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" /v Value
+
+expectedOutput: |
+  Value    REG_SZ    Deny
+
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#bkmk-priv-location"
+
+tags:
+  - telemetry
+  - location
+  - gps
+  - privacy
+  - tracking
+  - atomic-policy
+
+notes: |
+  PRIVACY BENEFIT:
+  - Prevents location tracking by Windows and apps
+  - Stops location history collection
+  - Limits location-based profiling
+
+  CRITICAL CONSIDERATION:
+  - Emergency services may need location data
+  - Consider the trade-off between privacy and safety
+  - You can manually provide location when needed
+
+  GRANULAR CONTROL FUTURE:
+  This is the master location switch. Future enhancements could include:
+  - Per-app location permissions (allow Maps but deny Edge)
+  - Location accuracy control (coarse vs precise)
+  - Location history separate from current location
+  - Time-based location rules
+
+  For now, this provides system-wide location control.
+  USER decides if the privacy benefit outweighs the functionality loss.
+
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true

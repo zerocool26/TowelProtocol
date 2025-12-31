@@ -1,0 +1,55 @@
+policyId: "net-001"
+version: "1.0.0"
+name: "Disable Wi-Fi Sense"
+category: Network
+description: |
+  Disables Wi-Fi Sense which automatically connects to suggested open hotspots
+  and shares Wi-Fi network access with contacts. Prevents automatic connection
+  to potentially insecure networks and sharing credentials with third parties.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Microsoft\\WcmSvc\\wifinetworkmanager\\config"
+  valueName: "AutoConnectAllowedOEM"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Deprecated
+riskLevel: Low
+reversible: true
+revertMechanism: "Set AutoConnectAllowedOEM to 1"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: 22621
+dependencies: []
+knownBreakage:
+  - scenario: "Automatic connection to open hotspots disabled"
+    severity: Low
+    details: "Must manually connect to public Wi-Fi networks"
+  - scenario: "Wi-Fi network sharing with contacts disabled"
+    severity: Low
+    details: "Feature already deprecated in Windows 11"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\WcmSvc\\wifinetworkmanager\\config' -Name AutoConnectAllowedOEM -ErrorAction SilentlyContinue"
+expectedOutput: "AutoConnectAllowedOEM: 0"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+tags:
+  - "network"
+  - "wifi"
+  - "privacy"
+  - "deprecated"
+  - "low-risk"
+notes: "Wi-Fi Sense largely removed in Windows 10 1903+, but registry key still exists"
+enabledByDefault: true
+includedInProfiles:
+  - "Standard"
+  - "Hardened"
+  - "MaximumPrivacy"

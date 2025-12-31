@@ -1,0 +1,127 @@
+# ============================================================================
+# Policy: net-001-b - Block watson.telemetry.microsoft.com
+# ============================================================================
+# ATOMIC FIREWALL POLICY: Controls ONE specific endpoint
+# Part of telemetry endpoint blocking - each endpoint is separately selectable
+# ============================================================================
+
+policyId: "net-001-b"
+version: "1.0.0"
+name: "Block watson.telemetry.microsoft.com (Crash Reporting Endpoint)"
+category: Network
+
+description: |
+  Blocks outbound connections to watson.telemetry.microsoft.com via Windows Firewall.
+
+  This endpoint is used by Windows Error Reporting (WER) to upload crash dumps
+  and error reports to Microsoft for analysis and debugging.
+
+  ATOMIC CONTROL: This policy creates ONE firewall rule for ONE endpoint.
+  You can select which telemetry endpoints to block individually. Related:
+  net-001-a (vortex), net-001-c (settings-win), net-001-d (oca).
+
+mechanism: Firewall
+
+mechanismDetails:
+  type: FirewallRule
+  ruleGrouping: Individual
+
+  endpoint:
+    hostname: "watson.telemetry.microsoft.com"
+    description: "Windows Error Reporting (WER) crash dump upload endpoint"
+    criticality: "Non-essential"
+    knownBreakage: "Windows Error Reporting uploads - crash analysis may be limited"
+    category: "Telemetry"
+    port: null  # All ports
+    protocol: "Both"  # TCP and UDP
+    direction: "Outbound"
+
+  firewallRule:
+    displayName: "PHF Block - watson.telemetry.microsoft.com"
+    description: "Privacy Hardening Framework - Block error reporting endpoint"
+    direction: "Outbound"
+    action: "Block"
+    protocol: "Any"
+    remoteAddress: "watson.telemetry.microsoft.com"
+    group: "PrivacyHardeningFramework"
+    enabled: true
+
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+
+revertMechanism: |
+  Remove the firewall rule using Windows Firewall or this tool.
+  The rule is tagged with Group="PrivacyHardeningFramework" for easy identification.
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  skuRestrictions: []
+
+dependencies: []
+
+knownBreakage:
+  - scenario: "Crash Report Uploads"
+    severity: "Low"
+    description: |
+      Crash dumps and error reports will not be uploaded to Microsoft.
+      This means Microsoft won't receive crash data to help fix bugs
+      affecting your system.
+    affectedComponents: ["Windows Error Reporting"]
+
+  - scenario: "Solution Availability"
+    severity: "Low"
+    description: |
+      You may not receive automatic solutions to known problems since
+      crash reports aren't being sent for analysis.
+    affectedComponents: ["Problem Reporting", "Solution Center"]
+
+verificationCommand: |
+  netsh advfirewall firewall show rule name="PHF Block - watson.telemetry.microsoft.com"
+
+expectedOutput: |
+  Rule Name:                            PHF Block - watson.telemetry.microsoft.com
+  Enabled:                              Yes
+  Direction:                            Out
+  Action:                               Block
+
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+  - "https://docs.microsoft.com/en-us/windows/privacy/windows-endpoints"
+
+tags:
+  - firewall
+  - network
+  - telemetry
+  - endpoint-blocking
+  - watson
+  - error-reporting
+  - atomic-policy
+  - per-endpoint-control
+
+notes: |
+  ATOMIC FIREWALL CONTROL:
+
+  This is ONE of 50+ planned endpoint-specific firewall policies.
+
+  PRIVACY vs FUNCTIONALITY:
+  - Blocking watson endpoint prevents crash report uploads
+  - Privacy benefit: Crash dumps can contain sensitive data
+  - Functionality loss: Microsoft can't analyze crashes to provide fixes
+  - USER DECIDES which is more important
+
+  RELATED ENDPOINTS:
+  - net-001-a: vortex.data.microsoft.com (general telemetry)
+  - net-001-b: watson.telemetry.microsoft.com (this policy - crash reports)
+  - net-001-c: settings-win.data.microsoft.com (settings sync)
+  - net-001-d: oca.telemetry.microsoft.com (online crash analysis)
+  - net-001-e: telecommand.telemetry.microsoft.com (remote commands)
+
+  You can block all, some, or none based on your privacy needs.
+
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true

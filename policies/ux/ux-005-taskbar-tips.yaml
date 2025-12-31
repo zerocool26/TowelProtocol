@@ -1,0 +1,55 @@
+policyId: "ux-005"
+version: "1.0.0"
+name: "Disable Taskbar Tips and Notifications"
+category: UX
+description: |
+  Disables tips, tricks, and suggestions that appear in the taskbar and notification area.
+  Prevents Windows from showing notifications about features, tips about using Windows,
+  and suggestions based on your usage patterns.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager"
+  valueName: "SubscribedContent-338389Enabled"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set SubscribedContent-338389Enabled to 1"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Windows tips and tricks notifications disabled"
+    severity: Low
+    details: "No helpful feature suggestions from Windows"
+  - scenario: "Taskbar tips disabled"
+    severity: Low
+    details: "Must learn Windows features manually"
+verificationCommand: "Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager' -Name SubscribedContent-338389Enabled"
+expectedOutput: "SubscribedContent-338389Enabled: 0"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+tags:
+  - "ux"
+  - "privacy"
+  - "notifications"
+  - "tips"
+  - "low-risk"
+notes: "Part of ContentDeliveryManager system that controls various Windows suggestions"
+enabledByDefault: true
+includedInProfiles:
+  - "Standard"
+  - "Hardened"
+  - "MaximumPrivacy"

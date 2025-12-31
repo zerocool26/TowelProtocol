@@ -1,0 +1,51 @@
+policyId: "ai-005"
+version: "1.0.0"
+name: "Disable Search Highlights"
+category: UX
+description: |
+  Disables Search Highlights feature which shows trending searches, news, and other
+  content in the search box. Prevents Windows from tracking and displaying trending topics.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search"
+  valueName: "EnableDynamicContentInWSB"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Delete registry value or set to 1"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Search highlights and dynamic content disabled"
+    severity: Low
+    details: "Clean, distraction-free search box"
+verificationCommand: "reg query \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search\" /v EnableDynamicContentInWSB"
+expectedOutput: "0x0"
+references:
+  - "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-search"
+tags:
+  - "ux"
+  - "search"
+  - "highlights"
+  - "privacy"
+  - "supported"
+notes: null
+enabledByDefault: true
+includedInProfiles:
+  - "Balanced"
+  - "Hardened"
+  - "MaximumPrivacy"

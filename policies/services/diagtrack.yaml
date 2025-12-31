@@ -1,0 +1,55 @@
+policyId: "svc-001"
+version: "1.0.0"
+name: "Disable DiagTrack Service"
+category: Services
+description: |
+  Disables and stops the Connected User Experiences and Telemetry service (DiagTrack).
+  This is the primary service responsible for collecting and transmitting diagnostic data.
+mechanism: Service
+mechanismDetails:
+  type: ServiceConfig
+  serviceName: "DiagTrack"
+  displayName: "Connected User Experiences and Telemetry"
+  startupType: "Disabled"
+  stopService: true
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: "Set service to Automatic (Delayed Start) and start"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Microsoft Store may fail to function correctly"
+    severity: High
+    details: "Store depends on DiagTrack for various operations"
+  - scenario: "Windows Defender cloud protection degraded"
+    severity: Medium
+    details: "Cloud-delivered protection relies on DiagTrack"
+  - scenario: "Some system troubleshooters unavailable"
+    severity: Low
+    details: null
+verificationCommand: "sc query DiagTrack"
+expectedOutput: "STATE: STOPPED, START_TYPE: DISABLED"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#bkmk-priv-feedback"
+tags:
+  - "service"
+  - "telemetry"
+  - "privacy"
+  - "medium-risk"
+notes: |
+  ⚠ HIGH IMPACT: Disabling this service will break several Windows features.
+  Only apply if you can tolerate Store and cloud Defender disruptions.
+  Consider using diagnostic data registry settings instead for lower-risk alternative.
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"

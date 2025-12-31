@@ -1,0 +1,60 @@
+policyId: "svc-005"
+version: "1.0.0"
+name: "Disable Xbox Services (XblAuthManager, XblGameSave, XboxGipSvc, XboxNetApiSvc)"
+category: Services
+description: |
+  Disables all Xbox-related services on Windows 11. Removes Xbox Live authentication,
+  game save sync, gamepad support, and Xbox networking. Only relevant if you use Xbox
+  games or Game Pass on your PC.
+mechanism: PowerShell
+mechanismDetails:
+  type: PowerShellScript
+  scriptPath: "Services/Disable-XboxServices.ps1"
+  parameters:
+    LogPath: "%ProgramData%\\PrivacyHardeningFramework\\logs\\xbox-services.log"
+  requiresSignature: true
+supportStatus: Supported
+riskLevel: High
+reversible: true
+revertMechanism: "Re-enable Xbox services via Services.msc or PowerShell"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Xbox Live games will not function"
+    severity: High
+    details: "Game Pass, Xbox app, Xbox Live multiplayer all broken"
+  - scenario: "Game saves will not sync to cloud"
+    severity: High
+    details: "Progress may be lost when switching devices"
+  - scenario: "Xbox Game Bar will not work"
+    severity: Medium
+    details: "Recording and overlay features unavailable"
+  - scenario: "Xbox controller support may be affected"
+    severity: Medium
+    details: "Basic controller support remains, advanced features lost"
+verificationCommand: "Get-Service XblAuthManager,XblGameSave,XboxGipSvc,XboxNetApiSvc | Select-Object Name,Status,StartType"
+expectedOutput: "All services Stopped and Disabled"
+references:
+  - "https://support.xbox.com/en-US/help/games-apps/game-setup-and-play/xbox-app-for-pc-overview"
+tags:
+  - "service"
+  - "xbox"
+  - "gaming"
+  - "bloatware"
+  - "high-risk"
+notes: |
+  ⚠ HIGH IMPACT: Only disable if you do NOT use Xbox games, Game Pass, or Xbox features.
+  This will completely break Xbox gaming on Windows.
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"

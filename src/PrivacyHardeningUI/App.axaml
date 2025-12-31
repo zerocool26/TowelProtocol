@@ -1,0 +1,35 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="using:PrivacyHardeningUI.Converters"
+             x:Class="PrivacyHardeningUI.App"
+             RequestedThemeVariant="Light">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://PrivacyHardeningUI/Styles/ThemeResources.Light.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <!-- Value Converters -->
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+            <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
+            <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+            <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+            <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
+            <converters:RiskLevelToBrushConverter x:Key="RiskLevelToBrushConverter"/>
+            <converters:EnumToStringConverter x:Key="EnumToStringConverter"/>
+
+            <!-- Audit View Converters -->
+            <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
+            <converters:BoolToCheckmarkConverter x:Key="BoolToCheckmarkConverter"/>
+            <converters:BoolToStatusTextConverter x:Key="BoolToStatusTextConverter"/>
+
+            <!-- Diff View Converters -->
+            <converters:ChangeTypeToColorConverter x:Key="ChangeTypeToColorConverter"/>
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://PrivacyHardeningUI/Styles/ControlStyles.axaml" />
+        <StyleInclude Source="avares://PrivacyHardeningUI/Styles/IconStyles.axaml" />
+    </Application.Styles>
+</Application>

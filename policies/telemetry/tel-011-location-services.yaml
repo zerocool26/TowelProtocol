@@ -1,0 +1,55 @@
+policyId: "tel-011"
+version: "1.0.0"
+name: "Disable Location Services"
+category: Privacy
+description: |
+  Disables Windows location services system-wide. Prevents apps and Windows from
+  accessing device location data (GPS, WiFi triangulation, IP geolocation).
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\LocationAndSensors"
+  valueName: "DisableLocation"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: "Delete registry value or set to 0"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Location-based features will not work"
+    severity: Medium
+    details: "Maps, weather, Find My Device all affected"
+  - scenario: "Apps requiring location will fail or show errors"
+    severity: Medium
+    details: "Includes navigation, weather, local search apps"
+  - scenario: "Time zone may not auto-update when traveling"
+    severity: Low
+    details: "Manual time zone adjustment required"
+verificationCommand: "reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\LocationAndSensors /v DisableLocation"
+expectedOutput: "0x1"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#location"
+tags:
+  - "privacy"
+  - "location"
+  - "gps"
+  - "geolocation"
+  - "supported"
+notes: "⚠ Significant functionality impact. Only enable for high-security environments."
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"

@@ -1,0 +1,54 @@
+policyId: "tel-001"
+version: "1.0.0"
+name: "Set Diagnostic Data to Security Level (Enterprise)"
+category: Telemetry
+description: |
+  Sets Windows diagnostic data collection to Security level (0), the minimum available on
+  Enterprise and Education SKUs. This significantly reduces telemetry but does NOT eliminate
+  all data collection. Security-critical events are still sent to Microsoft.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection"
+  valueName: "AllowTelemetry"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Delete registry value or set to 3 (Full)"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Education"
+  excludedSkus:
+    - "Home"
+    - "Pro"
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Windows Update troubleshooting may require Basic telemetry temporarily"
+    severity: Low
+    details: null
+  - scenario: "Enterprise analytics tools may expect higher telemetry levels"
+    severity: Medium
+    details: null
+verificationCommand: "reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection /v AllowTelemetry"
+expectedOutput: "0x0"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization"
+tags:
+  - "telemetry"
+  - "privacy"
+  - "enterprise"
+  - "supported"
+notes: "Enterprise and Education SKUs only. Pro/Home SKUs cannot use Security (0) level."
+enabledByDefault: true
+includedInProfiles:
+  - "Balanced"
+  - "Hardened"
+  - "MaximumPrivacy"

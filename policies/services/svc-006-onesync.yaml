@@ -1,0 +1,55 @@
+policyId: "svc-006"
+version: "1.0.0"
+name: "Disable OneSyncSvc (Sync Host)"
+category: Services
+description: |
+  Disables the OneSyncSvc which synchronizes mail, contacts, calendar, and other data
+  with Microsoft cloud services. Required for Mail app and People app sync.
+mechanism: Service
+mechanismDetails:
+  type: ServiceConfig
+  serviceName: "OneSyncSvc"
+  displayName: "Sync Host"
+  startupType: "Disabled"
+  stopService: true
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: "Set service to Automatic (Delayed Start)"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Windows Mail app will not sync email"
+    severity: High
+    details: "Use Outlook or third-party email client instead"
+  - scenario: "People app will not sync contacts"
+    severity: Medium
+    details: "Contacts remain local only"
+  - scenario: "Calendar sync broken"
+    severity: Medium
+    details: "Use third-party calendar app"
+verificationCommand: "sc query OneSyncSvc"
+expectedOutput: "STATE: STOPPED, START_TYPE: DISABLED"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+tags:
+  - "service"
+  - "sync"
+  - "privacy"
+  - "cloud"
+  - "medium-risk"
+notes: "⚠ Breaks built-in Mail, Calendar, and People apps"
+enabledByDefault: false
+includedInProfiles:
+  - "Hardened"
+  - "MaximumPrivacy"
