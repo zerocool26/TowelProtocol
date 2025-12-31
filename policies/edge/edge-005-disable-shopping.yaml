@@ -1,0 +1,97 @@
+policyId: "edge-005"
+version: "1.0.0"
+name: "Disable Edge Shopping Features and Price Tracking"
+category: Edge
+description: |
+  Disables Microsoft Edge shopping features including price comparison,
+  coupons, and product tracking.
+
+  When disabled, Edge will NOT:
+  - Track products you view for price monitoring
+  - Show price comparison pop-ups
+  - Suggest coupons for shopping sites
+  - Send shopping data to Microsoft for recommendations
+  - Track your shopping behavior
+
+  Privacy benefit:
+  Your shopping activity and product interests not tracked by Microsoft.
+
+  Feature loss:
+  No automatic coupon finder or price tracking.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Edge"
+  valueName: "EdgeShoppingAssistantEnabled"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set EdgeShoppingAssistantEnabled to 1 or delete the value"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: "Microsoft Edge installed"
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "No automatic coupon suggestions"
+    severity: Low
+    details: "Must find coupons manually"
+  - scenario: "No price tracking"
+    severity: Low
+    details: "Must manually check prices"
+  - scenario: "No price comparison pop-ups"
+    severity: None
+    details: "Less shopping interruption (benefit)"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge' -Name EdgeShoppingAssistantEnabled -ErrorAction SilentlyContinue"
+expectedOutput: "EdgeShoppingAssistantEnabled: 0"
+references:
+  - "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies#edgeshoppingassistantenabled"
+tags:
+  - "edge"
+  - "browser"
+  - "privacy"
+  - "shopping"
+  - "tracking"
+  - "low-risk"
+notes: |
+  Low risk: Convenience feature, not essential browser functionality.
+
+  Privacy concern - MEDIUM:
+  Edge shopping features track:
+  - Which products you view
+  - Product pages you visit
+  - Shopping sites you use
+  - Price points you're interested in
+  - Purchase patterns
+  - Product categories you browse
+
+  This data is sent to Microsoft to:
+  - Build shopping profile
+  - Provide recommendations
+  - Track consumer behavior
+  - Potentially share with retailers
+
+  Privacy recommendation:
+  Disable unless you actively want Microsoft tracking your shopping.
+
+  Alternative:
+  Use browser extensions like Honey or manual coupon sites for deals
+  without integrated browser tracking.
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"
+  - "Hardened"
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false

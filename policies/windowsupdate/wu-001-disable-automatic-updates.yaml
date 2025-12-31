@@ -1,0 +1,92 @@
+policyId: "wu-001"
+version: "1.0.0"
+name: "Configure Windows Update Behavior"
+category: WindowsUpdate
+description: |
+  Configure how Windows Update operates on your system.
+
+  This policy gives you granular control over Windows Update automation,
+  allowing you to choose between:
+  - Fully automatic updates (Microsoft default)
+  - Notify before download
+  - Notify before install
+  - Fully manual (never check)
+
+  Privacy consideration: Automatic updates may install telemetry components.
+  Control consideration: Manual updates give you review time before installation.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU"
+  valueName: "NoAutoUpdate"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: "Set NoAutoUpdate to 0 or delete the value"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Education"
+  excludedSkus:
+    - "Home"
+  deviceRequirement: "Pro/Enterprise SKU required for Group Policy control"
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Automatic security updates disabled"
+    severity: High
+    details: "Critical security patches won't install automatically"
+  - scenario: "Manual update checking required"
+    severity: Medium
+    details: "You must manually check for and install updates"
+  - scenario: "System may become vulnerable if neglected"
+    severity: High
+    details: "Unpatched security vulnerabilities if updates not applied"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU' -Name NoAutoUpdate -ErrorAction SilentlyContinue"
+expectedOutput: "NoAutoUpdate: 1 (Disabled)"
+references:
+  - "https://learn.microsoft.com/en-us/windows/deployment/update/waas-wu-settings"
+  - "https://admx.help/?Category=Windows_10_2016&Policy=Microsoft.Policies.WindowsUpdate::AutoUpdateCfg"
+tags:
+  - "windowsupdate"
+  - "privacy"
+  - "control"
+  - "medium-risk"
+  - "automation"
+notes: |
+  Medium risk: You control when updates install, but must be diligent.
+
+  Privacy benefit:
+  - Prevents automatic installation of telemetry components
+  - Lets you review updates before installation
+  - Gives time to research potentially problematic updates
+
+  Security consideration:
+  - You MUST manually check for updates regularly
+  - Critical security patches won't install automatically
+  - System becomes vulnerable if updates are delayed too long
+
+  Recommended approach:
+  1. Check for updates weekly
+  2. Review update descriptions before installing
+  3. Test updates on non-critical system first if possible
+  4. Don't delay security updates more than 30 days
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false
+helpText: |
+  This policy gives you control over WHEN updates install, not WHETHER they install.
+
+  You should still install security updates, just on your schedule after review.
+
+  Recommendation: Disable automatic updates if you want control, but check
+  manually at least once per week for critical security patches.

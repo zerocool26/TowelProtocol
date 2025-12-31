@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- ==================== Fluent Design 2.0 - Animation Timing Resources ==================== -->
+
+  <!-- NOTE: Avalonia 11 uses Transitions in control Styles rather than standalone animations.
+       This file provides reusable animation timing values for use in control styles and transitions.
+
+       Usage Example in a Style:
+       <Style Selector="Button">
+         <Setter Property="Transitions">
+           <Transitions>
+             <DoubleTransition Property="Opacity" Duration="{StaticResource AnimationDurationFast}" />
+           </Transitions>
+         </Setter>
+       </Style>
+  -->
+
+  <!-- ==================== Animation Duration Constants ==================== -->
+
+  <!-- Ultra-fast animations (instant feedback, 100ms) -->
+  <x:Double x:Key="AnimationDurationUltraFast">0.1</x:Double>
+
+  <!-- Fast animations (micro-interactions, hover states, 150ms) -->
+  <x:Double x:Key="AnimationDurationFast">0.15</x:Double>
+
+  <!-- Normal animations (page transitions, reveals, 250ms) -->
+  <x:Double x:Key="AnimationDurationNormal">0.25</x:Double>
+
+  <!-- Moderate animations (300ms) -->
+  <x:Double x:Key="AnimationDurationModerate">0.3</x:Double>
+
+  <!-- Slow animations (complex transitions, large panels, 400ms) -->
+  <x:Double x:Key="AnimationDurationSlow">0.4</x:Double>
+
+  <!-- Very slow animations (major state changes, 600ms) -->
+  <x:Double x:Key="AnimationDurationVerySlow">0.6</x:Double>
+
+  <!-- ==================== Easing Configuration (String values for CubicBezier) ==================== -->
+
+  <!-- Fluent Design System Easing Curves -->
+  <!-- These match Microsoft's Fluent Design motion guidelines -->
+
+  <!-- Standard easing for most transitions -->
+  <x:String x:Key="EasingStandard">cubic-bezier(0.8, 0, 0.2, 1)</x:String>
+
+  <!-- Deceleration curve (entering elements) -->
+  <x:String x:Key="EasingDecelerate">cubic-bezier(0, 0, 0.2, 1)</x:String>
+
+  <!-- Acceleration curve (exiting elements) -->
+  <x:String x:Key="EasingAccelerate">cubic-bezier(0.4, 0, 1, 1)</x:String>
+
+  <!-- Sharp curve (quick attention) -->
+  <x:String x:Key="EasingSharp">cubic-bezier(0.4, 0, 0.6, 1)</x:String>
+
+</ResourceDictionary>

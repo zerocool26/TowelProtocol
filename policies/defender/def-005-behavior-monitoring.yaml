@@ -1,0 +1,91 @@
+policyId: "def-005"
+version: "1.0.0"
+name: "Disable Windows Defender Behavior Monitoring"
+category: Defender
+description: |
+  Disables Windows Defender behavior monitoring which analyzes running processes
+  for suspicious activity patterns.
+
+  Behavior monitoring collects detailed process execution data including:
+  - Process creation/termination events
+  - File system modifications
+  - Registry changes
+  - Network connections
+  - Memory operations
+
+  This data may be sent to Microsoft for cloud-based analysis.
+
+  Privacy benefit: Significantly reduces system monitoring and data collection.
+  Security risk: Defender can't detect malware based on behavior, only signatures.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection"
+  valueName: "DisableBehaviorMonitoring"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Critical
+reversible: true
+revertMechanism: "Set DisableBehaviorMonitoring to 0 (Enabled)"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Education"
+  excludedSkus:
+    - "Home"
+  deviceRequirement: "Tamper Protection must be disabled to apply this policy"
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Behavior-based malware detection disabled"
+    severity: Critical
+    details: "Zero-day and unknown malware may not be detected"
+  - scenario: "Process monitoring stopped"
+    severity: High
+    details: "Defender can't analyze running processes for threats"
+  - scenario: "Fileless malware protection reduced"
+    severity: Critical
+    details: "Memory-only attacks may go undetected"
+verificationCommand: "Get-MpPreference | Select-Object -ExpandProperty DisableBehaviorMonitoring"
+expectedOutput: "DisableBehaviorMonitoring: True"
+references:
+  - "https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/configure-real-time-protection-microsoft-defender-antivirus"
+  - "https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/behavior-monitor"
+tags:
+  - "defender"
+  - "privacy"
+  - "monitoring"
+  - "critical-risk"
+  - "advanced"
+notes: |
+  ⚠️ CRITICAL RISK: Severely reduces malware detection capability.
+
+  Only disable if:
+  - Using alternative EDR/antivirus with behavior monitoring
+  - Running in isolated/air-gapped environment
+  - Accepting significantly increased security risk for privacy
+
+  Tamper Protection will prevent this change unless disabled first.
+
+  Privacy note: Behavior monitoring collects extensive system activity data.
+  Disabling prevents this telemetry but leaves system more vulnerable.
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: true
+helpText: |
+  This is an advanced privacy setting with critical security implications.
+
+  You should only disable behavior monitoring if you:
+  1. Have alternative security software with behavior detection
+  2. Fully understand the security risks
+  3. Are in a controlled/isolated environment
+
+  Behavior monitoring is Defender's primary defense against unknown threats.

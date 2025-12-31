@@ -1,0 +1,77 @@
+policyId: cortana-001
+version: 1.0.0
+name: Disable Cortana
+category: Privacy
+description: |
+  Completely disables Cortana, Microsoft's voice assistant. Prevents Cortana from
+  collecting voice data, search queries, location data, and other personal information.
+
+mechanism: Registry
+mechanismDetails:
+  path: HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search
+  valueName: AllowCortana
+  valueType: DWord
+  value: 0
+
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: Set AllowCortana to 1 or delete the value
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  supportedSkus:
+    - Home
+    - Pro
+    - Enterprise
+    - Education
+
+dependencies: []
+
+knownBreakage:
+  - scenario: Cortana features will not be available
+    affectedFeatures:
+      - Voice commands
+      - Cortana search
+      - Reminders and tasks via Cortana
+      - Voice-activated assistance
+      - Cortana integration in apps
+    severity: Medium
+    workaround: Use Windows Search without Cortana, or use alternative assistants
+
+tags:
+  - privacy
+  - cortana
+  - voice-assistant
+  - data-collection
+  - search
+
+enabledByDefault: false
+autoApply: false
+requiresConfirmation: true
+userMustChoose: false
+showInUI: true
+
+helpText: |
+  Cortana collects extensive data including:
+  - Voice recordings and transcriptions
+  - Search queries and browsing history
+  - Location data
+  - Calendar and email content
+  - Contacts information
+  - Device usage patterns
+
+  Privacy Benefits of Disabling:
+  ✓ No voice data sent to Microsoft
+  ✓ Search queries not tracked
+  ✓ No personal data collection for assistant features
+  ✓ Reduced telemetry to Microsoft servers
+
+  Functionality Impact:
+  ✗ Voice commands won't work
+  ✗ Cortana reminders unavailable
+  ✗ Voice-activated search disabled
+  ✗ Some search features may be limited
+
+  Note: Windows Search will still work, but without Cortana's AI features.

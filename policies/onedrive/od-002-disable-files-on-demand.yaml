@@ -1,0 +1,87 @@
+policyId: "od-002"
+version: "1.0.0"
+name: "Disable OneDrive Files On-Demand"
+category: OneDrive
+description: |
+  Disables OneDrive Files On-Demand feature which shows cloud-only files
+  in File Explorer that download when accessed.
+
+  When disabled:
+  - All OneDrive files must be fully downloaded (no cloud-only placeholders)
+  - File Explorer won't show files that aren't physically on disk
+  - OneDrive won't send file access telemetry for placeholder files
+
+  Privacy consideration:
+  Files On-Demand sends telemetry about which files you access, even if
+  the file content is already local. Disabling prevents this tracking.
+
+  Disk space consideration:
+  Without Files On-Demand, ALL OneDrive files consume local disk space.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\OneDrive"
+  valueName: "DisableFilesOnDemand"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set DisableFilesOnDemand to 0 or delete the value"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: "OneDrive must be installed"
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "All OneDrive files consume local disk space"
+    severity: Low
+    details: "Can't have cloud-only files to save disk space"
+  - scenario: "Files On-Demand UI features removed"
+    severity: Low
+    details: "No green checkmark/cloud icon status indicators"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\OneDrive' -Name DisableFilesOnDemand -ErrorAction SilentlyContinue"
+expectedOutput: "DisableFilesOnDemand: 1"
+references:
+  - "https://learn.microsoft.com/en-us/sharepoint/files-on-demand-windows"
+tags:
+  - "onedrive"
+  - "privacy"
+  - "telemetry"
+  - "low-risk"
+  - "disk-space"
+notes: |
+  Low risk: Only affects disk space usage, not critical functionality.
+
+  Privacy benefit:
+  - OneDrive can't track which cloud-only files you access
+  - Reduces telemetry about file usage patterns
+  - No network requests to check file status
+
+  Disk space impact:
+  - All synced OneDrive files consume local disk space
+  - Can't use cloud-only files to save space
+  - Consider reducing OneDrive sync scope if disk space limited
+
+  Use case:
+  - Privacy-conscious users who want to reduce OneDrive telemetry
+  - Systems with ample disk space
+  - Users who prefer fully local files
+
+  Note: This policy only applies if OneDrive sync is enabled (od-001 not applied).
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"
+  - "Hardened"
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false

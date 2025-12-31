@@ -1,0 +1,54 @@
+policyId: app-002
+version: 1.0.0
+name: Disable App Suggestions in Start Menu
+category: Privacy
+description: |
+  Disables app suggestions in the Start Menu and taskbar. Prevents Windows from
+  suggesting apps based on your usage patterns and sending usage data to Microsoft.
+
+mechanism: Registry
+mechanismDetails:
+  path: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager
+  valueName: SubscribedContent-338388Enabled
+  valueType: DWord
+  value: 0
+
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: Set HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager\SubscribedContent-338388Enabled to 1
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  supportedSkus:
+    - Home
+    - Pro
+    - Enterprise
+    - Education
+
+dependencies: []
+
+knownBreakage:
+  - scenario: App suggestions will not appear in Start Menu
+    affectedFeatures:
+      - Suggested apps section in Start Menu
+    severity: Low
+    workaround: None needed - manually search for apps
+
+tags:
+  - privacy
+  - start-menu
+  - suggestions
+  - tracking
+
+enabledByDefault: false
+autoApply: false
+requiresConfirmation: true
+userMustChoose: false
+showInUI: true
+
+helpText: |
+  Prevents Windows from tracking your app usage to suggest apps in the Start Menu.
+  This improves privacy by preventing Microsoft from collecting data about which
+  apps you use and when.

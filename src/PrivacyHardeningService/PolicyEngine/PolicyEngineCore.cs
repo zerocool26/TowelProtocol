@@ -206,6 +206,85 @@ public sealed class PolicyEngineCore
         };
     }
 
+    // Overload which reports progress via a callback. Progress percent is approximate based on number of policies processed.
+    public async Task<ApplyResult> ApplyAsync(ApplyCommand command, Action<int, string?>? progressCallback, CancellationToken cancellationToken)
+    {
+        var policies = await LoadPoliciesAsync(cancellationToken);
+
+        // Resolve dependencies
+        var policiesToApply = _dependencyResolver.ResolveDependencies(policies, command.PolicyIds);
+
+        var appliedPolicies = new List<string>();
+        var failedPolicies = new List<string>();
+        var changes = new List<ChangeRecord>();
+
+        int total = Math.Max(1, policiesToApply.Length);
+        int processed = 0;
+
+        progressCallback?.Invoke(0, "Starting apply...");
+
+        foreach (var policy in policiesToApply)
+        {
+            processed++;
+            int percent = (int)((processed - 1) * 100.0 / total);
+            progressCallback?.Invoke(percent, $"Applying {policy.PolicyId}");
+
+            if (!_compatibility.IsApplicable(policy))
+            {
+                _logger.LogWarning("Skipping non-applicable policy: {PolicyId}", policy.PolicyId);
+                failedPolicies.Add(policy.PolicyId);
+                continue;
+            }
+
+            try
+            {
+                var executor = _executorFactory.GetExecutor(policy.Mechanism);
+                var change = await executor.ApplyAsync(policy, cancellationToken);
+                changes.Add(change);
+
+                if (change.Success)
+                {
+                    appliedPolicies.Add(policy.PolicyId);
+                    _logger.LogInformation("Applied policy: {PolicyId}", policy.PolicyId);
+                }
+                else
+                {
+                    failedPolicies.Add(policy.PolicyId);
+                    _logger.LogWarning("Failed to apply policy: {PolicyId} - {Error}",
+                        policy.PolicyId, change.ErrorMessage);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error applying policy: {PolicyId}", policy.PolicyId);
+                failedPolicies.Add(policy.PolicyId);
+
+                if (!command.ContinueOnError)
+                {
+                    break;
+                }
+            }
+
+            percent = (int)(processed * 100.0 / total);
+            progressCallback?.Invoke(percent, $"Completed {policy.PolicyId}");
+        }
+
+        // Save changes to log
+        await _changeLog.SaveChangesAsync(changes.ToArray(), cancellationToken);
+
+        return new ApplyResult
+        {
+            CommandId = command.CommandId,
+            Success = failedPolicies.Count == 0,
+            AppliedPolicies = appliedPolicies.ToArray(),
+            FailedPolicies = failedPolicies.ToArray(),
+            Changes = changes.ToArray(),
+            SnapshotId = Guid.NewGuid().ToString(),
+            CompletedAt = DateTime.UtcNow,
+            RestartRecommended = false
+        };
+    }
+
     public async Task<RevertResult> RevertAsync(RevertCommand command, CancellationToken cancellationToken)
     {
         var policies = await LoadPoliciesAsync(cancellationToken);

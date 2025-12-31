@@ -2,25 +2,144 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <!-- Dark color palette -->
-  <Color x:Key="AccentColor">#0EA5E9</Color>
-  <Color x:Key="AccentHoverColor">#0284C7</Color>
-  <Color x:Key="SurfaceColor">#FF0B1220</Color>
-  <Color x:Key="PanelColor">#FF0F1724</Color>
-  <Color x:Key="TextPrimaryColor">#FFF8FAFC</Color>
-  <Color x:Key="TextSecondaryColor">#FF94A3B8</Color>
+  <!-- ==================== Fluent Design 2.0 - Dark Theme ==================== -->
+
+  <!-- Primary Accent Colors (Microsoft Fluent Design System - Dark Mode) -->
+  <Color x:Key="AccentColor">#60CDFF</Color>
+  <Color x:Key="AccentHoverColor">#3AA0F3</Color>
+  <Color x:Key="AccentPressedColor">#0078D4</Color>
+  <Color x:Key="AccentDisabledColor">#3D5A80</Color>
+
+  <!-- Surface & Background Colors -->
+  <Color x:Key="SurfaceColor">#FF1C1C1C</Color>
+  <Color x:Key="SurfaceSecondaryColor">#FF242424</Color>
+  <Color x:Key="PanelColor">#FF2C2C2C</Color>
+  <Color x:Key="CardColor">#FF252525</Color>
+  <Color x:Key="LayerColor">#1F1F1F</Color>
+  <Color x:Key="LayerAltColor">#2B2B2B</Color>
+
+  <!-- Text Colors (Semantic) -->
+  <Color x:Key="TextPrimaryColor">#FFFFFFFF</Color>
+  <Color x:Key="TextSecondaryColor">#FFB4B4B4</Color>
+  <Color x:Key="TextTertiaryColor">#FF8A8A8A</Color>
+  <Color x:Key="TextDisabledColor">#FF5A5A5A</Color>
+  <Color x:Key="TextOnAccentColor">#FF000000</Color>
+
+  <!-- Border Colors -->
+  <Color x:Key="BorderColor">#FF3F3F3F</Color>
+  <Color x:Key="BorderSecondaryColor">#FF4F4F4F</Color>
+  <Color x:Key="DividerColor">#FF2F2F2F</Color>
+
+  <!-- Semantic Status Colors (Dark Mode Adjusted) -->
+  <Color x:Key="SuccessColor">#34D399</Color>
+  <Color x:Key="WarningColor">#FBBF24</Color>
+  <Color x:Key="ErrorColor">#F87171</Color>
+  <Color x:Key="InfoColor">#60A5FA</Color>
+
+  <!-- Risk Level Colors (for policies - Dark Mode) -->
+  <Color x:Key="RiskLowColor">#34D399</Color>
+  <Color x:Key="RiskMediumColor">#FBBF24</Color>
+  <Color x:Key="RiskHighColor">#FB923C</Color>
+  <Color x:Key="RiskCriticalColor">#F87171</Color>
+
+  <!-- Shadow Colors (Fluent Depth System - Dark Mode) -->
+  <Color x:Key="ShadowColor">#66000000</Color>
+  <Color x:Key="ShadowDeepColor">#99000000</Color>
+
+  <!-- Overlay Colors -->
+  <Color x:Key="OverlayColor">#80000000</Color>
+  <Color x:Key="OverlayLightColor">#40000000</Color>
+
+  <!-- ==================== Solid Color Brushes ==================== -->
 
   <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
   <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}" />
+  <SolidColorBrush x:Key="AccentPressedBrush" Color="{StaticResource AccentPressedColor}" />
+  <SolidColorBrush x:Key="AccentDisabledBrush" Color="{StaticResource AccentDisabledColor}" />
+
   <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
+  <SolidColorBrush x:Key="SurfaceSecondaryBrush" Color="{StaticResource SurfaceSecondaryColor}" />
   <SolidColorBrush x:Key="PanelBrush" Color="{StaticResource PanelColor}" />
+  <SolidColorBrush x:Key="CardBrush" Color="{StaticResource CardColor}" />
+  <SolidColorBrush x:Key="LayerBrush" Color="{StaticResource LayerColor}" />
+  <SolidColorBrush x:Key="LayerAltBrush" Color="{StaticResource LayerAltColor}" />
+
   <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
   <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
+  <SolidColorBrush x:Key="TextTertiaryBrush" Color="{StaticResource TextTertiaryColor}" />
+  <SolidColorBrush x:Key="TextDisabledBrush" Color="{StaticResource TextDisabledColor}" />
+  <SolidColorBrush x:Key="TextOnAccentBrush" Color="{StaticResource TextOnAccentColor}" />
 
-  <!-- Font family: prefer bundled Inter fonts if present (avares syntax), fallback to system fonts -->
+  <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+  <SolidColorBrush x:Key="BorderSecondaryBrush" Color="{StaticResource BorderSecondaryColor}" />
+  <SolidColorBrush x:Key="DividerBrush" Color="{StaticResource DividerColor}" />
+
+  <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
+  <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
+  <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}" />
+  <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}" />
+
+  <SolidColorBrush x:Key="OverlayBrush" Color="{StaticResource OverlayColor}" />
+  <SolidColorBrush x:Key="OverlayLightBrush" Color="{StaticResource OverlayLightColor}" />
+
+  <!-- ==================== Fluent Design Effects ==================== -->
+
+  <!-- Card Shadow (Depth 4 - Enhanced for Dark) -->
+  <BoxShadows x:Key="CardShadow">0 2 8 0 #33000000, 0 1 4 0 #1A000000</BoxShadows>
+
+  <!-- Elevated Shadow (Depth 8) -->
+  <BoxShadows x:Key="ElevatedShadow">0 4 16 0 #4D000000, 0 2 8 0 #26000000</BoxShadows>
+
+  <!-- Dialog Shadow (Depth 16) -->
+  <BoxShadows x:Key="DialogShadow">0 8 32 0 #66000000, 0 4 16 0 #40000000</BoxShadows>
+
+  <!-- ==================== Typography ==================== -->
+
+  <!-- Font Families -->
   <FontFamily x:Key="AppFontFamily">avares://PrivacyHardeningUI/Assets/Fonts/Inter-Regular.ttf#Inter, "Segoe UI Variable", "Segoe UI", system-ui</FontFamily>
-
-  <!-- Icon font family: place a bundled icon font .ttf in Assets/Fonts and it will be used; fallback to system icons on Windows -->
   <FontFamily x:Key="AppIconFontFamily">avares://PrivacyHardeningUI/Assets/Fonts/MaterialSymbolsOutlined.ttf#Material Symbols Outlined, Segoe MDL2 Assets, Segoe UI Symbol</FontFamily>
+
+  <!-- Font Sizes (Fluent Type Ramp) -->
+  <x:Double x:Key="FontSizeCaption">12</x:Double>
+  <x:Double x:Key="FontSizeBody">14</x:Double>
+  <x:Double x:Key="FontSizeBodyLarge">16</x:Double>
+  <x:Double x:Key="FontSizeSubtitle">20</x:Double>
+  <x:Double x:Key="FontSizeTitle">24</x:Double>
+  <x:Double x:Key="FontSizeTitleLarge">28</x:Double>
+  <x:Double x:Key="FontSizeDisplay">40</x:Double>
+
+  <!-- Font Weights -->
+  <FontWeight x:Key="FontWeightLight">Light</FontWeight>
+  <FontWeight x:Key="FontWeightNormal">Normal</FontWeight>
+  <FontWeight x:Key="FontWeightMedium">Medium</FontWeight>
+  <FontWeight x:Key="FontWeightSemiBold">SemiBold</FontWeight>
+  <FontWeight x:Key="FontWeightBold">Bold</FontWeight>
+
+  <!-- ==================== Spacing & Dimensions ==================== -->
+
+  <!-- Spacing Scale (8px base unit) -->
+  <x:Double x:Key="SpacingXS">4</x:Double>
+  <x:Double x:Key="SpacingSM">8</x:Double>
+  <x:Double x:Key="SpacingMD">16</x:Double>
+  <x:Double x:Key="SpacingLG">24</x:Double>
+  <x:Double x:Key="SpacingXL">32</x:Double>
+  <x:Double x:Key="SpacingXXL">48</x:Double>
+
+  <!-- Border Radius (Fluent Rounded Corners) -->
+  <CornerRadius x:Key="CornerRadiusSmall">4</CornerRadius>
+  <CornerRadius x:Key="CornerRadiusMedium">8</CornerRadius>
+  <CornerRadius x:Key="CornerRadiusLarge">12</CornerRadius>
+  <CornerRadius x:Key="CornerRadiusXLarge">16</CornerRadius>
+
+  <!-- Border Thickness -->
+  <Thickness x:Key="BorderThicknessThin">1</Thickness>
+  <Thickness x:Key="BorderThicknessMedium">2</Thickness>
+  <Thickness x:Key="BorderThicknessThick">4</Thickness>
+
+  <!-- ==================== Animation Durations ==================== -->
+
+  <x:TimeSpan x:Key="AnimationDurationFast">0:0:0.15</x:TimeSpan>
+  <x:TimeSpan x:Key="AnimationDurationNormal">0:0:0.25</x:TimeSpan>
+  <x:TimeSpan x:Key="AnimationDurationSlow">0:0:0.4</x:TimeSpan>
 
 </ResourceDictionary>

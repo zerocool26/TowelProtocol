@@ -1,0 +1,89 @@
+policyId: "wu-002"
+version: "1.0.0"
+name: "Disable Automatic Driver Updates via Windows Update"
+category: WindowsUpdate
+description: |
+  Prevents Windows Update from automatically downloading and installing device drivers.
+
+  When enabled, Windows will NOT:
+  - Download driver updates from Windows Update
+  - Install drivers automatically during Windows Updates
+  - Replace manufacturer drivers with Microsoft-provided drivers
+
+  You retain full control over driver installation and can:
+  - Install drivers manually from manufacturer websites
+  - Use Device Manager to control driver updates
+  - Prevent potentially problematic driver auto-installation
+
+  Privacy consideration: Driver updates may contain telemetry components.
+  Stability consideration: Some automatic driver updates cause hardware issues.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate"
+  valueName: "ExcludeWUDriversInQualityUpdate"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set ExcludeWUDriversInQualityUpdate to 0 or delete the value"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Drivers not automatically updated"
+    severity: Low
+    details: "You must manually install driver updates from manufacturers"
+  - scenario: "New hardware may not work immediately"
+    severity: Medium
+    details: "Newly connected devices may need manual driver installation"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate' -Name ExcludeWUDriversInQualityUpdate -ErrorAction SilentlyContinue"
+expectedOutput: "ExcludeWUDriversInQualityUpdate: 1"
+references:
+  - "https://learn.microsoft.com/en-us/windows-hardware/drivers/install/how-windows-selects-a-driver-for-a-device"
+  - "https://admx.help/?Category=Windows_10_2016&Policy=Microsoft.Policies.WindowsUpdate::ExcludeWUDriversInQualityUpdate"
+tags:
+  - "windowsupdate"
+  - "drivers"
+  - "privacy"
+  - "control"
+  - "low-risk"
+  - "stability"
+notes: |
+  Low risk: Manual driver management is often preferred by advanced users.
+
+  Benefits of disabling automatic driver updates:
+  - Prevent buggy driver auto-installation
+  - Use manufacturer drivers instead of generic Microsoft drivers
+  - Control when driver changes occur
+  - Prevent driver-related telemetry installation
+
+  Use cases:
+  - Gaming systems (stable drivers critical)
+  - Professional audio/video workstations
+  - Systems with specialized hardware
+  - Users who prefer manufacturer drivers
+
+  You can still manually update drivers via:
+  - Device Manager
+  - Manufacturer software (NVIDIA GeForce Experience, etc.)
+  - Direct downloads from manufacturer websites
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"
+  - "Hardened"
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false

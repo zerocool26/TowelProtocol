@@ -1,0 +1,70 @@
+name: "Dependency Review & Security Scanning"
+
+on:
+  pull_request:
+    branches: [ "master", "main", "develop" ]
+  push:
+    branches: [ "master", "main" ]
+  schedule:
+    # Run daily at 3 AM UTC
+    - cron: '0 3 * * *'
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  dependency-review:
+    name: Dependency Security Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+          deny-licenses: GPL-3.0, AGPL-3.0
+          comment-summary-in-pr: always
+
+  dependency-scanning:
+    name: Scan Dependencies for CVEs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore PrivacyHardeningFramework.sln
+
+      - name: Install dotnet-outdated
+        run: dotnet tool install --global dotnet-outdated-tool
+
+      - name: Check for outdated packages
+        run: dotnet outdated PrivacyHardeningFramework.sln
+
+      - name: List vulnerable packages
+        run: dotnet list package --vulnerable --include-transitive 2>&1 | tee vulnerability-report.txt || true
+
+      - name: Upload vulnerability report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vulnerability-report
+          path: vulnerability-report.txt
+          retention-days: 30
+
+      - name: Fail on high/critical vulnerabilities
+        run: |
+          if grep -E "Critical|High" vulnerability-report.txt; then
+            echo "::error::High or Critical vulnerabilities found!"
+            exit 1
+          fi

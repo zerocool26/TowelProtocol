@@ -1,0 +1,91 @@
+policyId: "edge-002"
+version: "1.0.0"
+name: "Disable Microsoft Edge Diagnostic Data Collection"
+category: Edge
+description: |
+  Disables Microsoft Edge telemetry and diagnostic data collection.
+
+  When enabled, Edge will NOT send:
+  - Usage statistics
+  - Crash reports
+  - Feature usage telemetry
+  - Performance metrics
+  - Extension usage data
+  - Search queries for improvement
+
+  Privacy benefit:
+  Your browser usage patterns and behavior not tracked by Microsoft.
+
+  Trade-off:
+  Microsoft can't improve Edge based on your usage data.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Edge"
+  valueName: "MetricsReportingEnabled"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set MetricsReportingEnabled to 1 or delete the value"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: "Microsoft Edge installed"
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "No diagnostic data sent to Microsoft"
+    severity: None
+    details: "Privacy benefit - Microsoft can't track your Edge usage"
+  - scenario: "Crash reports not automatically sent"
+    severity: Low
+    details: "Must manually report Edge issues"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge' -Name MetricsReportingEnabled -ErrorAction SilentlyContinue"
+expectedOutput: "MetricsReportingEnabled: 0"
+references:
+  - "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies#metricsreportingenabled"
+  - "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-data-privacy"
+tags:
+  - "edge"
+  - "browser"
+  - "privacy"
+  - "telemetry"
+  - "low-risk"
+notes: |
+  Low risk: No functional impact, only reduces telemetry.
+
+  Telemetry data collected by Edge includes:
+  - Which features you use and how often
+  - Performance metrics (page load times, crashes)
+  - Extension usage patterns
+  - Search behavior
+  - Navigation patterns
+  - Error and crash reports
+
+  Privacy recommendation: ALWAYS disable browser telemetry.
+  There's no user benefit to sending usage data to Microsoft.
+
+  Combine with:
+  - edge-001 (disable sync)
+  - edge-003 (disable personalization)
+  - edge-005 (disable shopping)
+
+  For comprehensive Edge privacy protection.
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"
+  - "Hardened"
+  - "Balanced"
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false

@@ -1,0 +1,59 @@
+policyId: app-001
+version: 1.0.0
+name: Disable Windows Consumer Features
+category: Privacy
+description: |
+  Prevents Windows from automatically installing suggested apps and promotional content
+  from the Microsoft Store. Disables consumer experiences like app suggestions,
+  tips, and promotional notifications.
+
+mechanism: Registry
+mechanismDetails:
+  path: HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent
+  valueName: DisableWindowsConsumerFeatures
+  valueType: DWord
+  value: 1
+
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: Set HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent\DisableWindowsConsumerFeatures to 0 or delete the value
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  supportedSkus:
+    - Home
+    - Pro
+    - Enterprise
+    - Education
+
+dependencies: []
+
+knownBreakage:
+  - scenario: Microsoft Store suggested apps will not appear
+    affectedFeatures:
+      - Suggested apps in Start Menu
+      - Promotional app tiles
+    severity: Low
+    workaround: Manually install apps from Microsoft Store
+
+tags:
+  - privacy
+  - store
+  - promotional-content
+  - consumer-features
+
+enabledByDefault: false
+autoApply: false
+requiresConfirmation: true
+userMustChoose: false
+showInUI: true
+
+helpText: |
+  This policy prevents Windows from automatically installing apps you didn't request
+  and showing promotional content. This improves privacy by preventing unwanted data
+  collection related to app suggestions and usage tracking.
+
+  Trade-off: You won't see suggested apps, but you can still manually search and install
+  any app from the Microsoft Store.

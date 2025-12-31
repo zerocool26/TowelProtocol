@@ -28,6 +28,11 @@ public sealed class ServiceClient
         WriteIndented = false
     };
 
+    /// <summary>
+    /// Raised when the service emits progress updates during long-running operations (Apply)
+    /// </summary>
+    public event Action<int, string?>? ProgressReceived;
+
     private readonly IDeserializer _yamlDeserializer;
     private bool _standaloneMode = false;
     private PolicyDefinition[]? _cachedPolicies;
@@ -54,17 +59,67 @@ public sealed class ServiceClient
             await pipeClient.ConnectAsync(TimeoutMs);
 
             // Send command
-            await JsonSerializer.SerializeAsync(pipeClient, command, command.GetType(), _jsonOptions);
+            var cmdJson = JsonSerializer.Serialize(command, command.GetType(), _jsonOptions) + "\n";
+            var cmdBytes = System.Text.Encoding.UTF8.GetBytes(cmdJson);
+            await pipeClient.WriteAsync(cmdBytes, 0, cmdBytes.Length);
             await pipeClient.FlushAsync();
 
-            // Read response
-            var response = await JsonSerializer.DeserializeAsync<TResponse>(pipeClient, _jsonOptions);
-            if (response == null)
+            using var sr = new StreamReader(pipeClient, System.Text.Encoding.UTF8);
+
+            // If an ApplyResult is expected we may receive multiple newline-delimited JSON messages (progress + final)
+            if (typeof(TResponse) == typeof(PrivacyHardeningContracts.Responses.ApplyResult))
+            {
+                while (true)
+                {
+                    var line = await sr.ReadLineAsync();
+                    if (line == null) throw new InvalidOperationException("Service closed connection unexpectedly");
+
+                    // Inspect message
+                    using var doc = System.Text.Json.JsonDocument.Parse(line);
+                    var root = doc.RootElement;
+
+                    // Detect progress message by presence of Percent property
+                    if (root.TryGetProperty("Percent", out var percentElem))
+                    {
+                        var percent = percentElem.GetInt32();
+                        string? msg = null;
+                        if (root.TryGetProperty("Message", out var msgElem)) msg = msgElem.GetString();
+                        ProgressReceived?.Invoke(percent, msg);
+                        continue;
+                    }
+
+                    // Otherwise assume final response of expected type
+                    var response = System.Text.Json.JsonSerializer.Deserialize<TResponse>(line, _jsonOptions);
+                    if (response == null) throw new InvalidOperationException("Received null response from service");
+                    if (!response.Success)
+                    {
+                        var first = response.Errors?.FirstOrDefault();
+                        var code = first?.Code ?? "Error";
+                        var message = first?.Message ?? "Service reported failure";
+
+                        if (string.Equals(code, "Unauthorized", StringComparison.OrdinalIgnoreCase))
+                        {
+                            throw new UnauthorizedAccessException(message);
+                        }
+
+                        throw new InvalidOperationException($"Service error: {code} - {message}");
+                    }
+
+                    return response;
+                }
+            }
+
+            // Default: read a single response line
+            var respLine = await sr.ReadLineAsync();
+            if (respLine == null) throw new InvalidOperationException("Service closed connection unexpectedly");
+
+            var singleResponse = System.Text.Json.JsonSerializer.Deserialize<TResponse>(respLine, _jsonOptions);
+            if (singleResponse == null)
                 throw new InvalidOperationException("Received null response from service");
 
-            if (!response.Success)
+            if (!singleResponse.Success)
             {
-                var first = response.Errors?.FirstOrDefault();
+                var first = singleResponse.Errors?.FirstOrDefault();
                 var code = first?.Code ?? "Error";
                 var message = first?.Message ?? "Service reported failure";
 
@@ -76,7 +131,7 @@ public sealed class ServiceClient
                 throw new InvalidOperationException($"Service error: {code} - {message}");
             }
 
-            return response;
+            return singleResponse;
         }
         catch (TimeoutException)
         {

@@ -1,0 +1,91 @@
+policyId: "edge-003"
+version: "1.0.0"
+name: "Disable Edge Personalized Advertising and Tracking"
+category: Edge
+description: |
+  Disables Microsoft Edge personalized advertising, tracking, and data collection
+  for ad targeting purposes.
+
+  When enabled, prevents:
+  - Advertising ID usage for personalized ads
+  - Tracking of sites you visit for ad profiles
+  - Collection of browsing data for marketing
+  - Personalized content recommendations based on history
+  - Third-party data sharing for advertising
+
+  Privacy benefit:
+  Your browsing behavior not profiled for advertising purposes.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Edge"
+  valueName: "PersonalizationReportingEnabled"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set PersonalizationReportingEnabled to 1 or delete the value"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: "Microsoft Edge installed"
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "No personalized content in Edge"
+    severity: None
+    details: "Generic content instead of personalized (privacy benefit)"
+  - scenario: "No personalized ads"
+    severity: None
+    details: "Generic ads instead of targeted ads (privacy benefit)"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge' -Name PersonalizationReportingEnabled -ErrorAction SilentlyContinue"
+expectedOutput: "PersonalizationReportingEnabled: 0"
+references:
+  - "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies#personalizationreportingenabled"
+tags:
+  - "edge"
+  - "browser"
+  - "privacy"
+  - "advertising"
+  - "tracking"
+  - "low-risk"
+notes: |
+  Low risk: Disables tracking, no functional impact.
+
+  What Edge personalizes when enabled:
+  - New Tab page content
+  - Suggested sites
+  - News feed articles
+  - Shopping recommendations
+  - Advertisement targeting
+  - Search suggestions
+
+  All based on your browsing history and behavior.
+
+  Privacy impact - HIGH:
+  Microsoft builds advertising profile of your browsing habits including:
+  - Sites you visit
+  - Topics you read about
+  - Products you view
+  - Search queries
+  - Time spent on different content
+
+  Recommended: ALWAYS disable personalization.
+  Generic content is fine, tracking is not.
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"
+  - "Hardened"
+  - "Balanced"
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false

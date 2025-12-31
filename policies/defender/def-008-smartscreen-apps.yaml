@@ -1,0 +1,109 @@
+policyId: "def-008"
+version: "1.0.0"
+name: "Disable SmartScreen for Apps and Files"
+category: Defender
+description: |
+  Disables Windows SmartScreen filtering for downloaded applications and files.
+
+  SmartScreen checks downloaded files against Microsoft's reputation database
+  and may send file information to Microsoft for analysis, including:
+  - File hashes
+  - Download URLs
+  - File metadata
+  - Publisher certificates
+
+  When disabled:
+  - No warnings for unrecognized apps
+  - No cloud reputation checks
+  - Files execute immediately without SmartScreen verification
+
+  Privacy benefit: Microsoft doesn't receive information about your downloads.
+  Security risk: Malicious/untrustworthy files may execute without warning.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\System"
+  valueName: "EnableSmartScreen"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: High
+reversible: true
+revertMechanism: "Set EnableSmartScreen to 1 (Enabled) or delete the value"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "No warnings for unsigned/unknown applications"
+    severity: High
+    details: "Potentially malicious apps execute without SmartScreen check"
+  - scenario: "Phishing protection reduced"
+    severity: Medium
+    details: "Files from phishing sites may not be flagged"
+  - scenario: "No app reputation checking"
+    severity: High
+    details: "Newly released malware may execute without reputation warnings"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\System' -Name EnableSmartScreen -ErrorAction SilentlyContinue"
+expectedOutput: "EnableSmartScreen: 0 (Disabled)"
+references:
+  - "https://learn.microsoft.com/en-us/windows/security/threat-protection/microsoft-defender-smartscreen/microsoft-defender-smartscreen-overview"
+  - "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-security-smartscreen"
+tags:
+  - "defender"
+  - "smartscreen"
+  - "privacy"
+  - "high-risk"
+  - "downloads"
+  - "reputation"
+notes: |
+  High risk: Removes app reputation warnings.
+
+  Privacy consideration:
+  SmartScreen sends information to Microsoft about EVERY file you run:
+  - File hash
+  - Download source URL
+  - Publisher information
+  - Execution context
+
+  This provides significant tracking capability for Microsoft.
+
+  Security consideration:
+  SmartScreen is effective at blocking:
+  - Brand-new malware (zero-day)
+  - Unsigned applications
+  - Phishing-related downloads
+
+  Disabling makes you more vulnerable to social engineering attacks.
+
+  Recommendation:
+  - If privacy is critical: Disable and use alternative verification
+  - If security is critical: Keep enabled despite telemetry
+  - Balanced approach: Enable, but review what you download carefully
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false
+allowedValues:
+  - value: 0
+    label: "Disabled"
+    description: "No SmartScreen checks. Files execute immediately."
+    privacyBenefit: "High - No file information sent to Microsoft"
+    securityRisk: "High - No warnings for malicious/unknown files"
+  - value: 1
+    label: "Enabled"
+    description: "SmartScreen checks all downloaded files."
+    privacyBenefit: "None - All file executions reported to Microsoft"
+    securityRisk: "Low - Protection against malicious downloads"

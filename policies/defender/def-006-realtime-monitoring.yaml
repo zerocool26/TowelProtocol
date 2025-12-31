@@ -1,0 +1,109 @@
+policyId: "def-006"
+version: "1.0.0"
+name: "Disable Windows Defender Real-Time File/Process Monitoring"
+category: Defender
+description: |
+  Disables Windows Defender real-time monitoring of file and process activity.
+
+  When disabled, Defender will NOT:
+  - Scan files as they're accessed
+  - Monitor process execution
+  - Intercept suspicious operations
+  - Send file/process metadata to cloud for analysis
+
+  You can still run manual scans, but continuous monitoring stops.
+
+  Privacy benefit: Eliminates continuous file/process monitoring and cloud analysis.
+  Security risk: System is unprotected against real-time threats.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection"
+  valueName: "DisableRealtimeMonitoring"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Critical
+reversible: true
+revertMechanism: "Set DisableRealtimeMonitoring to 0 or delete the value"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Education"
+  excludedSkus:
+    - "Home"
+  deviceRequirement: "Tamper Protection must be disabled to apply this policy"
+  deprecatedAsOfBuild: null
+dependencies:
+  - policyId: "def-005"
+    reason: "Behavior monitoring is part of real-time protection"
+    optional: true
+    type: Related
+knownBreakage:
+  - scenario: "No real-time malware protection"
+    severity: Critical
+    details: "Files execute without being scanned. Manual scans required."
+  - scenario: "Exploit/ransomware protection disabled"
+    severity: Critical
+    details: "Malicious files can execute immediately without detection"
+  - scenario: "Microsoft Security Center shows warnings"
+    severity: Low
+    details: "Security Center will show 'Virus protection is off' warnings"
+verificationCommand: "Get-MpPreference | Select-Object -ExpandProperty DisableRealtimeMonitoring"
+expectedOutput: "DisableRealtimeMonitoring: True"
+references:
+  - "https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/configure-real-time-protection-microsoft-defender-antivirus"
+tags:
+  - "defender"
+  - "privacy"
+  - "monitoring"
+  - "critical-risk"
+  - "real-time"
+  - "advanced"
+notes: |
+  ⚠️⚠️ CRITICAL RISK: Completely disables active protection.
+
+  ONLY disable if:
+  - Using alternative real-time antivirus (e.g., Kaspersky, Norton)
+  - System is air-gapped or highly isolated
+  - Running in controlled sandbox/lab environment
+  - You FULLY accept the security consequences
+
+  Tamper Protection MUST be disabled first or this change will be blocked.
+
+  Privacy consideration:
+  Real-time monitoring sends extensive file/process metadata to Microsoft cloud.
+  Disabling stops this telemetry but leaves system vulnerable to active threats.
+
+  Recommendation: If privacy is your goal but you need protection, consider:
+  1. Keep real-time enabled but disable cloud protection (def-001)
+  2. Use alternative antivirus with less telemetry
+  3. Only disable on non-critical systems
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: true
+helpText: |
+  ⚠️ EXTREMELY DANGEROUS - READ CAREFULLY ⚠️
+
+  This setting completely turns off Windows Defender's active protection.
+
+  Your system will be vulnerable to:
+  - Viruses executing immediately upon download
+  - Malware running without detection
+  - Ransomware encrypting files in real-time
+  - Exploit kits attacking your system
+
+  You MUST have alternative antivirus software if you enable this.
+
+  Privacy vs Security:
+  - Privacy benefit: HIGH (no continuous monitoring/telemetry)
+  - Security risk: CRITICAL (no active malware protection)
+
+  Think carefully before enabling this policy.

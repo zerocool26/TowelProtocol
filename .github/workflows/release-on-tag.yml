@@ -6,6 +6,75 @@ on:
       - 'v*'
 
 jobs:
+  build-and-release:
+    runs-on: windows-latest
+    outputs:
+      artifact-path: ${{ steps.package.outputs.artifact }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore and build
+        run: |
+          dotnet restore "PrivacyHardeningFramework.sln"
+          dotnet build "PrivacyHardeningFramework.sln" -c Release --no-restore
+
+      - name: Package elevated helper
+        id: package
+        shell: powershell
+        run: |
+          # Ensure packaging script exists and runs; script should create dist/PrivacyHardeningElevated.zip
+          .\scripts\package_elevated_helper.ps1 -Configuration Release
+          if (-Not (Test-Path -Path .\dist\PrivacyHardeningElevated.zip)) {
+            Write-Error "Packaging failed: dist/PrivacyHardeningElevated.zip not found"
+          }
+          Write-Output "artifact=.\dist\PrivacyHardeningElevated.zip" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+
+      - name: Optional code signing (placeholder)
+        if: ${{ secrets.CODE_SIGN_CERT && secrets.CODE_SIGN_PASSWORD }}
+        shell: powershell
+        run: |
+          Write-Host "Code signing placeholder: CODE_SIGN_CERT and CODE_SIGN_PASSWORD provided."
+          # Example: Import-PfxCertificate and signtool.exe usage would go here
+
+      - name: Create draft release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          body: |
+            Automated release created by workflow. Build logs:
+            - Commit: ${{ github.sha }}
+            - Branch: ${{ github.ref_name }}
+          draft: true
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/PrivacyHardeningElevated.zip
+          asset_name: PrivacyHardeningElevated.zip
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+name: Release on Tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
   release:
     runs-on: windows-latest
     permissions:

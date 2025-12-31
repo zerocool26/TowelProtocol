@@ -1,0 +1,83 @@
+policyId: "od-003"
+version: "1.0.0"
+name: "Prevent Automatic OneDrive Sign-In"
+category: OneDrive
+description: |
+  Prevents OneDrive from automatically signing in using Windows account credentials.
+
+  When enabled:
+  - OneDrive won't auto-configure using your Microsoft account
+  - No automatic sync setup during first login
+  - User must manually sign in to OneDrive if desired
+  - Prevents silent OneDrive activation
+
+  Privacy benefit:
+  Users have explicit control over whether OneDrive is active on their system.
+  Prevents automatic cloud sync without user knowledge.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\OneDrive"
+  valueName: "DisableAutoSignIn"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set DisableAutoSignIn to 0 or delete the value"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Manual OneDrive setup required"
+    severity: Low
+    details: "Users must explicitly sign in to OneDrive if they want to use it"
+  - scenario: "OneDrive won't auto-configure on new profiles"
+    severity: Low
+    details: "New Windows user profiles won't have OneDrive pre-configured"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\OneDrive' -Name DisableAutoSignIn -ErrorAction SilentlyContinue"
+expectedOutput: "DisableAutoSignIn: 1"
+references:
+  - "https://learn.microsoft.com/en-us/sharepoint/use-group-policy#prevent-users-from-silently-signing-in-to-onedrive-with-their-windows-credentials"
+tags:
+  - "onedrive"
+  - "privacy"
+  - "consent"
+  - "low-risk"
+  - "user-control"
+notes: |
+  Low risk: Users can still use OneDrive by manually signing in.
+
+  Privacy benefit:
+  - Explicit user consent required for OneDrive activation
+  - No silent cloud sync without user knowledge
+  - Prevents automatic Microsoft account integration
+  - User fully controls when/if OneDrive is used
+
+  Use cases:
+  - Organizations that want explicit OneDrive opt-in
+  - Privacy-conscious users who want control over cloud services
+  - Systems where OneDrive shouldn't be default
+
+  Best practice:
+  Combine with od-001 (disable sync) for complete OneDrive control, or
+  use standalone to require explicit user consent before OneDrive activation.
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"
+  - "Hardened"
+  - "Balanced"
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false

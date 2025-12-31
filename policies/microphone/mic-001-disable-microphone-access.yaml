@@ -1,0 +1,76 @@
+policyId: mic-001
+version: 1.0.0
+name: Disable Microphone Access
+category: Privacy
+description: |
+  Disables microphone access for all apps system-wide. Prevents any application from
+  accessing the device microphone. Strong privacy protection against audio surveillance
+  and unauthorized recording.
+
+mechanism: Registry
+mechanismDetails:
+  path: HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone
+  valueName: Value
+  valueType: String
+  value: Deny
+
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: Set Value to "Allow" or delete the registry key
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  supportedSkus:
+    - Home
+    - Pro
+    - Enterprise
+    - Education
+
+dependencies: []
+
+knownBreakage:
+  - scenario: Microphone will not work in any application
+    affectedFeatures:
+      - Voice calls and video conferencing
+      - Voice recording apps
+      - Speech recognition (Cortana, dictation)
+      - Voice commands
+      - Any app requiring microphone access
+    severity: Medium
+    workaround: Re-enable microphone in Settings > Privacy > Microphone when needed
+
+tags:
+  - privacy
+  - microphone
+  - audio
+  - surveillance
+  - security
+  - recording
+
+enabledByDefault: false
+autoApply: false
+requiresConfirmation: true
+userMustChoose: true
+showInUI: true
+
+helpText: |
+  IMPORTANT: This disables microphone access for ALL applications system-wide.
+
+  Privacy & Security Benefits:
+  ✓ Prevents unauthorized audio recording
+  ✓ Protects against malware audio surveillance
+  ✓ Stops apps from listening in background
+  ✓ No accidental microphone activation
+  ✓ Prevents voice data collection
+
+  Functionality Impact:
+  ✗ Voice/video calls will not work
+  ✗ Voice recording disabled
+  ✗ Cortana and voice commands disabled
+  ✗ Speech-to-text (dictation) won't work
+  ✗ Any voice input completely blocked
+
+  This is a strong privacy control. You can temporarily re-enable microphone
+  access when needed through Windows Settings > Privacy > Microphone.

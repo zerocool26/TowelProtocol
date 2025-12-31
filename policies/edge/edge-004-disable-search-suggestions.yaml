@@ -1,0 +1,92 @@
+policyId: "edge-004"
+version: "1.0.0"
+name: "Disable Edge Address Bar Search Suggestions"
+category: Edge
+description: |
+  Disables search suggestions in Microsoft Edge address bar.
+
+  When disabled:
+  - No suggestions sent to search engine as you type
+  - Address bar doesn't send partial queries to Bing
+  - Local history/bookmarks still suggest, but no cloud queries
+  - Reduces telemetry about what you're searching for
+
+  Privacy benefit:
+  Your partial search queries not sent to Microsoft before you press Enter.
+
+  Convenience loss:
+  No real-time search suggestions as you type.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Edge"
+  valueName: "SearchSuggestEnabled"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set SearchSuggestEnabled to 1 or delete the value"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: "Microsoft Edge installed"
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "No search suggestions while typing"
+    severity: Low
+    details: "Must complete search query before seeing results"
+  - scenario: "Local suggestions still work"
+    severity: None
+    details: "History and bookmarks still suggest (privacy benefit)"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge' -Name SearchSuggestEnabled -ErrorAction SilentlyContinue"
+expectedOutput: "SearchSuggestEnabled: 0"
+references:
+  - "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies#searchsuggestenabled"
+tags:
+  - "edge"
+  - "browser"
+  - "privacy"
+  - "search"
+  - "telemetry"
+  - "low-risk"
+notes: |
+  Low risk: Convenience feature only.
+
+  Privacy concern with search suggestions:
+  Every keystroke in address bar is sent to Microsoft/Bing:
+  - "how to h..." (sent to Bing)
+  - "how to hack..." (sent to Bing)
+  - "how to hack windows..." (sent to Bing)
+
+  Microsoft sees ALL partial searches, not just completed ones.
+
+  This reveals:
+  - What you're thinking about searching
+  - Topics you're interested in but don't complete
+  - Sensitive searches you start but abandon
+  - Your typing patterns and search behavior
+
+  Privacy recommendation:
+  Disable if you want private browsing. Local history suggestions
+  still work (from your own bookmarks/history).
+
+  Alternative:
+  Use DuckDuckGo or StartPage as default search engine for
+  additional privacy (doesn't prevent this telemetry though).
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"
+  - "Hardened"
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false

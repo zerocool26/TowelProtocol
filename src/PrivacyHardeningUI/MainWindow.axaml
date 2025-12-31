@@ -109,11 +109,17 @@
                Background="#80000000">
             <Border Background="White" CornerRadius="8" Padding="32"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
-                <StackPanel Spacing="16" HorizontalAlignment="Center">
-                    <ProgressBar IsIndeterminate="True" Width="200"/>
-                    <TextBlock Text="Processing..." HorizontalAlignment="Center"/>
+                <StackPanel Spacing="12" HorizontalAlignment="Center">
+                    <ProgressBar Width="320" Minimum="0" Maximum="100" Value="{Binding ProgressValue}" IsVisible="{Binding ProgressVisible}"/>
+                    <TextBlock Text="{Binding StatusMessage}" HorizontalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                        <Button Content="Cancel" Command="{Binding CancelApplyCommand}" IsVisible="{Binding IsProcessing}"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </Panel>
+        
+        <!-- Snackbar -->
+        <controls:Snackbar DataContext="{Binding}" />
     </Grid>
 </Window>

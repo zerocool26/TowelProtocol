@@ -1,13 +1,15 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:converters="using:PrivacyHardeningUI.Converters"
-             x:Class="PrivacyHardeningUI.App"
-             RequestedThemeVariant="Light">
+             x:Class="PrivacyHardeningUI.App">
+
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://PrivacyHardeningUI/Styles/ThemeResources.Light.axaml" />
+                <ResourceInclude Source="avares://PrivacyHardeningUI/Styles/Animations.axaml" />
             </ResourceDictionary.MergedDictionaries>
+
             <!-- Value Converters -->
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
             <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
@@ -28,7 +30,10 @@
     </Application.Resources>
 
     <Application.Styles>
+        <!-- Fluent Theme with Dark mode variant support -->
         <FluentTheme />
+
+        <!-- Custom Control Styles -->
         <StyleInclude Source="avares://PrivacyHardeningUI/Styles/ControlStyles.axaml" />
         <StyleInclude Source="avares://PrivacyHardeningUI/Styles/IconStyles.axaml" />
     </Application.Styles>

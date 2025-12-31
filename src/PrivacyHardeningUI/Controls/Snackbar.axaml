@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="PrivacyHardeningUI.Controls.Snackbar"
+             x:DataType="vm:MainViewModel"
+             xmlns:vm="using:PrivacyHardeningUI.ViewModels">
+
+  <Grid>
+    <Border Name="PART_Border" Classes="snackbar" Background="#EE323232" CornerRadius="6" Padding="12,8"
+            HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,24"
+            IsVisible="{Binding SnackbarVisible}" IsHitTestVisible="True" Opacity="0">
+      <Border.RenderTransform>
+        <TranslateTransform Y="24" />
+      </Border.RenderTransform>
+
+      <DockPanel>
+        <TextBlock Foreground="White" Text="{Binding SnackbarMessage}" Margin="8,0" VerticalAlignment="Center" />
+        <Button Content="✕" DockPanel.Dock="Right" Classes="flat" Command="{Binding DismissSnackbarCommand}"
+                Margin="8,0,0,0" Width="28" Height="28" VerticalAlignment="Center" />
+      </DockPanel>
+    </Border>
+  </Grid>
+
+</UserControl>

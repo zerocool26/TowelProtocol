@@ -11,12 +11,13 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
     <PackageReference Include="xunit" Version="2.4.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\PrivacyHardeningContracts\PrivacyHardeningContracts.csproj" />
     <ProjectReference Include="..\..\src\PrivacyHardeningService\PrivacyHardeningService.csproj" />
+    <ProjectReference Include="..\..\src\PrivacyHardeningUI\PrivacyHardeningUI.csproj" />
   </ItemGroup>
 
 </Project>

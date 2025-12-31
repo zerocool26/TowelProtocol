@@ -1,0 +1,85 @@
+policyId: "cp-003"
+version: "1.0.0"
+name: "Disable AI-Powered Text Suggestions"
+category: Copilot
+description: |
+  Disables AI-powered text suggestions and autocomplete in Windows
+  applications and system interfaces.
+
+  This prevents:
+  - AI analyzing your typing patterns
+  - Cloud-based text prediction
+  - Context-aware autocomplete
+  - Sending typing data to Microsoft AI services
+
+  Privacy benefit:
+  Your typing patterns and text input remain private, not analyzed by AI.
+
+  Convenience loss:
+  No AI-powered autocomplete or text suggestions.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKCU\\Software\\Microsoft\\input\\Settings"
+  valueName: "InsightsEnabled"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set InsightsEnabled to 1 or delete the value"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "No AI text suggestions"
+    severity: Low
+    details: "Manual typing required, no smart autocomplete"
+  - scenario: "Slower text input for some users"
+    severity: Low
+    details: "Users who rely on suggestions may type slower"
+verificationCommand: "Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\input\\Settings' -Name InsightsEnabled -ErrorAction SilentlyContinue"
+expectedOutput: "InsightsEnabled: 0"
+references:
+  - "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+tags:
+  - "copilot"
+  - "ai"
+  - "typing"
+  - "privacy"
+  - "low-risk"
+  - "telemetry"
+notes: |
+  Low risk: Just disables convenience feature, no system impact.
+
+  Privacy benefit:
+  - Your typing patterns not analyzed by AI
+  - Text content not sent to cloud for prediction
+  - Input data remains local
+  - No telemetry about typing habits
+
+  AI text suggestions collect:
+  - What you type across applications
+  - Context of your text input
+  - Language patterns and vocabulary
+  - Typing speed and corrections
+
+  Recommended: Disable for privacy if you don't need AI typing assistance.
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"
+  - "Hardened"
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false

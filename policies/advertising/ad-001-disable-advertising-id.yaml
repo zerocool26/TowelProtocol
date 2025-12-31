@@ -1,0 +1,73 @@
+policyId: ad-001
+version: 1.0.0
+name: Disable Advertising ID
+category: Privacy
+description: |
+  Disables the Windows Advertising ID, which is used to track you across apps and
+  websites for targeted advertising. Prevents apps from accessing your unique
+  advertising identifier.
+
+mechanism: Registry
+mechanismDetails:
+  path: HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo
+  valueName: DisabledByGroupPolicy
+  valueType: DWord
+  value: 1
+
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: Set DisabledByGroupPolicy to 0 or delete the value
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  supportedSkus:
+    - Home
+    - Pro
+    - Enterprise
+    - Education
+
+dependencies: []
+
+knownBreakage:
+  - scenario: Personalized ads will be less relevant
+    affectedFeatures:
+      - Targeted advertising in apps
+      - Cross-app tracking for ads
+    severity: Low
+    workaround: None needed - you'll still see ads, just not personalized ones
+
+tags:
+  - privacy
+  - advertising
+  - tracking
+  - identifier
+  - cross-app-tracking
+
+enabledByDefault: false
+autoApply: false
+requiresConfirmation: true
+userMustChoose: false
+showInUI: true
+
+helpText: |
+  The Advertising ID is a unique identifier Windows assigns to your account for
+  ad tracking purposes. Apps and advertisers use it to:
+
+  - Track your behavior across multiple apps
+  - Build a profile of your interests
+  - Show targeted advertisements
+  - Share data with advertising networks
+
+  Privacy Impact of Disabling:
+  ✓ Apps cannot track you across different applications
+  ✓ Advertisers cannot build detailed profile about you
+  ✓ Less data shared with advertising networks
+  ✓ Reduces cross-app surveillance
+
+  Functionality Impact:
+  - You'll still see ads, but they won't be personalized
+  - Ads may be less relevant to your interests
+
+  This is a recommended privacy improvement with minimal functionality impact.

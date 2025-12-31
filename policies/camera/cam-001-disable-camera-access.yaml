@@ -1,0 +1,73 @@
+policyId: cam-001
+version: 1.0.0
+name: Disable Camera Access
+category: Privacy
+description: |
+  Disables camera access for all apps system-wide. Prevents any application from
+  accessing the device camera without explicit user permission. This is a strong
+  privacy protection against unauthorized camera surveillance.
+
+mechanism: Registry
+mechanismDetails:
+  path: HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam
+  valueName: Value
+  valueType: String
+  value: Deny
+
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: Set Value to "Allow" or delete the registry key
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  supportedSkus:
+    - Home
+    - Pro
+    - Enterprise
+    - Education
+
+dependencies: []
+
+knownBreakage:
+  - scenario: Camera will not work in any application
+    affectedFeatures:
+      - Video conferencing (Teams, Zoom, etc.)
+      - Camera apps
+      - Windows Hello facial recognition
+      - Any app requiring camera access
+    severity: Medium
+    workaround: Re-enable camera access in Settings > Privacy > Camera when needed
+
+tags:
+  - privacy
+  - camera
+  - surveillance
+  - webcam
+  - security
+
+enabledByDefault: false
+autoApply: false
+requiresConfirmation: true
+userMustChoose: true
+showInUI: true
+
+helpText: |
+  IMPORTANT: This disables camera access for ALL applications system-wide.
+
+  Privacy & Security Benefits:
+  ✓ Prevents unauthorized camera access
+  ✓ Protects against malware camera surveillance
+  ✓ Stops apps from accessing camera in background
+  ✓ No accidental camera activation
+
+  Functionality Impact:
+  ✗ Video calls will not work (Teams, Zoom, Skype)
+  ✗ Camera apps cannot function
+  ✗ Windows Hello face recognition disabled
+  ✗ Webcam completely inaccessible
+
+  Recommendation: This is a strong privacy control. Consider using a physical
+  webcam cover instead if you need occasional camera access. You can temporarily
+  re-enable camera access when needed through Windows Settings.

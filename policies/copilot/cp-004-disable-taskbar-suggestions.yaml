@@ -1,0 +1,80 @@
+policyId: "cp-004"
+version: "1.0.0"
+name: "Disable Copilot Taskbar Presence and Icon"
+category: Copilot
+description: |
+  Removes Windows Copilot icon and integration from the Windows taskbar.
+
+  This prevents:
+  - Copilot icon appearing in taskbar
+  - Quick access to Copilot from taskbar
+  - Taskbar suggestions powered by Copilot
+  - Visual presence of AI assistant
+
+  Note: This is cosmetic control. For full Copilot disable, use cp-001.
+
+  Privacy benefit:
+  Reduces visual reminders and easy access to Copilot, supporting
+  intentional decision to avoid AI assistant.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced"
+  valueName: "ShowCopilotButton"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set ShowCopilotButton to 1 or delete the value"
+applicability:
+  minBuild: 22621
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: "Windows 11 22H2 or later"
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "No Copilot taskbar button"
+    severity: None
+    details: "Can still access Copilot via other methods if enabled"
+  - scenario: "Cleaner taskbar appearance"
+    severity: None
+    details: "Less taskbar clutter (benefit)"
+verificationCommand: "Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced' -Name ShowCopilotButton -ErrorAction SilentlyContinue"
+expectedOutput: "ShowCopilotButton: 0"
+references:
+  - "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-windowsai"
+tags:
+  - "copilot"
+  - "taskbar"
+  - "ui"
+  - "low-risk"
+notes: |
+  Low risk: Cosmetic change only, no functional impact.
+
+  Use case:
+  - Users who disabled Copilot (cp-001) and want clean UI
+  - Reducing visual clutter in taskbar
+  - Supporting decision to avoid AI features
+
+  Combine with:
+  - cp-001 (Disable Windows Copilot) for full Copilot removal
+  - Other taskbar customization policies
+
+  Note: This only hides the taskbar button. For complete Copilot
+  disable, use cp-001.
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"
+  - "Hardened"
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false

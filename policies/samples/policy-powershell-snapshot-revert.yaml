@@ -1,0 +1,17 @@
+id: sample.policies.powershell.snapshot_revert
+title: Sample PowerShell policy (snapshot + revert)
+description: Demonstrates PowerShell mechanism with snapshot and revert scripts (non-destructive sample).
+category: sample
+risk: low
+applicability:
+  - all
+mechanism:
+  type: PowerShell
+  details:
+    ScriptPath: "samples/main_example.ps1"        # main script to apply (not provided here - replace with real script)
+    SnapshotScriptPath: "samples/snapshot_example.ps1"
+    RevertScriptPath: "samples/revert_example.ps1"
+    RequiresSignature: false
+notes: |
+  - This is a sample policy to demonstrate how to wire `SnapshotScriptPath` and `RevertScriptPath`.
+  - Replace `ScriptPath` with your actual apply script. Sign scripts in production and enable `RequiresSignature`.

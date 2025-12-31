@@ -1,0 +1,84 @@
+policyId: "od-001"
+version: "1.0.0"
+name: "Disable OneDrive File Sync Completely"
+category: OneDrive
+description: |
+  Completely disables OneDrive file synchronization and cloud integration.
+
+  This prevents OneDrive from:
+  - Syncing local files to Microsoft cloud
+  - Sending file metadata to Microsoft
+  - Tracking file access patterns
+  - Integrating with File Explorer
+  - Running in the background
+
+  Privacy benefit: Your local files remain completely local, no cloud sync.
+  Data loss risk: Files won't be backed up to cloud unless you use alternative backup.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\OneDrive"
+  valueName: "DisableFileSyncNGSC"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: "Set DisableFileSyncNGSC to 0 or delete the value"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "OneDrive sync completely disabled"
+    severity: Medium
+    details: "Files won't sync to cloud or other devices"
+  - scenario: "File Explorer OneDrive integration removed"
+    severity: Low
+    details: "OneDrive won't appear in File Explorer sidebar"
+  - scenario: "No automatic cloud backup"
+    severity: Medium
+    details: "Local file loss risk if no alternative backup"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\OneDrive' -Name DisableFileSyncNGSC -ErrorAction SilentlyContinue"
+expectedOutput: "DisableFileSyncNGSC: 1"
+references:
+  - "https://learn.microsoft.com/en-us/sharepoint/use-group-policy"
+  - "https://admx.help/?Category=OneDrive&Policy=Microsoft.Policies.OneDriveNGSC::DisableFileSyncNGSC"
+tags:
+  - "onedrive"
+  - "privacy"
+  - "cloud"
+  - "sync"
+  - "medium-risk"
+notes: |
+  Medium risk: No cloud backup unless you use alternative solution.
+
+  Privacy benefit:
+  - No file content uploaded to Microsoft servers
+  - No file metadata sent to Microsoft
+  - No tracking of file access patterns
+  - No telemetry about storage usage
+  - Complete local file control
+
+  Alternative backup solutions:
+  - Local NAS/external drive backups
+  - Alternative cloud storage (Google Drive, Dropbox with privacy focus)
+  - Manual backups via robocopy/rsync
+
+  Recommended: Disable if you prefer local-only files or use alternative cloud storage.
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false

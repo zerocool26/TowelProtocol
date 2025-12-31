@@ -198,6 +198,21 @@ knownBreakage:
 ### Privilege Separation
 
 - **UI Application**: Runs as standard user, no direct system modification rights
+
+## Samples & Scripts
+
+There are example PowerShell snapshot/revert scripts and a sample policy to help you get started:
+
+- `scripts/samples/snapshot_example.ps1` — captures a small JSON snapshot (non-destructive example).
+- `scripts/samples/revert_example.ps1` — accepts the `PreviousState` JSON and demonstrates restoring/logging it.
+- `policies/samples/policy-powershell-snapshot-revert.yaml` — sample policy showing how to reference `SnapshotScriptPath` and `RevertScriptPath`.
+- `docs/scripts.md` — documentation on how to author snapshot and revert scripts and recommended best practices.
+
+Use the packaging script to build and bundle the elevated helper for distribution:
+
+- `scripts/package_elevated_helper.ps1` — builds (if needed) and creates `dist/PrivacyHardeningElevated.zip`.
+
+See `docs/packaging.md` for packaging recommendations and code-signing guidance.
 - **Windows Service**: Runs as LocalSystem, performs all system changes
 - **IPC**: Named pipe with SDDL restricting access to Administrators + SYSTEM
 

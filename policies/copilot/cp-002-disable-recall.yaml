@@ -1,0 +1,139 @@
+policyId: "cp-002"
+version: "1.0.0"
+name: "Disable Windows Recall Feature"
+category: Copilot
+description: |
+  Disables Windows Recall feature that takes periodic screenshots of your
+  screen activity for AI analysis and searchable history.
+
+  Recall captures:
+  - Screenshots every few seconds
+  - All visible screen content
+  - Application windows and text
+  - Websites you visit
+  - Documents you view
+  - Everything visible on screen
+
+  This data is analyzed by local AI and made searchable.
+
+  Privacy concern - CRITICAL:
+  Even though processed locally, Recall creates a comprehensive
+  surveillance database of everything you do on your computer.
+
+  Disabling prevents this pervasive monitoring.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKCU\\Software\\Policies\\Microsoft\\Windows\\WindowsAI"
+  valueName: "DisableAIDataAnalysis"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set DisableAIDataAnalysis to 0 or delete the value"
+applicability:
+  minBuild: 22631
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Education"
+  excludedSkus:
+    - "Home"
+  deviceRequirement: "Copilot+ PC with NPU (Neural Processing Unit)"
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Recall search unavailable"
+    severity: Low
+    details: "Can't search past screen activity via Recall"
+  - scenario: "No AI-powered activity timeline"
+    severity: Low
+    details: "Recall's timeline feature unavailable"
+  - scenario: "Snapshots not captured"
+    severity: None
+    details: "Screen monitoring disabled (privacy benefit)"
+verificationCommand: "Get-ItemProperty -Path 'HKCU:\\Software\\Policies\\Microsoft\\Windows\\WindowsAI' -Name DisableAIDataAnalysis -ErrorAction SilentlyContinue"
+expectedOutput: "DisableAIDataAnalysis: 1"
+references:
+  - "https://support.microsoft.com/en-us/windows/privacy-and-control-over-your-recall-experience-d404f672-7647-41e5-886c-a3c59680af15"
+  - "https://learn.microsoft.com/en-us/windows/client-management/manage-recall"
+tags:
+  - "copilot"
+  - "ai"
+  - "recall"
+  - "privacy"
+  - "surveillance"
+  - "low-risk"
+  - "critical-privacy"
+notes: |
+  Low risk to disable: Recall is optional feature, no system impact.
+
+  CRITICAL PRIVACY CONCERN:
+  Windows Recall is one of the most invasive privacy features ever
+  introduced in Windows.
+
+  What Recall captures:
+  - Periodic screenshots of your entire screen
+  - All text visible in any application
+  - Websites you browse (including private browsing)
+  - Documents you view or edit
+  - Passwords/sensitive info if visible on screen
+  - Video calls and conferences
+  - Private messages and emails
+  - Financial information on screen
+
+  Even though local:
+  - Creates comprehensive activity database
+  - Screenshots stored on device (security risk if compromised)
+  - AI analyzes all content locally
+  - Searchable history of everything you've done
+
+  Security risks:
+  - Malware could access Recall database
+  - Screenshots may contain sensitive data
+  - Forensic evidence of all activities
+  - Family/coworkers could access your history
+
+  STRONGLY RECOMMENDED: Disable Recall for privacy and security.
+
+  Alternative: Use manual screenshots or screen recording when needed.
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"
+  - "Hardened"
+  - "Balanced"
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: true
+helpText: |
+  ⚠️ CRITICAL PRIVACY FEATURE ⚠️
+
+  Windows Recall takes screenshots of your screen every few seconds
+  and stores them in a searchable database.
+
+  This creates a complete record of:
+  - Every document you open
+  - Every website you visit
+  - Every application you use
+  - Every conversation you have
+  - Everything visible on your screen
+
+  Privacy implications:
+  - Comprehensive surveillance of your computer use
+  - Screenshots stored locally (accessible if PC compromised)
+  - Potential exposure of passwords, financial data, private communications
+  - Forensic evidence of all activities
+
+  Security implications:
+  - Malware could steal Recall database
+  - Others with access to your PC could view your history
+  - Screenshots may capture sensitive information
+
+  Strongly consider disabling Recall unless you specifically need
+  the ability to search your past screen activity.
+
+  Your screen activity should be private by default.

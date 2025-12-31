@@ -1,0 +1,72 @@
+name: Sign and release elevated helper
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-sign:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore and build
+        run: dotnet build "PrivacyHardeningFramework.sln" -c Release
+
+      - name: Run tests
+        run: dotnet test "PrivacyHardeningFramework.sln" -c Release --no-build
+
+      - name: Decode signing certificate (base64 PFX)
+        env:
+          SIGNING_PFX_B64: ${{ secrets.SIGNING_PFX_B64 }}
+        run: |
+          if (-not $env:SIGNING_PFX_B64) { Write-Error "SIGNING_PFX_B64 secret not set"; exit 1 }
+          [System.IO.File]::WriteAllBytes('cert.pfx', [Convert]::FromBase64String($env:SIGNING_PFX_B64))
+        shell: powershell
+
+      - name: Find elevated helper executable
+        id: findexe
+        run: |
+          $exe = Get-ChildItem -Path src\PrivacyHardeningElevated\bin\Release -Filter "PrivacyHardeningElevated.exe" -Recurse | Select-Object -First 1
+          if (-not $exe) { Write-Error "Elevated helper not found"; exit 1 }
+          Write-Output "::set-output name=exe::$($exe.FullName)"
+        shell: powershell
+
+      - name: Sign elevated helper
+        env:
+          PFX_PASSWORD: ${{ secrets.SIGNING_PFX_PASSWORD }}
+        run: |
+          $exe = "${{ steps.findexe.outputs.exe }}"
+          if (-not (Test-Path $exe)) { Write-Error "Executable not found at $exe"; exit 1 }
+
+          # Use signtool from Windows SDK. Ensure Windows SDK is available on runner.
+          $signtool = "C:\\Program Files (x86)\\Windows Kits\\10\\bin\\x64\\signtool.exe"
+          if (-not (Test-Path $signtool)) { Write-Error "signtool not found at $signtool"; exit 1 }
+
+          & $signtool sign /fd SHA256 /a /f cert.pfx /p $env:PFX_PASSWORD /tr http://timestamp.digicert.com /td SHA256 $exe
+          & $signtool verify /pa $exe
+        shell: powershell
+
+      - name: Package signed helper
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          $exe = "${{ steps.findexe.outputs.exe }}"
+          Compress-Archive -Path $exe -DestinationPath dist/PrivacyHardeningElevated_signed.zip -Force
+        shell: powershell
+
+      - name: Create GitHub release and upload artifact
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/PrivacyHardeningElevated_signed.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

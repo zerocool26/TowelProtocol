@@ -1,0 +1,87 @@
+policyId: "def-003"
+version: "1.0.0"
+name: "Disable Windows Defender Network Protection"
+category: Defender
+description: |
+  Disables Windows Defender Network Protection which monitors network traffic for
+  suspicious connections and blocks access to known malicious sites/IPs.
+
+  Network Protection sends network metadata to Microsoft for analysis.
+  Disabling improves privacy but reduces protection against network-based threats.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Windows Defender Exploit Guard\\Network Protection"
+  valueName: "EnableNetworkProtection"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: High
+reversible: true
+revertMechanism: "Set EnableNetworkProtection to 1 (Enabled) or 2 (Audit mode)"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Education"
+  excludedSkus:
+    - "Home"
+  deviceRequirement: "Windows Defender must be enabled"
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Network-based threat protection disabled"
+    severity: High
+    details: "Defender won't block connections to malicious sites/IPs"
+  - scenario: "SmartScreen network checks reduced"
+    severity: Medium
+    details: "Less protection against phishing and malware downloads"
+  - scenario: "Network metadata not sent to Microsoft"
+    severity: Low
+    details: "Privacy benefit - network traffic not analyzed by cloud"
+verificationCommand: "Get-MpPreference | Select-Object -ExpandProperty EnableNetworkProtection"
+expectedOutput: "EnableNetworkProtection: 0 (Disabled)"
+references:
+  - "https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/enable-network-protection"
+  - "https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/evaluate-network-protection"
+tags:
+  - "defender"
+  - "privacy"
+  - "network"
+  - "high-risk"
+  - "cloud-data"
+notes: |
+  ⚠️ High risk: Disables network-level threat protection.
+
+  Value options:
+  - 0 = Disabled (maximum privacy, minimum protection)
+  - 1 = Enabled (blocks malicious connections)
+  - 2 = Audit mode (logs but doesn't block)
+
+  This policy gives you control over whether Defender monitors your network traffic.
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false
+allowedValues:
+  - value: 0
+    label: "Disabled"
+    description: "No network protection. Maximum privacy, no network monitoring."
+    privacyBenefit: "High - No network metadata sent to Microsoft"
+    securityRisk: "High - No protection against malicious network connections"
+  - value: 1
+    label: "Enabled"
+    description: "Block connections to known malicious sites/IPs."
+    privacyBenefit: "Low - Network metadata analyzed by Microsoft"
+    securityRisk: "Low - Full network threat protection"
+  - value: 2
+    label: "Audit Mode"
+    description: "Log suspicious connections but don't block."
+    privacyBenefit: "Medium - Metadata sent but no blocking"
+    securityRisk: "Medium - You see logs but must act manually"

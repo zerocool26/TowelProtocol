@@ -1,0 +1,109 @@
+policyId: "cp-001"
+version: "1.0.0"
+name: "Disable Windows Copilot Completely"
+category: Copilot
+description: |
+  Completely disables Windows Copilot AI assistant integrated into Windows 11.
+
+  This prevents:
+  - Copilot from launching or running
+  - Copilot icon appearing in taskbar
+  - Copilot from accessing system information
+  - AI analysis of your activities and data
+  - Data being sent to Microsoft AI services
+
+  Privacy benefit:
+  No local activity, context, or data sent to Microsoft's AI cloud services.
+  Complete control over AI assistant usage.
+
+  Functionality loss:
+  No AI assistance features, suggestions, or Copilot integration.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKCU\\Software\\Policies\\Microsoft\\Windows\\WindowsCopilot"
+  valueName: "TurnOffWindowsCopilot"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set TurnOffWindowsCopilot to 0 or delete the value"
+applicability:
+  minBuild: 22621
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: "Windows 11 22H2 or later"
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Windows Copilot unavailable"
+    severity: Low
+    details: "AI assistant features not accessible"
+  - scenario: "No Copilot taskbar integration"
+    severity: None
+    details: "Copilot icon won't appear in taskbar"
+  - scenario: "No AI-powered suggestions"
+    severity: Low
+    details: "No context-aware AI assistance"
+verificationCommand: "Get-ItemProperty -Path 'HKCU:\\Software\\Policies\\Microsoft\\Windows\\WindowsCopilot' -Name TurnOffWindowsCopilot -ErrorAction SilentlyContinue"
+expectedOutput: "TurnOffWindowsCopilot: 1"
+references:
+  - "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-windowsai"
+  - "https://learn.microsoft.com/en-us/copilot/microsoft-365/microsoft-365-copilot-privacy"
+tags:
+  - "copilot"
+  - "ai"
+  - "privacy"
+  - "low-risk"
+  - "cloud"
+  - "telemetry"
+notes: |
+  Low risk: Copilot is optional, disabling has no system impact.
+
+  Privacy benefit - CRITICAL:
+  Windows Copilot sends extensive data to Microsoft AI services:
+  - Screen content and context
+  - Application usage patterns
+  - User queries and requests
+  - System state information
+  - File and document context
+
+  Disabling Copilot prevents all of this data collection.
+
+  Data sent to Microsoft when Copilot is enabled:
+  - Your questions/prompts
+  - Context from current applications
+  - System information for AI processing
+  - Usage patterns for AI training
+
+  Recommended: Disable if you don't want AI analysis of your computer usage.
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"
+  - "Hardened"
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false
+helpText: |
+  Windows Copilot is Microsoft's AI assistant integrated into Windows 11.
+
+  When enabled, it can:
+  - Answer questions about Windows and your PC
+  - Suggest actions based on your activity
+  - Integrate with Microsoft 365 Copilot
+  - Access system information and context
+
+  Privacy consideration:
+  Copilot requires sending data to Microsoft's cloud AI services.
+  This includes context from your screen, applications, and queries.
+
+  Disable if you prefer not to use cloud AI assistance or want
+  to prevent this data collection.

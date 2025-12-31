@@ -131,6 +131,14 @@ public sealed class IPCServer
             }
 
             // 4. Execute command
+            // 4. Execute command
+            if (command is ApplyCommand applyCmd)
+            {
+                // Special-case apply: stream progress updates then final result
+                await ExecuteApplyWithProgressAsync(stream, applyCmd, cancellationToken);
+                return;
+            }
+
             var response = await ExecuteCommandAsync(command, cancellationToken);
 
             // 5. Send response
@@ -212,7 +220,9 @@ public sealed class IPCServer
 
     private async Task SendResponseAsync(Stream stream, ResponseBase response, CancellationToken cancellationToken)
     {
-        await JsonSerializer.SerializeAsync(stream, response, response.GetType(), _jsonOptions, cancellationToken);
+        var json = JsonSerializer.Serialize(response, response.GetType(), _jsonOptions);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(json + "\n");
+        await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
         await stream.FlushAsync(cancellationToken);
     }
 
@@ -228,8 +238,44 @@ public sealed class IPCServer
             }
         };
 
-        await JsonSerializer.SerializeAsync(stream, errorResponse, _jsonOptions);
+        var json = JsonSerializer.Serialize(errorResponse, _jsonOptions);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(json + "\n");
+        await stream.WriteAsync(bytes, 0, bytes.Length);
         await stream.FlushAsync();
+    }
+
+    private async Task ExecuteApplyWithProgressAsync(Stream stream, ApplyCommand applyCmd, CancellationToken cancellationToken)
+    {
+        // progress callback writes ProgressResponse messages to the stream
+        void ProgressCallback(int percent, string? message)
+        {
+            try
+            {
+                var progress = new PrivacyHardeningContracts.Responses.ProgressResponse
+                {
+                    CommandId = applyCmd.CommandId,
+                    Success = true,
+                    Percent = percent,
+                    Message = message
+                };
+
+                var json = JsonSerializer.Serialize(progress, progress.GetType(), _jsonOptions) + "\n";
+                var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+                // Fire-and-forget write; use synchronous write to avoid async-over-sync complications in callback
+                stream.Write(bytes, 0, bytes.Length);
+                stream.Flush();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Failed to send progress update");
+            }
+        }
+
+        // Execute apply with progress callback
+        var result = await _policyEngine.ApplyAsync(applyCmd, ProgressCallback, cancellationToken);
+
+        // Send final apply result
+        await SendResponseAsync(stream, result, cancellationToken);
     }
 
     private ResponseBase CreateErrorResponse(string commandId, string code, string message)

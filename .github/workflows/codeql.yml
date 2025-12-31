@@ -1,0 +1,71 @@
+name: "CodeQL Advanced Security Scanning"
+
+on:
+  push:
+    branches: [ "master", "main", "develop" ]
+  pull_request:
+    branches: [ "master", "main" ]
+  schedule:
+    # Run at 2 AM UTC every Monday
+    - cron: '0 2 * * 1'
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  analyze:
+    name: Analyze Code Security
+    runs-on: windows-latest
+    timeout-minutes: 360
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'csharp' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        queries: +security-and-quality
+        # Use advanced query suite for comprehensive security analysis
+        config: |
+          query-filters:
+            - include:
+                kind: problem
+                tags:
+                  - security
+                  - reliability
+                  - maintainability
+
+    - name: Restore dependencies
+      run: dotnet restore PrivacyHardeningFramework.sln
+
+    - name: Build solution
+      run: dotnet build PrivacyHardeningFramework.sln --configuration Release --no-restore
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"
+        upload: true
+        output: codeql-results
+
+    - name: Upload CodeQL results as artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: codeql-results
+        path: codeql-results
+        retention-days: 7

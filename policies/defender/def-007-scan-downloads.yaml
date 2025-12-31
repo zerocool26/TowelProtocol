@@ -1,0 +1,89 @@
+policyId: "def-007"
+version: "1.0.0"
+name: "Disable Windows Defender Downloaded File Scanning"
+category: Defender
+description: |
+  Disables automatic scanning of files downloaded from the internet.
+
+  When disabled, Defender will NOT automatically scan:
+  - Files downloaded via browser
+  - Email attachments
+  - Files from cloud storage (OneDrive, etc.)
+  - Files received via instant messaging
+
+  You can still manually scan files, but automatic download scanning stops.
+
+  Privacy benefit: Downloaded files not sent to Microsoft for cloud analysis.
+  Security risk: Malicious downloads may execute without detection.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection"
+  valueName: "DisableIOAVProtection"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: High
+reversible: true
+revertMechanism: "Set DisableIOAVProtection to 0 or delete the value"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Education"
+  excludedSkus:
+    - "Home"
+  deviceRequirement: "Tamper Protection must be disabled to apply this policy"
+  deprecatedAsOfBuild: null
+dependencies:
+  - policyId: "def-006"
+    reason: "Download scanning is part of real-time protection"
+    optional: true
+    type: Related
+knownBreakage:
+  - scenario: "Downloaded files not automatically scanned"
+    severity: High
+    details: "Malware in downloads may execute undetected"
+  - scenario: "Email attachments not scanned"
+    severity: High
+    details: "Malicious email attachments may open without warning"
+  - scenario: "SmartScreen integration reduced"
+    severity: Medium
+    details: "Less protection against drive-by downloads"
+verificationCommand: "Get-MpPreference | Select-Object -ExpandProperty DisableIOAVProtection"
+expectedOutput: "DisableIOAVProtection: True"
+references:
+  - "https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/configure-advanced-scan-types-microsoft-defender-antivirus"
+tags:
+  - "defender"
+  - "privacy"
+  - "downloads"
+  - "high-risk"
+  - "internet"
+notes: |
+  ⚠️ High risk: Downloads execute without automatic scanning.
+
+  Use cases for disabling:
+  - You manually verify all downloads
+  - Using alternative download scanner
+  - Want to prevent Microsoft analyzing your download patterns
+
+  Privacy note:
+  Download scanning may send file metadata/hashes to Microsoft for cloud lookup.
+  Disabling prevents this telemetry.
+
+  Security note:
+  Most malware enters systems via downloads. Disabling this significantly
+  increases infection risk.
+
+  Recommendation: Keep enabled unless you have strong privacy needs AND
+  alternative protection (e.g., VirusTotal integration, manual scanning).
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false

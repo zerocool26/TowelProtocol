@@ -1,0 +1,72 @@
+policyId: loc-001
+version: 1.0.0
+name: Disable Location Tracking
+category: Privacy
+description: |
+  Disables Windows location tracking services. Prevents apps and Windows features
+  from accessing your device's location. This is a system-wide setting that affects
+  all apps and services.
+
+mechanism: Registry
+mechanismDetails:
+  path: HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location
+  valueName: Value
+  valueType: String
+  value: Deny
+
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: Set Value to "Allow" or delete the registry key
+
+applicability:
+  minBuild: 10240
+  maxBuild: null
+  supportedSkus:
+    - Home
+    - Pro
+    - Enterprise
+    - Education
+
+dependencies: []
+
+knownBreakage:
+  - scenario: Location-based features will not work
+    affectedFeatures:
+      - Maps and navigation apps
+      - Weather location
+      - Find My Device
+      - Location-based reminders
+      - Any app requiring location access
+    severity: Medium
+    workaround: Re-enable location for specific apps in Settings > Privacy > Location
+
+tags:
+  - privacy
+  - location
+  - tracking
+  - gps
+  - critical-privacy
+
+enabledByDefault: false
+autoApply: false
+requiresConfirmation: true
+userMustChoose: true
+showInUI: true
+
+helpText: |
+  IMPORTANT: This completely disables location tracking for all apps and services.
+
+  Privacy Impact:
+  ✓ Prevents apps from tracking your physical location
+  ✓ Stops Windows from building location history
+  ✓ Disables location-based advertising
+
+  Functionality Impact:
+  ✗ Maps and navigation will not work
+  ✗ Weather won't auto-detect your location
+  ✗ Find My Device feature disabled
+  ✗ Location-based reminders won't work
+
+  This is a critical privacy control. Only enable if you understand the trade-offs.
+  You can manually allow location for specific trusted apps after applying this policy.

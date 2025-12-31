@@ -1,0 +1,94 @@
+policyId: "edge-001"
+version: "1.0.0"
+name: "Disable Microsoft Edge Sync Completely"
+category: Edge
+description: |
+  Completely disables Microsoft Edge browser sync across devices.
+
+  When disabled, Edge will NOT sync:
+  - Browsing history
+  - Favorites/bookmarks
+  - Passwords
+  - Open tabs
+  - Extensions
+  - Settings
+  - Collections
+  - Payment info
+
+  Privacy benefit:
+  Your browsing data remains completely local, not stored in Microsoft cloud.
+
+  Convenience loss:
+  No cross-device synchronization of browser data.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Edge"
+  valueName: "SyncDisabled"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set SyncDisabled to 0 or delete the value"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: "Microsoft Edge installed"
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "No browser sync across devices"
+    severity: Low
+    details: "Bookmarks, history, passwords won't sync to other devices"
+  - scenario: "Manual export/import required for data transfer"
+    severity: Low
+    details: "Must manually move browser data between devices"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge' -Name SyncDisabled -ErrorAction SilentlyContinue"
+expectedOutput: "SyncDisabled: 1"
+references:
+  - "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies#syncdisabled"
+  - "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-security-data-privacy"
+tags:
+  - "edge"
+  - "browser"
+  - "privacy"
+  - "sync"
+  - "cloud"
+  - "low-risk"
+notes: |
+  Low risk: Sync is convenience feature, not critical functionality.
+
+  Privacy benefit - HIGH:
+  Edge sync sends extensive data to Microsoft cloud:
+  - Complete browsing history
+  - All saved passwords (encrypted but stored on Microsoft servers)
+  - Payment information
+  - Personal bookmarks and favorites
+  - Extension data and settings
+  - Open tabs across all devices
+
+  Disabling prevents Microsoft from storing this sensitive data.
+
+  Alternative solutions:
+  - Use third-party password manager (Bitwarden, KeePass)
+  - Export/import bookmarks manually when needed
+  - Use portable browser profiles on USB drive
+  - Local browser data only
+
+  Recommended: Disable for privacy unless you specifically need cross-device sync.
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"
+  - "Hardened"
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false

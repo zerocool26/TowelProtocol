@@ -14,7 +14,16 @@
       "Bash(powershell -Command:*)",
       "Bash(Select-String -Pattern \"error|Error|ERROR\" -Context 2)",
       "Bash(powershell -ExecutionPolicy Bypass -File \"LaunchGUI.ps1\")",
-      "Bash(Select-String -Pattern \"error|warning\" -Context 2)"
+      "Bash(Select-String -Pattern \"error|warning\" -Context 2)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"scripts\\\\download-inter-fonts.ps1\")",
+      "Bash(mkdir:*)",
+      "Bash(Select-String -Pattern \"error|warning|succeeded\")",
+      "Bash(Select-Object -Last 10)",
+      "Bash(dotnet test:*)",
+      "Bash(Remove-Item \"tests\\\\PrivacyHardeningTests\\\\PolicyEngineTests.cs\" -Force)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(dotnet restore:*)"
     ]
   }
 }

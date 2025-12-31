@@ -1,0 +1,74 @@
+policyId: "edge-006"
+version: "1.0.0"
+name: "Disable Edge Collections Cloud Sync"
+category: Edge
+description: |
+  Disables Microsoft Edge Collections synchronization to cloud.
+
+  Collections allow organizing web pages, images, and notes.
+  When sync is disabled, collections remain local only.
+
+  Privacy benefit:
+  Your collections, notes, and organized content not stored in Microsoft cloud.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Edge"
+  valueName: "EdgeCollectionsEnabled"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set EdgeCollectionsEnabled to 1 or delete the value"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: "Microsoft Edge installed"
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Collections feature completely disabled"
+    severity: Low
+    details: "Can't use Collections to organize web content"
+  - scenario: "No cloud sync of collections"
+    severity: Low
+    details: "Collections data stays local only"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge' -Name EdgeCollectionsEnabled -ErrorAction SilentlyContinue"
+expectedOutput: "EdgeCollectionsEnabled: 0"
+references:
+  - "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies#edgecollectionsenabled"
+tags:
+  - "edge"
+  - "browser"
+  - "privacy"
+  - "collections"
+  - "cloud"
+  - "low-risk"
+notes: |
+  Low risk: Collections is optional feature.
+
+  Privacy concern:
+  Collections sync sends to Microsoft cloud:
+  - Web pages you save
+  - Images and content you collect
+  - Notes you write
+  - Organization of your research
+  - Topics you're interested in
+
+  Recommended: Disable if you don't use Collections or prefer
+  local-only note-taking tools.
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false

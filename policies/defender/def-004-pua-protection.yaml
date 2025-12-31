@@ -1,0 +1,67 @@
+policyId: "def-004"
+version: "1.0.0"
+name: "Disable Potentially Unwanted Application (PUA) Protection"
+category: Defender
+description: |
+  Disables Windows Defender PUA (Potentially Unwanted Application) detection and blocking.
+
+  PUA protection flags software like adware, bundleware, and aggressive marketing tools.
+  Some legitimate software may be flagged. Disabling gives you full control over what runs.
+
+  Privacy consideration: PUA detection may send application metadata to Microsoft.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender"
+  valueName: "PUAProtection"
+  valueType: DWord
+  valueData: 0
+  expectedValue: "0x00000000"
+supportStatus: Supported
+riskLevel: Medium
+reversible: true
+revertMechanism: "Set PUAProtection to 1 (Enabled)"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "Potentially unwanted apps not blocked"
+    severity: Medium
+    details: "Adware, toolbars, and bundleware may install without warning"
+  - scenario: "Less protection against aggressive software"
+    severity: Low
+    details: "User must manually verify software legitimacy"
+verificationCommand: "Get-MpPreference | Select-Object -ExpandProperty PUAProtection"
+expectedOutput: "PUAProtection: 0 (Disabled)"
+references:
+  - "https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/detect-block-potentially-unwanted-apps-microsoft-defender-antivirus"
+tags:
+  - "defender"
+  - "privacy"
+  - "pua"
+  - "medium-risk"
+  - "user-control"
+notes: |
+  Medium risk: Allows potentially unwanted software to run.
+
+  Value options:
+  - 0 = Disabled (you decide what's unwanted)
+  - 1 = Enabled (Defender blocks PUAs automatically)
+
+  Use case: Disable if you want full control and accept legitimate software
+  that Defender flags as PUA (e.g., certain dev tools, game mods).
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false

@@ -1,0 +1,79 @@
+policyId: "od-004"
+version: "1.0.0"
+name: "Disable OneDrive User Feedback and Telemetry"
+category: OneDrive
+description: |
+  Disables OneDrive's ability to collect user feedback and send usage telemetry
+  to Microsoft.
+
+  When enabled, OneDrive will NOT:
+  - Show feedback prompts
+  - Collect usage statistics
+  - Send feature usage telemetry
+  - Track user interaction patterns
+  - Send crash reports
+
+  Privacy benefit: Reduces telemetry and tracking by OneDrive client.
+mechanism: Registry
+mechanismDetails:
+  type: RegistryKey
+  keyPath: "HKLM\\SOFTWARE\\Policies\\Microsoft\\OneDrive"
+  valueName: "DisableFeedback"
+  valueType: DWord
+  valueData: 1
+  expectedValue: "0x00000001"
+supportStatus: Supported
+riskLevel: Low
+reversible: true
+revertMechanism: "Set DisableFeedback to 0 or delete the value"
+applicability:
+  minBuild: 22000
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: "OneDrive must be installed"
+  deprecatedAsOfBuild: null
+dependencies: []
+knownBreakage:
+  - scenario: "No OneDrive feedback prompts"
+    severity: None
+    details: "User won't be asked for OneDrive feedback"
+  - scenario: "Less telemetry for Microsoft to improve OneDrive"
+    severity: None
+    details: "Microsoft receives less usage data (privacy benefit)"
+verificationCommand: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\OneDrive' -Name DisableFeedback -ErrorAction SilentlyContinue"
+expectedOutput: "DisableFeedback: 1"
+references:
+  - "https://learn.microsoft.com/en-us/sharepoint/use-group-policy"
+tags:
+  - "onedrive"
+  - "privacy"
+  - "telemetry"
+  - "low-risk"
+  - "feedback"
+notes: |
+  Low risk: No functional impact, only reduces telemetry.
+
+  Privacy benefit:
+  - OneDrive client doesn't send usage statistics
+  - No tracking of feature usage
+  - No crash report uploads
+  - Fewer telemetry connections to Microsoft
+
+  Recommended: Enable for all privacy-conscious configurations.
+  This has no functional downside and improves privacy.
+
+  Combine with Windows telemetry policies for comprehensive telemetry reduction.
+enabledByDefault: false
+includedInProfiles:
+  - "MaximumPrivacy"
+  - "Hardened"
+  - "Balanced"
+autoApply: false
+requiresConfirmation: true
+showInUI: true
+userMustChoose: false
