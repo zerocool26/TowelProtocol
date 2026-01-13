@@ -51,6 +51,11 @@ public sealed class PolicyAuditItem
     public string? ExpectedValue { get; init; }
 
     /// <summary>
+    /// Technical evidence details (e.g. registry path, file status).
+    /// </summary>
+    public string? EvidenceDetails { get; init; }
+
+    /// <summary>
     /// Whether system state matches expected
     /// </summary>
     public required bool Matches { get; init; }
@@ -71,5 +76,7 @@ public sealed class SystemInfo
     public required string WindowsSku { get; init; }
     public required bool IsDomainJoined { get; init; }
     public required bool IsMDMManaged { get; init; }
+    public required bool IsSCCMManaged { get; init; }
+    public required bool IsEntraIDJoined { get; init; }
     public required bool DefenderTamperProtectionEnabled { get; init; }
 }

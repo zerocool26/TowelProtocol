@@ -11,115 +11,92 @@
         Title="Windows 11 Privacy Hardening Framework"
         MinWidth="1200" MinHeight="800">
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Window.DataTemplates>
+        <DataTemplate DataType="vm:DashboardViewModel">
+            <views:DashboardView />
+        </DataTemplate>
+        <DataTemplate DataType="vm:AuditViewModel">
+            <views:AuditView />
+        </DataTemplate>
+        <DataTemplate DataType="vm:ApplyViewModel">
+            <views:ApplyView />
+        </DataTemplate>
+        <DataTemplate DataType="vm:PreviewViewModel">
+            <views:PreviewView />
+        </DataTemplate>
+        <DataTemplate DataType="vm:HistoryViewModel">
+            <views:HistoryView />
+        </DataTemplate>
+        <DataTemplate DataType="vm:DriftViewModel">
+            <views:DriftView />
+        </DataTemplate>
+        <DataTemplate DataType="vm:ReportsViewModel">
+            <views:ReportsView />
+        </DataTemplate>
+    </Window.DataTemplates>
 
-        <!-- Title Bar -->
-        <Border Grid.Row="0" Background="{StaticResource PanelBrush}" Padding="18">
-            <Grid ColumnDefinitions="*,Auto">
-                <StackPanel Grid.Column="0">
-                    <TextBlock Classes="title" Text="Windows 11 Privacy Hardening Framework" />
-                    <TextBlock Classes="subtitle" Text="Granular control, auditable changes, and full reversibility" Margin="0,6,0,0" />
-                </StackPanel>
+    <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="240,*,320" Margin="12">
 
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                    <Button Command="{Binding ToggleThemeCommand}" ToolTip.Tip="Toggle Light/Dark theme"
-                            AutomationProperties.Name="Toggle Theme"
-                            TabIndex="10">Theme</Button>
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <!-- Main Content -->
-        <TabControl Grid.Row="1" Margin="8" SelectedIndex="{Binding SelectedTabIndex}">
-
-            <!-- Policy Selection Tab -->
-            <TabItem Header="Policy Selection">
-                <TabItem.HeaderTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <controls:IconHelper Name="folder" FontSize="16" />
-                            <TextBlock Text="Policy Selection"/>
-                            <TextBlock Text="Policy Selection"/>
-                        </StackPanel>
-                    </DataTemplate>
-                </TabItem.HeaderTemplate>
-                <views:PolicySelectionView DataContext="{Binding PolicySelection}"/>
-            </TabItem>
-
-            <!-- Audit Tab -->
-            <TabItem Header="Audit">
-                <TabItem.HeaderTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <controls:IconHelper Name="search" FontSize="16" />
-                            <TextBlock Text="Audit"/>
-                            <TextBlock Text="Audit"/>
-                        </StackPanel>
-                    </DataTemplate>
-                </TabItem.HeaderTemplate>
-                <views:AuditView DataContext="{Binding Audit}"/>
-            </TabItem>
-
-            <!-- Diff View Tab -->
-            <TabItem Header="Diff View">
-                <TabItem.HeaderTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <controls:IconHelper Name="bar_chart" FontSize="16" />
-                            <TextBlock Text="Diff View"/>
-                            <TextBlock Text="Diff View"/>
-                        </StackPanel>
-                    </DataTemplate>
-                </TabItem.HeaderTemplate>
-                <views:DiffView DataContext="{Binding Diff}"/>
-            </TabItem>
-
-        </TabControl>
-
-        <!-- Status Bar -->
-        <Border Grid.Row="2" Background="{StaticResource PanelBrush}"
-            Padding="16,8" BorderBrush="{StaticResource PanelBrush}"
-            BorderThickness="0,1,0,0">
-            <Grid ColumnDefinitions="*,Auto">
-
-                <TextBlock Grid.Column="0"
-                          Text="{Binding StatusMessage}"
-                          VerticalAlignment="Center"
-                          Opacity="0.7"/>
-
-                  <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                      <Button Content="Run Audit"
-                          Command="{Binding RunAuditCommand}"
-                          IsEnabled="{Binding !IsProcessing}"
-                          AutomationProperties.Name="Run Audit"
-                          TabIndex="30"/>
-                      <Button Content="Apply Selected"
-                          Command="{Binding ApplySelectedPoliciesCommand}"
-                          Classes="accent"
-                          IsEnabled="{Binding !IsProcessing}"
-                          AutomationProperties.Name="Apply Selected Policies"
-                          TabIndex="31"/>
-                  </StackPanel>
-            </Grid>
-        </Border>
-
-        <!-- Processing Overlay -->
-        <Panel Grid.RowSpan="3"
-               IsVisible="{Binding IsProcessing}"
-               Background="#80000000">
-            <Border Background="White" CornerRadius="8" Padding="32"
-                    HorizontalAlignment="Center" VerticalAlignment="Center">
-                <StackPanel Spacing="12" HorizontalAlignment="Center">
-                    <ProgressBar Width="320" Minimum="0" Maximum="100" Value="{Binding ProgressValue}" IsVisible="{Binding ProgressVisible}"/>
-                    <TextBlock Text="{Binding StatusMessage}" HorizontalAlignment="Center"/>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
-                        <Button Content="Cancel" Command="{Binding CancelApplyCommand}" IsVisible="{Binding IsProcessing}"/>
+        <!-- Top command bar (compact) -->
+        <Border Grid.Row="0" Grid.ColumnSpan="3" Background="{DynamicResource PanelBrush}" Padding="10" CornerRadius="8">
+            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <controls:IconHelper Name="privacy" />
+                    <StackPanel Spacing="0">
+                        <TextBlock FontWeight="{DynamicResource FontWeightSemiBold}" FontSize="{DynamicResource FontSizeBodyLarge}" Text="Privacy Hardening Framework" />
+                        <TextBlock Opacity="0.75" FontSize="{DynamicResource FontSizeCaption}" Text="Audit → Preview → Apply → Verify → Undo" />
                     </StackPanel>
                 </StackPanel>
-            </Border>
-        </Panel>
-        
-        <!-- Snackbar -->
-        <controls:Snackbar DataContext="{Binding}" />
+
+                <TextBlock Grid.Column="1" Text="{Binding StatusMessage}" Opacity="0.75" VerticalAlignment="Center" Margin="12,0" />
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button Command="{Binding ToggleThemeCommand}" ToolTip.Tip="Toggle Light/Dark" Padding="10,6">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <controls:IconHelper Name="theme" />
+                            <TextBlock Text="Theme" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding OpenSettingsCommand}" ToolTip.Tip="Settings" Padding="10,6">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <controls:IconHelper Name="settings" />
+                            <TextBlock Text="Settings" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Left navigation -->
+        <Border Grid.Row="1" Grid.Column="0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="6" Margin="0,12,12,0">
+            <ListBox ItemsSource="{Binding NavItems}" SelectedItem="{Binding SelectedNavItem}">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Padding="10,8" CornerRadius="6" HorizontalAlignment="Stretch">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <controls:IconHelper Name="{Binding Icon}" />
+                                <TextBlock Grid.Column="1" Text="{Binding Title}" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+
+        <!-- Main page host -->
+        <Border Grid.Row="1" Grid.Column="1" Background="{DynamicResource SurfaceBrush}" CornerRadius="8" Margin="0,12,12,0">
+            <ContentControl Content="{Binding CurrentPage}" />
+        </Border>
+
+        <!-- Status rail -->
+        <views:StatusRailView Grid.Row="1" Grid.Column="2" DataContext="{Binding StatusRail}" Margin="0,12,0,0" />
+
+        <!-- Bottom: snackbars + non-blocking notifications -->
+        <controls:Snackbar Grid.Row="2" Grid.ColumnSpan="3" DataContext="{Binding}" />
     </Grid>
 </Window>

@@ -1,0 +1,15 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "build-solution",
+			"type": "shell",
+			"command": "dotnet build \"PrivacyHardeningFramework.sln\" -c Release --disable-build-servers -p:RestoreDisableParallel=true -p:BuildInParallel=false -v minimal"
+		},
+		{
+			"label": "build-final",
+			"type": "shell",
+			"command": "dotnet build \"PrivacyHardeningFramework.sln\" -c Release --disable-build-servers -p:RestoreDisableParallel=true -p:BuildInParallel=false -v minimal"
+		}
+	]
+}

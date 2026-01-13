@@ -8,133 +8,288 @@
              x:Class="PrivacyHardeningUI.Views.AuditView"
              x:DataType="vm:AuditViewModel">
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid RowDefinitions="Auto,*" Margin="12">
 
-        <!-- Header with Run Button -->
-        <Border Grid.Row="0" Padding="16" Background="{StaticResource PanelBrush}">
-            <Grid ColumnDefinitions="*,Auto">
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="System Audit" FontSize="20" FontWeight="Bold"/>
-                    <TextBlock Text="Check which privacy policies are currently active on your system"
-                               FontSize="12" Opacity="0.7" Margin="0,4,0,0"/>
+        <!-- Header / controls -->
+        <Border Grid.Row="0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10">
+            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="8">
+                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="2">
+                    <TextBlock FontWeight="{DynamicResource FontWeightSemiBold}" FontSize="{DynamicResource FontSizeBodyLarge}" Text="Audit" />
+                    <TextBlock Opacity="0.75" FontSize="{DynamicResource FontSizeCaption}" Text="Detect drift and compliance against the selected policy set." />
                 </StackPanel>
 
-                <Button Grid.Column="1" Content="Run Audit"
-                    Command="{Binding RunAuditCommand}"
-                    IsEnabled="{Binding !IsRunning}"
-                    HorizontalAlignment="Right" VerticalAlignment="Center"
-                    Padding="24,8" FontSize="14" FontWeight="Bold"
-                    AutomationProperties.Name="Run Audit"
-                    TabIndex="10"/>
+                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button Command="{Binding RunAuditCommand}" IsEnabled="{Binding CanRunAudit}" Classes="accent" Padding="12,6">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <controls:IconHelper Name="search" />
+                            <TextBlock Text="Run" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding ClearFiltersCommand}" Padding="12,6" ToolTip.Tip="Clear search and filters">
+                        <TextBlock Text="Reset" />
+                    </Button>
+                </StackPanel>
+
+                <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="10" VerticalAlignment="Center">
+                    <TextBox Grid.Column="0"
+                             Watermark="Search policy id, name, category, risk…"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <ToggleSwitch IsChecked="{Binding ShowNonCompliant}" Content="Non" />
+                        <ToggleSwitch IsChecked="{Binding ShowCompliant}" Content="Ok" />
+                        <ToggleSwitch IsChecked="{Binding ShowNotApplicable}" Content="N/A" />
+                    </StackPanel>
+
+                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding ShowUnsupported}" Content="Include unsupported" />
+                    <ToggleSwitch Grid.Column="3" IsChecked="{Binding ShowOnlyReversible}" Content="Reversible" />
+
+                    <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                        <ToggleSwitch Content="Applied" IsChecked="{Binding ShowOnlyApplied}" />
+                        <ComboBox Width="150" ItemsSource="{Binding GroupByOptions}" SelectedItem="{Binding GroupBy}" />
+                        <TextBlock Opacity="0.75">
+                            <Run Text="Total " />
+                            <Run Text="{Binding TotalCount}" FontWeight="SemiBold" />
+                        </TextBlock>
+                        <TextBlock Opacity="0.75">
+                            <Run Text="Non " />
+                            <Run Text="{Binding NonCompliantCount}" FontWeight="SemiBold" />
+                        </TextBlock>
+                    </StackPanel>
+                </Grid>
             </Grid>
         </Border>
 
-        <!-- Audit Results List -->
-        <ScrollViewer Grid.Row="1">
-            <ListBox ItemsSource="{Binding AuditItems}" Margin="8"
-                     AutomationProperties.Name="Audit Results List"
-                     TabIndex="20">
-                <ListBox.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <VirtualizingStackPanel />
-                    </ItemsPanelTemplate>
-                </ListBox.ItemsPanel>
-                <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Border Classes="card">
-                                <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto">
+        <!-- Master-detail -->
+        <Grid Grid.Row="1" ColumnDefinitions="420,*,360" ColumnSpacing="12" Margin="0,12,0,0">
+            <!-- Left: dense list -->
+            <Border Grid.Column="0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8">
+                <Grid RowDefinitions="Auto,*">
+                    <Border Grid.Row="0" Background="{DynamicResource PanelBrush}" Padding="10" CornerRadius="8,8,0,0">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10" VerticalAlignment="Center">
+                            <TextBlock Opacity="0.75" Text="Results" />
+                            <TextBlock Grid.Column="1" Opacity="0.65" Text="Select an item to view evidence" />
+                            <TextBlock Grid.Column="2" Opacity="0.75">
+                                <Run Text="Compliant " />
+                                <Run Text="{Binding CompliantCount}" FontWeight="SemiBold" />
+                            </TextBlock>
+                            <TextBlock Grid.Column="3" Opacity="0.75">
+                                <Run Text="N/A " />
+                                <Run Text="{Binding NotApplicableCount}" FontWeight="SemiBold" />
+                            </TextBlock>
+                        </Grid>
+                    </Border>
 
-                                <!-- Status Icon -->
-                                <Border Grid.Row="0" Grid.Column="0" Grid.RowSpan="3"
-                                        Width="48" Height="48"
-                                        CornerRadius="24"
-                                        VerticalAlignment="Top" Margin="0,0,16,0"
-                                        Background="{StaticResource AccentBrush}">
-                                    <controls:IconHelper Name="check_circle"
-                                               Foreground="White" FontSize="20"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <ListBox Grid.Row="1"
+                             ItemsSource="{Binding FilteredItems}"
+                             SelectedItem="{Binding SelectedItem}"
+                             >
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:AuditPolicyRowViewModel">
+                                <Border Padding="10,8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" HorizontalAlignment="Stretch">
+                                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto" ColumnSpacing="10" RowDefinitions="Auto,Auto">
+                                        <Border Grid.RowSpan="2" Grid.Column="0" CornerRadius="10" Padding="8,3"
+                                                Background="{Binding ComplianceStatus, Converter={StaticResource AuditStatusToBrushConverter}}">
+                                            <TextBlock Foreground="{DynamicResource TextOnAccentBrush}" FontWeight="SemiBold" FontSize="12" Text="{Binding StatusPillText}" />
+                                        </Border>
+
+                                        <Border Grid.RowSpan="2" Grid.Column="1" CornerRadius="10" Padding="8,3"
+                                                Background="{Binding RiskLevel, Converter={StaticResource RiskLevelToBrushConverter}}">
+                                            <TextBlock Foreground="{DynamicResource TextOnAccentBrush}" FontWeight="SemiBold" FontSize="12" Text="{Binding RiskText}" />
+                                        </Border>
+
+                                        <StackPanel Grid.RowSpan="2" Grid.Column="2" Spacing="6" VerticalAlignment="Center">
+                                            <controls:IconHelper Name="{Binding MechanismIcon}" />
+                                            <controls:IconHelper Name="undo" IsVisible="{Binding IsReversible}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="3" Grid.Row="0" Spacing="1">
+                                            <TextBlock FontWeight="SemiBold" Text="{Binding PolicyName}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Opacity="0.7" FontSize="12" Text="{Binding PolicyId}" FontFamily="Consolas" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+
+                                        <TextBlock Grid.Column="4" Grid.Row="0" Opacity="0.7" Text="{Binding Category}" />
+
+                                        <TextBlock Grid.Column="3" Grid.ColumnSpan="2" Grid.Row="1" Opacity="0.75" FontSize="12" Text="{Binding SummaryLine}" TextTrimming="CharacterEllipsis" />
+                                    </Grid>
                                 </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
 
-                                <!-- Policy Name and ID -->
-                                <StackPanel Grid.Row="0" Grid.Column="1" Spacing="4">
-                                    <TextBlock Text="{Binding PolicyId}" FontSize="16" FontWeight="Bold"/>
-                                    <TextBlock Text="{Binding PolicyId}" FontSize="11" Opacity="0.7"
-                                               FontFamily="Consolas"/>
+            <!-- Middle: explain + actions -->
+            <Border Grid.Column="1" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
+                <Grid RowDefinitions="Auto,Auto,*" RowSpacing="10">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                        <StackPanel Grid.Column="0" Spacing="2">
+                            <TextBlock FontWeight="{DynamicResource FontWeightSemiBold}" FontSize="{DynamicResource FontSizeBodyLarge}" Text="Explain" />
+                            <TextBlock Opacity="0.75" FontSize="{DynamicResource FontSizeCaption}" Text="What, why, risk, and what will change" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                                    IsVisible="{Binding SelectedItem, Converter={StaticResource NullToVisibilityConverter}}">
+                            <Button Command="{Binding PreviewSelectedCommand}" Padding="10,6" Classes="accent"
+                                    IsEnabled="{Binding CanUsePrivilegedActions}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <controls:IconHelper Name="diff" />
+                                    <TextBlock Text="Preview" />
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding ApplySelectedCommand}" Padding="10,6"
+                                    IsEnabled="{Binding CanUsePrivilegedActions}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <controls:IconHelper Name="shield" />
+                                    <TextBlock Text="Apply" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="1" Background="{DynamicResource PanelBrush}" CornerRadius="6" Padding="10"
+                            IsVisible="{Binding SelectedItem, Converter={StaticResource NullToVisibilityConverter}}">
+                        <StackPanel Spacing="8">
+                            <TextBlock FontWeight="SemiBold" Text="{Binding SelectedItem.PolicyName}" TextWrapping="Wrap" FontSize="16"/>
+                            
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                        <TextBlock Opacity="0.75" Text="ID" />
+                                        <TextBlock Grid.Column="1" Opacity="0.9" FontFamily="Consolas" FontSize="12" Text="{Binding SelectedItem.PolicyId}" />
+                                    </Grid>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Border CornerRadius="10" Padding="8,3" Background="{Binding SelectedItem.ComplianceStatus, Converter={StaticResource AuditStatusToBrushConverter}}">
+                                            <TextBlock Foreground="{DynamicResource TextOnAccentBrush}" FontSize="11" FontWeight="SemiBold" Text="{Binding SelectedItem.StatusPillText}" />
+                                        </Border>
+                                        <Border CornerRadius="10" Padding="8,3" Background="{Binding SelectedItem.RiskLevel, Converter={StaticResource RiskLevelToBrushConverter}}">
+                                            <TextBlock Foreground="{DynamicResource TextOnAccentBrush}" FontSize="11" FontWeight="SemiBold" Text="{Binding SelectedItem.RiskText}" />
+                                        </Border>
+                                        <Border CornerRadius="10" Padding="8,3" Background="{DynamicResource BorderBrush}">
+                                            <TextBlock FontSize="11" FontWeight="SemiBold" Text="{Binding SelectedItem.MechanismText}" />
+                                        </Border>
+                                    </StackPanel>
                                 </StackPanel>
 
-                                <!-- Status Badge -->
-                                <Border Grid.Row="0" Grid.Column="2"
-                                        CornerRadius="3" Padding="12,4" Margin="8,0,0,0"
-                                        VerticalAlignment="Top">
-                                    <Border.Background>
-                                        <SolidColorBrush Color="{Binding IsApplied, Converter={StaticResource BoolToColorConverter}}"/>
-                                    </Border.Background>
-                                    <TextBlock Text="{Binding IsApplied, Converter={StaticResource BoolToStatusTextConverter}}"
-                                               Foreground="White" FontSize="12" FontWeight="Bold"/>
-                                </Border>
+                                <Separator Grid.Column="1" VerticalAlignment="Stretch" Width="1" Background="{DynamicResource BorderBrush}" Margin="8,0"/>
 
-                                <!-- Expected Value -->
-                                <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
-                                            Margin="0,8,0,0" Spacing="2"
-                                            IsVisible="{Binding ExpectedValue, Converter={StaticResource NullToVisibilityConverter}}">
-                                    <TextBlock Text="Expected Value:" FontSize="12" FontWeight="Bold"/>
-                                    <Border Background="{DynamicResource SystemChromeMediumLowColor}"
-                                            CornerRadius="3" Padding="8" Margin="16,0,0,0">
-                                        <TextBlock Text="{Binding ExpectedValue}" FontFamily="Consolas" FontSize="11"/>
-                                    </Border>
-                                </StackPanel>
-
-                                <!-- Actual Value -->
-                                <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
-                                            Margin="0,8,0,0" Spacing="2"
-                                            IsVisible="{Binding ActualValue, Converter={StaticResource NullToVisibilityConverter}}">
-                                    <TextBlock Text="Actual Value:" FontSize="12" FontWeight="Bold"/>
-                                    <Border Background="{DynamicResource SystemChromeMediumLowColor}"
-                                            CornerRadius="3" Padding="8" Margin="16,0,0,0">
-                                        <TextBlock Text="{Binding ActualValue}" FontFamily="Consolas" FontSize="11"/>
-                                    </Border>
+                                <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                                    <TextBlock Text="IMPACT SCORECARD" FontSize="9" FontWeight="Bold" Opacity="0.5" LetterSpacing="1" Margin="0,0,0,2"/>
+                                    <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="16">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <TextBlock Text="Privacy:" FontSize="11" Opacity="0.7"/>
+                                            <TextBlock Text="{Binding SelectedItem.PrivacyImpactText}" FontSize="11" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <TextBlock Text="Perf:" FontSize="11" Opacity="0.7"/>
+                                            <TextBlock Text="{Binding SelectedItem.PerformanceImpactText}" FontSize="11" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                                            <TextBlock Text="Comp:" FontSize="11" Opacity="0.7"/>
+                                            <TextBlock Text="{Binding SelectedItem.CompatibilityRiskText}" FontSize="11" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Grid>
                                 </StackPanel>
                             </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </ScrollViewer>
+                        </StackPanel>
+                    </Border>
 
-        <!-- Status Bar -->
-        <Border Grid.Row="2" Background="{DynamicResource SystemChromeLowColor}"
-                BorderBrush="{DynamicResource SystemBaseMediumColor}"
-                BorderThickness="0,1,0,0" Padding="16,8">
-            <Grid ColumnDefinitions="*,Auto">
-                <!-- Error Message -->
-                <TextBlock Grid.Column="0"
-                           Text="{Binding ErrorMessage}"
-                           Foreground="Red"
-                           IsVisible="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}"/>
+                    <ScrollViewer Grid.Row="2">
+                        <StackPanel Spacing="10">
+                            <Border Background="{DynamicResource PanelBrush}" CornerRadius="6" Padding="10"
+                                    IsVisible="{Binding SelectedItem, Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel Spacing="6">
+                                    <TextBlock FontWeight="SemiBold" Text="Evidence (current vs expected)" />
+                                    <TextBlock FontFamily="Consolas" FontSize="12" Text="{Binding SelectedItem.EvidenceBlock}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
 
-                <!-- Stats -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16"
-                            IsVisible="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=Inverse}">
-                    <TextBlock>
-                        <Run Text="Total Audited:"/>
-                        <Run Text="{Binding AuditItems.Count}" FontWeight="Bold"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </Border>
+                            <Border Background="{DynamicResource PanelBrush}" CornerRadius="6" Padding="10"
+                                    IsVisible="{Binding InfoMessage, Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel Spacing="6">
+                                    <TextBlock FontWeight="SemiBold" Text="Standalone (read-only)" />
+                                    <TextBlock Foreground="{DynamicResource InfoBrush}" Text="{Binding InfoMessage}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="{DynamicResource PanelBrush}" CornerRadius="6" Padding="10"
+                                    IsVisible="{Binding ShowAuditError}">
+                                <StackPanel Spacing="6">
+                                    <TextBlock FontWeight="SemiBold" Text="Audit error" />
+                                    <TextBlock Foreground="{DynamicResource ErrorBrush}" Text="{Binding ErrorMessage}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="{DynamicResource PanelBrush}" CornerRadius="6" Padding="10"
+                                    IsVisible="{Binding SelectedItem, Converter={StaticResource NullToInverseVisibilityConverter}}">
+                                <TextBlock Opacity="0.75" TextWrapping="Wrap" Text="Select a policy on the left. Use Preview before applying changes." />
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Right: evidence timeline (tool provenance) -->
+            <Border Grid.Column="2" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
+                <Grid RowDefinitions="Auto,Auto,*" RowSpacing="10">
+                    <StackPanel Grid.Row="0" Spacing="2">
+                        <TextBlock FontWeight="{DynamicResource FontWeightSemiBold}" FontSize="{DynamicResource FontSizeBodyLarge}" Text="Timeline" />
+                        <TextBlock Opacity="0.75" FontSize="{DynamicResource FontSizeCaption}" Text="Tool-applied provenance and rollback evidence" />
+                    </StackPanel>
+
+                    <Border Grid.Row="1" Background="{DynamicResource PanelBrush}" CornerRadius="6" Padding="10"
+                            IsVisible="{Binding EvidenceError, Converter={StaticResource NullToVisibilityConverter}}">
+                        <TextBlock Foreground="{DynamicResource WarningBrush}" Text="{Binding EvidenceError}" TextWrapping="Wrap" />
+                    </Border>
+
+                    <Border Grid.Row="1" Background="{DynamicResource PanelBrush}" CornerRadius="6" Padding="10"
+                            IsVisible="{Binding IsEvidenceLoading}">
+                        <StackPanel Spacing="8">
+                            <ProgressBar IsIndeterminate="True" Height="6" />
+                            <TextBlock Opacity="0.75" Text="Loading history…" />
+                        </StackPanel>
+                    </Border>
+
+                    <ListBox Grid.Row="2" ItemsSource="{Binding RelatedChanges}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="10,8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                                    <StackPanel Spacing="2">
+                                        <TextBlock FontWeight="SemiBold" Text="{Binding Operation}" />
+                                        <TextBlock Opacity="0.75" FontSize="12" Text="{Binding AppliedAt}" />
+                                        <TextBlock Opacity="0.75" FontSize="12" Text="{Binding Mechanism}" />
+                                        <TextBlock Opacity="0.85" FontSize="12" Text="{Binding Description}" TextWrapping="Wrap" />
+                                        <TextBlock Foreground="{DynamicResource ErrorBrush}" FontSize="12" Text="{Binding ErrorMessage}" TextWrapping="Wrap"
+                                                   IsVisible="{Binding Success, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+        </Grid>
 
         <!-- Running Overlay -->
-        <Panel Grid.RowSpan="3" IsVisible="{Binding IsRunning}"
-               Background="#80000000">
-            <Border Background="White" CornerRadius="8" Padding="32"
-                    HorizontalAlignment="Center" VerticalAlignment="Center">
-                <StackPanel Spacing="16" HorizontalAlignment="Center">
-                    <ProgressBar IsIndeterminate="True" Width="200"/>
-                    <TextBlock Text="Running audit..." HorizontalAlignment="Center" FontSize="14"/>
-                    <TextBlock Text="This may take a few moments"
-                               HorizontalAlignment="Center" FontSize="12" Opacity="0.7"/>
+        <Panel Grid.RowSpan="2" IsVisible="{Binding IsRunning}" Background="#80000000">
+            <Border Background="White" CornerRadius="8" Padding="28" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel Spacing="12" HorizontalAlignment="Center">
+                    <ProgressBar IsIndeterminate="True" Width="240" />
+                    <TextBlock Text="Running audit…" HorizontalAlignment="Center" FontSize="14" />
+                    <TextBlock Text="Collecting evidence from system state" HorizontalAlignment="Center" FontSize="12" Opacity="0.75" />
                 </StackPanel>
             </Border>
         </Panel>
+
     </Grid>
 </UserControl>

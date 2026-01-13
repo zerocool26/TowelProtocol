@@ -72,7 +72,7 @@ public sealed class RegistryExecutor : IExecutor
         var details = ParseRegistryDetails(policy.MechanismDetails);
         if (details == null)
         {
-            return CreateErrorRecord(policy, "Invalid registry mechanism details");
+            return CreateErrorRecord(policy, ChangeOperation.Apply, "Invalid registry mechanism details");
         }
 
         try
@@ -86,7 +86,7 @@ public sealed class RegistryExecutor : IExecutor
             using var key = hive.CreateSubKey(subKey, writable: true);
             if (key == null)
             {
-                return CreateErrorRecord(policy, $"Failed to create/open registry key: {details.KeyPath}");
+                return CreateErrorRecord(policy, ChangeOperation.Apply, $"Failed to create/open registry key: {details.KeyPath}");
             }
 
             // Set value based on type
@@ -107,6 +107,7 @@ public sealed class RegistryExecutor : IExecutor
             return new ChangeRecord
             {
                 ChangeId = Guid.NewGuid().ToString(),
+                Operation = ChangeOperation.Apply,
                 PolicyId = policy.PolicyId,
                 AppliedAt = DateTime.UtcNow,
                 Mechanism = MechanismType.Registry,
@@ -119,7 +120,7 @@ public sealed class RegistryExecutor : IExecutor
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to apply registry policy: {PolicyId}", policy.PolicyId);
-            return CreateErrorRecord(policy, ex.Message);
+            return CreateErrorRecord(policy, ChangeOperation.Apply, ex.Message);
         }
     }
 
@@ -130,7 +131,7 @@ public sealed class RegistryExecutor : IExecutor
         var details = ParseRegistryDetails(policy.MechanismDetails);
         if (details == null)
         {
-            return CreateErrorRecord(policy, "Invalid registry mechanism details");
+            return CreateErrorRecord(policy, ChangeOperation.Revert, "Invalid registry mechanism details");
         }
 
         try
@@ -198,6 +199,7 @@ public sealed class RegistryExecutor : IExecutor
             return new ChangeRecord
             {
                 ChangeId = Guid.NewGuid().ToString(),
+                Operation = ChangeOperation.Revert,
                 PolicyId = policy.PolicyId,
                 AppliedAt = DateTime.UtcNow,
                 Mechanism = MechanismType.Registry,
@@ -210,7 +212,7 @@ public sealed class RegistryExecutor : IExecutor
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to revert registry policy: {PolicyId}", policy.PolicyId);
-            return CreateErrorRecord(policy, ex.Message);
+            return CreateErrorRecord(policy, ChangeOperation.Revert, ex.Message);
         }
     }
 
@@ -219,7 +221,10 @@ public sealed class RegistryExecutor : IExecutor
         try
         {
             var json = JsonSerializer.Serialize(mechanismDetails);
-            return JsonSerializer.Deserialize<RegistryDetails>(json);
+            return JsonSerializer.Deserialize<RegistryDetails>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
         }
         catch
         {
@@ -246,11 +251,12 @@ public sealed class RegistryExecutor : IExecutor
         return (hive, subKey);
     }
 
-    private ChangeRecord CreateErrorRecord(PolicyDefinition policy, string error)
+    private ChangeRecord CreateErrorRecord(PolicyDefinition policy, ChangeOperation operation, string error)
     {
         return new ChangeRecord
         {
             ChangeId = Guid.NewGuid().ToString(),
+            Operation = operation,
             PolicyId = policy.PolicyId,
             AppliedAt = DateTime.UtcNow,
             Mechanism = MechanismType.Registry,

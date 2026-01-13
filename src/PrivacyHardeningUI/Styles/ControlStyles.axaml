@@ -4,41 +4,76 @@
 
   <!-- TextBlock base -->
   <Style Selector="TextBlock">
-    <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
-    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
   </Style>
 
   <Style Selector="TextBlock.title">
-    <Setter Property="FontSize" Value="22" />
+    <Setter Property="FontSize" Value="{DynamicResource FontSizeTitle}" />
     <Setter Property="FontWeight" Value="Bold" />
   </Style>
 
   <Style Selector="TextBlock.subtitle">
-    <Setter Property="FontSize" Value="12" />
-    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+    <Setter Property="FontSize" Value="{DynamicResource FontSizeSubtitle}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
   </Style>
 
   <!-- Button styles -->
   <Style Selector="Button">
-    <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+    <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
     <Setter Property="Padding" Value="10,6" />
-    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="CornerRadius" Value="{DynamicResource CornerRadiusSmall}" />
   </Style>
 
   <Style Selector="Button.accent">
-    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
     <Setter Property="Foreground" Value="White" />
   </Style>
 
+  <!-- Interaction states for buttons -->
+  <Style Selector="Button:pointerover">
+    <Setter Property="Opacity" Value="0.95" />
+  </Style>
+
+  <Style Selector="Button:pressed">
+    <Setter Property="Opacity" Value="0.88" />
+    <Setter Property="RenderTransform">
+      <Setter.Value>
+        <TranslateTransform X="0" Y="1" />
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Accent button hover/pressed specific styling -->
+  <Style Selector="Button.accent:pointerover">
+    <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}" />
+  </Style>
+
+  <Style Selector="Button.accent:pressed">
+    <Setter Property="Background" Value="{DynamicResource AccentPressedBrush}" />
+  </Style>
+
+  <!-- Focus visuals for keyboard users -->
+  <Style Selector="Button:focus">
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
+
+  <!-- TextBox focus style -->
+  <Style Selector="TextBox:focus">
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
+
   <Style Selector="Window">
-    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-    <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+    <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
   </Style>
 
   <!-- Card style for list items -->
   <Style Selector="Border.card">
-    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource PanelBrush}" />
+    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource PanelBrush}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="6" />
     <Setter Property="Padding" Value="14" />
@@ -64,7 +99,7 @@
       </Setter.Value>
     </Setter>
     <Setter Property="Opacity" Value="0.98" />
-    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
   </Style>
 
   <Style Selector="ListBoxItem">
@@ -73,8 +108,8 @@
   </Style>
 
   <Style Selector="ListBoxItem:focus">
-    <Setter Property="Background" Value="{StaticResource PanelBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+    <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
     <Setter Property="BorderThickness" Value="1" />
   </Style>
 

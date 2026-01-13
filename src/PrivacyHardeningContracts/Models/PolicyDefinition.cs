@@ -82,9 +82,25 @@ public sealed class PolicyDefinition
     public string? VerificationCommand { get; init; }
 
     /// <summary>
+    /// The exact Registry key or File path used as evidence for this policy's state.
+    /// Used for "Evidence-Based Auditing" in the UI.
+    /// </summary>
+    public string? EvidencePath { get; init; }
+
+    /// <summary>
     /// Expected output from verification command
     /// </summary>
     public string? ExpectedOutput { get; init; }
+
+    /// <summary>
+    /// Detailed impact ratings for this policy.
+    /// </summary>
+    public ImpactRating? Impact { get; init; }
+
+    /// <summary>
+    /// Available sub-setting options for granular configuration.
+    /// </summary>
+    public PolicyValueOption[]? ValueOptions { get; init; }
 
     /// <summary>
     /// Reference URLs (Microsoft docs, research)
@@ -100,6 +116,11 @@ public sealed class PolicyDefinition
     /// Additional notes (warnings, caveats)
     /// </summary>
     public string? Notes { get; init; }
+
+    /// <summary>
+    /// Detailed technical evidence metadata (e.g. "HKLM\...\DisableTel") used for fine-tuning.
+    /// </summary>
+    public string? TechnicalEvidence { get; init; }
 
     /// <summary>
     /// Whether this policy is enabled by default in profiles

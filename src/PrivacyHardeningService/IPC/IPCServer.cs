@@ -59,6 +59,61 @@ public sealed class IPCServer
         await Task.WhenAll(tasks);
     }
 
+    private static PipeSecurity CreatePipeSecurity()
+    {
+        var security = new PipeSecurity();
+
+        // Always allow the creator/owner full control (ensures the service can create additional instances).
+        security.AddAccessRule(
+            new PipeAccessRule(
+                new SecurityIdentifier(WellKnownSidType.CreatorOwnerSid, null),
+                PipeAccessRights.FullControl,
+                AccessControlType.Allow));
+
+        // Defense-in-depth: deny remote network/anonymous access to this local-only IPC pipe.
+        security.AddAccessRule(
+            new PipeAccessRule(
+                new SecurityIdentifier(WellKnownSidType.AnonymousSid, null),
+                PipeAccessRights.FullControl,
+                AccessControlType.Deny));
+
+        security.AddAccessRule(
+            new PipeAccessRule(
+                new SecurityIdentifier(WellKnownSidType.NetworkSid, null),
+                PipeAccessRights.FullControl,
+                AccessControlType.Deny));
+
+        // Allow LocalSystem and Administrators full control (service + elevated helper scenarios)
+        security.AddAccessRule(
+            new PipeAccessRule(
+                new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null),
+                PipeAccessRights.FullControl,
+                AccessControlType.Allow));
+
+        security.AddAccessRule(
+            new PipeAccessRule(
+                new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null),
+                PipeAccessRights.FullControl,
+                AccessControlType.Allow));
+
+        // Allow interactive users to connect and exchange data (read-only operations are still enforced by CallerValidator).
+        security.AddAccessRule(
+            new PipeAccessRule(
+                new SecurityIdentifier(WellKnownSidType.InteractiveSid, null),
+                PipeAccessRights.ReadWrite | PipeAccessRights.Synchronize,
+                AccessControlType.Allow));
+
+        // Ensure the account running the service can always create additional instances (dev console-run scenario).
+        var currentUserSid = WindowsIdentity.GetCurrent()?.User;
+        if (currentUserSid != null)
+        {
+            security.AddAccessRule(new PipeAccessRule(currentUserSid, PipeAccessRights.FullControl, AccessControlType.Allow));
+        }
+
+        security.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
+        return security;
+    }
+
     private async Task ServerLoopAsync(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
@@ -66,17 +121,20 @@ public sealed class IPCServer
             NamedPipeServerStream? serverStream = null;
             try
             {
-                // Create pipe with restrictive security
-                var pipeSecurity = CreateRestrictivePipeSecurity();
+                // Create pipe server instance with explicit security (some environments have restrictive default DACLs).
+                // Authorization is enforced after connection by CallerValidator.
+                var pipeSecurity = CreatePipeSecurity();
                 serverStream = NamedPipeServerStreamAcl.Create(
-                    PipeName,
-                    PipeDirection.InOut,
-                    MaxConcurrentConnections,
-                    PipeTransmissionMode.Byte,
-                    PipeOptions.Asynchronous,
+                    pipeName: PipeName,
+                    direction: PipeDirection.InOut,
+                    maxNumberOfServerInstances: MaxConcurrentConnections,
+                    transmissionMode: PipeTransmissionMode.Byte,
+                    options: PipeOptions.Asynchronous,
                     inBufferSize: 4096,
                     outBufferSize: 4096,
-                    pipeSecurity);
+                    pipeSecurity: pipeSecurity,
+                    inheritability: HandleInheritability.None,
+                    additionalAccessRights: (PipeAccessRights)0);
 
                 _logger.LogDebug("Waiting for client connection...");
                 await serverStream.WaitForConnectionAsync(cancellationToken);
@@ -92,6 +150,15 @@ public sealed class IPCServer
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in IPC server loop");
+                // Avoid tight spin if pipe creation repeatedly fails.
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
             }
             finally
             {
@@ -238,10 +305,21 @@ public sealed class IPCServer
             }
         };
 
-        var json = JsonSerializer.Serialize(errorResponse, _jsonOptions);
-        var bytes = System.Text.Encoding.UTF8.GetBytes(json + "\n");
-        await stream.WriteAsync(bytes, 0, bytes.Length);
-        await stream.FlushAsync();
+        try
+        {
+            var json = JsonSerializer.Serialize(errorResponse, _jsonOptions);
+            var bytes = System.Text.Encoding.UTF8.GetBytes(json + "\n");
+            await stream.WriteAsync(bytes, 0, bytes.Length);
+            await stream.FlushAsync();
+        }
+        catch (IOException)
+        {
+            // Client disconnected; nothing to do.
+        }
+        catch (ObjectDisposedException)
+        {
+            // Stream already closed; nothing to do.
+        }
     }
 
     private async Task ExecuteApplyWithProgressAsync(Stream stream, ApplyCommand applyCmd, CancellationToken cancellationToken)
@@ -291,24 +369,6 @@ public sealed class IPCServer
         };
     }
 
-    private static PipeSecurity CreateRestrictivePipeSecurity()
-    {
-        var pipeSecurity = new PipeSecurity();
-
-        // Allow Administrators full control
-        pipeSecurity.AddAccessRule(new PipeAccessRule(
-            new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null),
-            PipeAccessRights.FullControl,
-            AccessControlType.Allow));
-
-        // Allow SYSTEM full control
-        pipeSecurity.AddAccessRule(new PipeAccessRule(
-            new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null),
-            PipeAccessRights.FullControl,
-            AccessControlType.Allow));
-
-        return pipeSecurity;
-    }
 }
 
 // Simple error response for protocol errors

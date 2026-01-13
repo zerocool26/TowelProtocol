@@ -36,6 +36,93 @@ public sealed class DependencyResolver
         return resolved.ToArray();
     }
 
+    /// <summary>
+    /// Validates the entire policy graph for circular dependencies
+    /// </summary>
+    /// <param name="policies">All known policy definitions</param>
+    /// <exception cref="InvalidOperationException">If a circular dependency is detected</exception>
+    public void ValidateGraph(PolicyDefinition[] policies)
+    {
+        var policyMap = policies.ToDictionary(p => p.PolicyId);
+        var visiting = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var stack = new List<string>();
+        var cycles = new List<string>();
+
+        _logger.LogInformation("Validating dependency graph for {Count} policies...", policies.Length);
+
+        foreach (var policy in policies)
+        {
+            ValidateVisit(policy.PolicyId);
+        }
+
+        if (cycles.Count > 0)
+        {
+            _logger.LogError("Dependency graph validation failed. Found {Count} cycle(s).", cycles.Count);
+            throw new InvalidOperationException(
+                "Circular dependency detected in policy graph:\n" + string.Join("\n", cycles.Distinct()));
+        }
+
+        _logger.LogInformation("Dependency graph validation successful (no cycles found). ");
+
+        void ValidateVisit(string policyId)
+        {
+            if (visited.Contains(policyId))
+            {
+                return;
+            }
+
+            if (visiting.Contains(policyId))
+            {
+                var startIndex = stack.IndexOf(policyId);
+                if (startIndex >= 0)
+                {
+                    var cyclePath = stack.Skip(startIndex).Concat(new[] { policyId });
+                    cycles.Add(string.Join(" -> ", cyclePath));
+                }
+                else
+                {
+                    cycles.Add(policyId);
+                }
+
+                return;
+            }
+
+            if (!policyMap.TryGetValue(policyId, out var policy))
+            {
+                // Missing dependency references are handled elsewhere as warnings; not a graph-cycle issue.
+                visited.Add(policyId);
+                return;
+            }
+
+            visiting.Add(policyId);
+            stack.Add(policyId);
+
+            foreach (var dependency in policy.Dependencies)
+            {
+                var depId = dependency.PolicyId;
+
+                // Mirror the same traversal semantics used during apply ordering.
+                if (dependency.Type == DependencyType.Required || dependency.Type == DependencyType.Prerequisite)
+                {
+                    ValidateVisit(depId);
+                }
+                else if (dependency.Type == DependencyType.Recommended)
+                {
+                    if (!dependency.UserCanOverride)
+                    {
+                        ValidateVisit(depId);
+                    }
+                }
+                // Conflicts do not participate in ordering and should not create cycles.
+            }
+
+            stack.RemoveAt(stack.Count - 1);
+            visiting.Remove(policyId);
+            visited.Add(policyId);
+        }
+    }
+
     private void Visit(
         PolicyDefinition policy,
         Dictionary<string, PolicyDefinition> policyMap,

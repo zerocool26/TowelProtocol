@@ -6,6 +6,11 @@ namespace PrivacyHardeningContracts.Models;
 public enum RiskLevel
 {
     /// <summary>
+    /// No meaningful impact (informational only).
+    /// </summary>
+    None = -1,
+
+    /// <summary>
     /// No known breakage, fully supported by Microsoft
     /// </summary>
     Low,

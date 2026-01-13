@@ -17,11 +17,11 @@
     <Grid RowDefinitions="Auto,Auto,*,Auto">
 
         <!-- Filter Controls Row -->
-        <Border Grid.Row="0" Padding="16" Background="{StaticResource PanelBrush}">
+        <Border Grid.Row="0" Padding="16" Background="{DynamicResource PanelBrush}">
             <Grid ColumnDefinitions="Auto,*,Auto,Auto" RowDefinitions="Auto,Auto">
 
                 <!-- Category Filter -->
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Category:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Category:" VerticalAlignment="Center" Margin="0,0,8,0" FontFamily="{DynamicResource AppFontFamily}" />
                 <ComboBox Grid.Row="0" Grid.Column="1"
                           ItemsSource="{Binding Categories}"
                           SelectedItem="{Binding SelectedCategory}"
@@ -53,20 +53,20 @@
                           TabIndex="12"/>
 
                 <!-- Search Box -->
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Search:" VerticalAlignment="Center" Margin="0,8,8,0"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Search:" VerticalAlignment="Center" Margin="0,8,8,0" FontFamily="{DynamicResource AppFontFamily}" />
                 <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"
                          Text="{Binding SearchText}"
                          Watermark="Search by name, description, or policy ID..."
                          Margin="0,8,0,0"
                          AutomationProperties.Name="Policy Search"
-                         TabIndex="13"/>
+                         TabIndex="13" FontFamily="{DynamicResource AppFontFamily}" />
             </Grid>
         </Border>
 
         <!-- Quick Selection Buttons Row -->
-        <Border Grid.Row="1" Padding="16,8" Background="{StaticResource SurfaceBrush}">
+        <Border Grid.Row="1" Padding="16,8" Background="{DynamicResource SurfaceBrush}">
                 <WrapPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                <Button Content="Load Policies" Command="{Binding LoadPoliciesCommand}" Margin="0,0,8,0" AutomationProperties.Name="Load Policies" TabIndex="20"/>
+                <Button Classes="accent" Content="Load Policies" Command="{Binding LoadPoliciesCommand}" Margin="0,0,8,0" AutomationProperties.Name="Load Policies" TabIndex="20"/>
                 <Button Content="Select All" Command="{Binding SelectAllCommand}" Margin="0,0,8,0" AutomationProperties.Name="Select All" TabIndex="21"/>
                 <Button Content="Select None" Command="{Binding SelectNoneCommand}" Margin="0,0,8,0" AutomationProperties.Name="Select None" TabIndex="22"/>
                 <Button Content="Low Risk Only" Command="{Binding SelectByRiskCommand}" CommandParameter="Low" Margin="0,0,8,0" AutomationProperties.Name="Select Low Risk" TabIndex="23"/>
@@ -101,12 +101,12 @@
                                     <!-- Header Row -->
                                     <Grid ColumnDefinitions="*,Auto,Auto,Auto">
                                         <TextBlock Grid.Column="0" Text="{Binding Name}"
-                                                   FontSize="16" FontWeight="Bold"/>
+                                                       FontSize="{DynamicResource FontSizeBodyLarge}" FontWeight="{DynamicResource FontWeightSemiBold}" />
                                         <Border Grid.Column="1"
                                                 Background="{Binding RiskLevel, Converter={StaticResource RiskLevelToBrushConverter}}"
                                                 CornerRadius="3" Padding="8,2" Margin="8,0">
                                             <TextBlock Text="{Binding RiskLevel, Converter={StaticResource EnumToStringConverter}}"
-                                                       Foreground="White" FontSize="12" FontWeight="Bold"/>
+                                                       Foreground="White" FontSize="{DynamicResource FontSizeCaption}" FontWeight="{DynamicResource FontWeightBold}"/>
                                         </Border>
                                         <Border Grid.Column="2"
                                                 Background="{DynamicResource SystemBaseMediumColor}"
@@ -115,11 +115,11 @@
                                                        FontSize="12"/>
                                         </Border>
                                         <Border Grid.Column="3"
-                                                Background="{StaticResource PanelBrush}"
+                                            Background="{DynamicResource PanelBrush}"
                                                 CornerRadius="3" Padding="8,2" Margin="8,0"
                                                 IsVisible="{Binding Reversible, Converter={StaticResource InverseBoolConverter}}">
                                             <TextBlock Text="IRREVERSIBLE"
-                                                       Foreground="Red" FontSize="12" FontWeight="Bold"/>
+                                                       Foreground="{StaticResource ErrorBrush}" FontSize="12" FontWeight="Bold"/>
                                         </Border>
                                     </Grid>
 
@@ -140,11 +140,11 @@
                                     </StackPanel>
 
                                     <!-- Known Breakage -->
-                                    <Border Background="#FFF3CD" BorderBrush="#FFD700" BorderThickness="1"
+                                    <Border Background="{DynamicResource OverlayLightBrush}" BorderBrush="{DynamicResource WarningBrush}" BorderThickness="1"
                                             CornerRadius="3" Padding="8" Margin="0,4"
                                             IsVisible="{Binding KnownBreakage, Converter={StaticResource NullToVisibilityConverter}}">
                                         <StackPanel Spacing="4" Orientation="Horizontal">
-                                            <Border Width="18" Height="18" Background="#FFD700" CornerRadius="3" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                            <Border Width="18" Height="18" Background="{DynamicResource WarningBrush}" CornerRadius="3" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                             <StackPanel>
                                                 <TextBlock Text="Known Breakage:" FontWeight="Bold" FontSize="12"/>
                                                 <TextBlock Text="{Binding KnownBreakage}"
@@ -164,7 +164,7 @@
                                     <!-- References -->
                                     <StackPanel IsVisible="{Binding References, Converter={StaticResource NullToVisibilityConverter}}"
                                                 Spacing="2">
-                                        <TextBlock Text="References:" FontWeight="Bold" FontSize="12"/>
+                                        <TextBlock Text="References:" FontWeight="Bold" FontSize="{DynamicResource FontSizeCaption}"/>
                                         <ItemsControl ItemsSource="{Binding References}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
@@ -179,18 +179,18 @@
                                     <!-- Notes -->
                                     <StackPanel IsVisible="{Binding Notes, Converter={StaticResource NullToVisibilityConverter}}"
                                                 Spacing="2">
-                                        <TextBlock Text="Notes:" FontWeight="Bold" FontSize="12"/>
-                                        <TextBlock Text="{Binding Notes}" FontSize="12"
+                                        <TextBlock Text="Notes:" FontWeight="Bold" FontSize="{DynamicResource FontSizeCaption}"/>
+                                        <TextBlock Text="{Binding Notes}" FontSize="{DynamicResource FontSizeBody}"
                                                    TextWrapping="Wrap" Opacity="0.8" Margin="16,0,0,0"/>
                                     </StackPanel>
                                 </StackPanel>
 
                                 <!-- Applicable Badge -->
                                 <Border Grid.Column="2"
-                                        Background="Green" CornerRadius="16"
+                                        Background="{DynamicResource SuccessBrush}" CornerRadius="{DynamicResource CornerRadiusXLarge}"
                                         Padding="12,4" VerticalAlignment="Top" Margin="16,0,0,0"
                                         IsVisible="{Binding IsApplicable}">
-                                    <controls:IconHelper Name="check_circle" FontSize="18" Foreground="White" />
+                                    <controls:IconHelper Name="check_circle" FontSize="18" Foreground="{DynamicResource TextOnAccentBrush}" />
                                 </Border>
                             </Grid>
                         </Border>

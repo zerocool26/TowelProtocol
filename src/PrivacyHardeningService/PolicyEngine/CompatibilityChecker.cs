@@ -24,6 +24,13 @@ public sealed class CompatibilityChecker
     public bool IsApplicable(PolicyDefinition policy)
     {
         var app = policy.Applicability;
+        if (app == null)
+        {
+            return true;
+        }
+
+        var excludedSkus = app.ExcludedSkus ?? Array.Empty<string>();
+        var supportedSkus = app.SupportedSkus ?? Array.Empty<string>();
 
         // Check build range
         if (app.MinBuild.HasValue && _currentBuild < app.MinBuild.Value)
@@ -41,14 +48,14 @@ public sealed class CompatibilityChecker
         }
 
         // Check SKU
-        if (app.ExcludedSkus.Contains(_currentSku, StringComparer.OrdinalIgnoreCase))
+        if (excludedSkus.Contains(_currentSku, StringComparer.OrdinalIgnoreCase))
         {
             _logger.LogDebug("Policy {PolicyId} excluded for SKU: {Sku}", policy.PolicyId, _currentSku);
             return false;
         }
 
-        if (app.SupportedSkus.Length > 0 &&
-            !app.SupportedSkus.Contains(_currentSku, StringComparer.OrdinalIgnoreCase))
+        if (supportedSkus.Length > 0 &&
+            !supportedSkus.Contains(_currentSku, StringComparer.OrdinalIgnoreCase))
         {
             _logger.LogDebug("Policy {PolicyId} not supported for SKU: {Sku}", policy.PolicyId, _currentSku);
             return false;

@@ -27,6 +27,8 @@ public sealed class SystemStateCapture
         var windowsSku = await GetWindowsSkuAsync(cancellationToken);
         var isDomainJoined = IsDomainJoined();
         var isMDMManaged = await IsMDMManagedAsync(cancellationToken);
+        var isSCCMManaged = await IsSCCMManagedAsync(cancellationToken);
+        var isEntraIDJoined = await IsEntraIDJoinedAsync(cancellationToken);
         var tamperProtectionEnabled = await IsDefenderTamperProtectionEnabledAsync(cancellationToken);
 
         return new SystemInfo
@@ -36,8 +38,33 @@ public sealed class SystemStateCapture
             WindowsSku = windowsSku,
             IsDomainJoined = isDomainJoined,
             IsMDMManaged = isMDMManaged,
+            IsSCCMManaged = isSCCMManaged,
+            IsEntraIDJoined = isEntraIDJoined,
             DefenderTamperProtectionEnabled = tamperProtectionEnabled
         };
+    }
+
+    private async Task<bool> IsSCCMManagedAsync(CancellationToken ct)
+    {
+        // Simple check for SCCM agent service existence
+        try
+        {
+            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\SMS\Mobile Client");
+            return key != null;
+        }
+        catch { return false; }
+    }
+
+    private async Task<bool> IsEntraIDJoinedAsync(CancellationToken ct)
+    {
+        // Simple check for Entra ID registration via registry
+        try
+        {
+            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Enrollments");
+            // This is a naive check; real Entra ID join detection is more complex but this serves as a signal
+            return key != null && key.GetSubKeyNames().Length > 0;
+        }
+        catch { return false; }
     }
 
     private async Task<int> GetWindowsBuildAsync(CancellationToken cancellationToken)

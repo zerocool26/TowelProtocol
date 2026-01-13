@@ -1,16 +1,18 @@
-using System.Management.Automation;
+using System.Management;
 using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 
 namespace PrivacyHardeningService.StateManager;
 
 /// <summary>
-/// Manages Windows System Restore points via PowerShell
+/// Manages Windows System Restore points via WMI (root\default:SystemRestore)
 /// </summary>
 [SupportedOSPlatform("windows")]
 public sealed class RestorePointManager
 {
     private readonly ILogger<RestorePointManager> _logger;
+    private const uint RestorePointTypeModifySettings = 12;
+    private const uint EventTypeBeginSystemChange = 100;
 
     public RestorePointManager(ILogger<RestorePointManager> logger)
     {
@@ -30,19 +32,20 @@ public sealed class RestorePointManager
 
             _logger.LogInformation("Creating system restore point: {Description}", description);
 
-            using var ps = PowerShell.Create();
+            cancellationToken.ThrowIfCancellationRequested();
 
-            // Use Checkpoint-Computer cmdlet to create restore point
-            ps.AddCommand("Checkpoint-Computer")
-              .AddParameter("Description", description)
-              .AddParameter("RestorePointType", "MODIFY_SETTINGS");
+            using var systemRestoreClass = new ManagementClass(new ManagementScope(@"\\.\root\default"), new ManagementPath("SystemRestore"), null);
+            using var inParams = systemRestoreClass.GetMethodParameters("CreateRestorePoint");
+            inParams["Description"] = description;
+            inParams["RestorePointType"] = RestorePointTypeModifySettings;
+            inParams["EventType"] = EventTypeBeginSystemChange;
 
-            var results = await Task.Run(() => ps.Invoke(), cancellationToken);
+            using var outParams = systemRestoreClass.InvokeMethod("CreateRestorePoint", inParams, null);
+            var returnValue = (uint?)outParams?["ReturnValue"] ?? 1u;
 
-            if (ps.HadErrors)
+            if (returnValue != 0u)
             {
-                var errors = string.Join(", ", ps.Streams.Error.Select(e => e.ToString()));
-                _logger.LogError("Failed to create restore point: {Errors}", errors);
+                _logger.LogError("Failed to create restore point (WMI). ReturnValue={ReturnValue}", returnValue);
                 return null;
             }
 
@@ -71,17 +74,12 @@ public sealed class RestorePointManager
     {
         try
         {
-            using var ps = PowerShell.Create();
+            cancellationToken.ThrowIfCancellationRequested();
 
-            // Check if System Restore is enabled on any drive
-            ps.AddCommand("Get-ComputerRestorePoint")
-              .AddParameter("ErrorAction", "SilentlyContinue");
-
-            var results = await Task.Run(() => ps.Invoke(), cancellationToken);
-
-            // If we can query restore points, System Restore is likely enabled
-            // Even if results are empty, the cmdlet working means SR is available
-            return !ps.HadErrors;
+            using var searcher = new ManagementObjectSearcher(@"\\.\root\default", "SELECT SequenceNumber FROM SystemRestore");
+            using var results = searcher.Get();
+            _ = results.Count; // Force evaluation to catch COM/WMI failures.
+            return true;
         }
         catch
         {
@@ -93,26 +91,27 @@ public sealed class RestorePointManager
     {
         try
         {
-            using var ps = PowerShell.Create();
+            cancellationToken.ThrowIfCancellationRequested();
 
-            ps.AddCommand("Get-ComputerRestorePoint")
-              .AddParameter("ErrorAction", "SilentlyContinue");
+            using var searcher = new ManagementObjectSearcher(@"\\.\root\default", "SELECT SequenceNumber FROM SystemRestore");
+            using var results = searcher.Get();
 
-            ps.AddCommand("Select-Object")
-              .AddParameter("Last", 1);
-
-            var results = await Task.Run(() => ps.Invoke(), cancellationToken);
-
-            if (results.Count > 0)
+            uint max = 0;
+            foreach (ManagementObject obj in results)
             {
-                var restorePoint = results[0];
-                var sequenceNumber = restorePoint.Properties["SequenceNumber"]?.Value;
-
-                if (sequenceNumber != null)
+                using (obj)
                 {
-                    return sequenceNumber.ToString();
+                    var value = obj["SequenceNumber"];
+                    if (value == null) continue;
+
+                    if (uint.TryParse(value.ToString(), out var seq) && seq > max)
+                    {
+                        max = seq;
+                    }
                 }
             }
+
+            return max > 0 ? max.ToString() : null;
         }
         catch (Exception ex)
         {
@@ -129,21 +128,16 @@ public sealed class RestorePointManager
 
         try
         {
-            using var ps = PowerShell.Create();
+            cancellationToken.ThrowIfCancellationRequested();
 
-            ps.AddCommand("Get-ComputerRestorePoint")
-              .AddParameter("ErrorAction", "SilentlyContinue");
-
-            var results = await Task.Run(() => ps.Invoke(), cancellationToken);
-
-            foreach (var result in results)
+            if (!uint.TryParse(restorePointId, out var seq))
             {
-                var sequenceNumber = result.Properties["SequenceNumber"]?.Value?.ToString();
-                if (sequenceNumber == restorePointId)
-                {
-                    return true;
-                }
+                return false;
             }
+
+            using var searcher = new ManagementObjectSearcher(@"\\.\root\default", $"SELECT SequenceNumber FROM SystemRestore WHERE SequenceNumber = {seq}");
+            using var results = searcher.Get();
+            return results.Count > 0;
         }
         catch (Exception ex)
         {
@@ -159,26 +153,42 @@ public sealed class RestorePointManager
 
         try
         {
-            using var ps = PowerShell.Create();
+            cancellationToken.ThrowIfCancellationRequested();
 
-            ps.AddCommand("Get-ComputerRestorePoint")
-              .AddParameter("ErrorAction", "SilentlyContinue");
+            using var searcher = new ManagementObjectSearcher(@"\\.\root\default", "SELECT SequenceNumber, Description, CreationTime FROM SystemRestore");
+            using var results = searcher.Get();
 
-            var results = await Task.Run(() => ps.Invoke(), cancellationToken);
-
-            foreach (var result in results)
+            foreach (ManagementObject obj in results)
             {
-                var sequenceNumber = result.Properties["SequenceNumber"]?.Value?.ToString();
-                var description = result.Properties["Description"]?.Value?.ToString();
-                var creationTime = result.Properties["CreationTime"]?.Value;
-
-                if (sequenceNumber != null && description != null)
+                using (obj)
                 {
+                    var sequenceNumber = obj["SequenceNumber"]?.ToString();
+                    var description = obj["Description"]?.ToString();
+                    var creationTimeRaw = obj["CreationTime"]?.ToString();
+
+                    if (string.IsNullOrWhiteSpace(sequenceNumber) || string.IsNullOrWhiteSpace(description))
+                    {
+                        continue;
+                    }
+
+                    var creationTime = DateTime.MinValue;
+                    if (!string.IsNullOrWhiteSpace(creationTimeRaw))
+                    {
+                        try
+                        {
+                            creationTime = ManagementDateTimeConverter.ToDateTime(creationTimeRaw);
+                        }
+                        catch
+                        {
+                            creationTime = DateTime.MinValue;
+                        }
+                    }
+
                     restorePoints.Add(new RestorePointInfo
                     {
                         SequenceNumber = sequenceNumber,
                         Description = description,
-                        CreationTime = creationTime is DateTime dt ? dt : DateTime.MinValue
+                        CreationTime = creationTime
                     });
                 }
             }
@@ -188,7 +198,9 @@ public sealed class RestorePointManager
             _logger.LogError(ex, "Failed to enumerate restore points");
         }
 
-        return restorePoints.ToArray();
+        return restorePoints
+            .OrderByDescending(r => r.CreationTime)
+            .ToArray();
     }
 }
 

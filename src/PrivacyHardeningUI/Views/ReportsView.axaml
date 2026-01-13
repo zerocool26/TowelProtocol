@@ -1,0 +1,55 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PrivacyHardeningUI.ViewModels"
+             x:Class="PrivacyHardeningUI.Views.ReportsView"
+             x:DataType="vm:ReportsViewModel">
+
+  <Grid RowDefinitions="Auto,*" Margin="12">
+
+    <Border Grid.Row="0" Background="{DynamicResource PanelBrush}" Padding="12" CornerRadius="8">
+      <StackPanel Spacing="4">
+        <TextBlock Classes="title" Text="Reports" />
+        <TextBlock Opacity="0.75" Text="Export audit/preview/history for offline review (no telemetry, no analytics)." />
+      </StackPanel>
+    </Border>
+
+    <Border Grid.Row="1" Margin="0,12,0,0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
+      <StackPanel Spacing="16">
+        <StackPanel Spacing="4">
+          <TextBlock FontWeight="SemiBold" Text="System Report Generation" FontSize="18"/>
+          <TextBlock Opacity="0.7" Text="Export collected evidence and state snapshots for review or archival." />
+        </StackPanel>
+
+        <Border Background="{DynamicResource PanelBrush}" CornerRadius="6" Padding="12">
+          <StackPanel Orientation="Horizontal" Spacing="12">
+            <TextBlock Text="🔒 Redaction is ACTIVE" Foreground="{DynamicResource SuccessBrush}" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <TextBlock Text="(User profile names and machine identifiers will be masked)" Opacity="0.6" VerticalAlignment="Center" FontSize="12"/>
+          </StackPanel>
+        </Border>
+
+        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+          <Button Grid.Column="0" Height="120" HorizontalAlignment="Stretch" Click="ExportAuditJson" IsEnabled="{Binding HasAudit}">
+            <StackPanel Spacing="8" VerticalAlignment="Center">
+              <TextBlock Text="Audit Results" HorizontalAlignment="Center" FontWeight="SemiBold"/>
+              <TextBlock Text="Evidence from last scan" Opacity="0.6" FontSize="11" HorizontalAlignment="Center"/>
+            </StackPanel>
+          </Button>
+
+          <Button Grid.Column="1" Height="120" HorizontalAlignment="Stretch" Click="ExportPreviewJson" IsEnabled="{Binding HasPreview}">
+            <StackPanel Spacing="8" VerticalAlignment="Center">
+              <TextBlock Text="Policy Preview" HorizontalAlignment="Center" FontWeight="SemiBold"/>
+              <TextBlock Text="Proposed system changes" Opacity="0.6" FontSize="11" HorizontalAlignment="Center"/>
+            </StackPanel>
+          </Button>
+
+          <Button Grid.Column="2" Height="120" HorizontalAlignment="Stretch" Click="ExportHistoryJson" IsEnabled="{Binding HasHistory}">
+            <StackPanel Spacing="8" VerticalAlignment="Center">
+              <TextBlock Text="Change History" HorizontalAlignment="Center" FontWeight="SemiBold"/>
+              <TextBlock Text="Timeline of all actions" Opacity="0.6" FontSize="11" HorizontalAlignment="Center"/>
+            </StackPanel>
+          </Button>
+        </Grid>
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

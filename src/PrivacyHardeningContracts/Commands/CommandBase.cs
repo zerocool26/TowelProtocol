@@ -5,6 +5,7 @@ namespace PrivacyHardeningContracts.Commands;
 /// <summary>
 /// Base class for all IPC commands sent from UI to service
 /// </summary>
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "commandType")]
 [JsonDerivedType(typeof(AuditCommand), typeDiscriminator: "audit")]
 [JsonDerivedType(typeof(ApplyCommand), typeDiscriminator: "apply")]
 [JsonDerivedType(typeof(RevertCommand), typeDiscriminator: "revert")]

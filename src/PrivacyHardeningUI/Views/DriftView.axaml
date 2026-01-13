@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PrivacyHardeningUI.ViewModels"
+             x:Class="PrivacyHardeningUI.Views.DriftView"
+             x:DataType="vm:DriftViewModel">
+
+  <Grid RowDefinitions="Auto,*,Auto" Margin="12">
+    <Border Grid.Row="0" Background="{DynamicResource PanelBrush}" Padding="12" CornerRadius="8">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="4">
+          <TextBlock Classes="title" Text="Drift" />
+          <TextBlock Opacity="0.75" Text="Detect when system settings drift away from the tool's expected state." />
+        </StackPanel>
+        <Button Grid.Column="1" Classes="accent" Content="Detect drift" Command="{Binding DetectDriftCommand}" />
+      </Grid>
+    </Border>
+
+    <Border Grid.Row="1" Margin="0,12,0,0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8">
+      <ScrollViewer>
+        <ItemsControl ItemsSource="{Binding DriftedPolicies}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <VirtualizingStackPanel />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="12">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                  <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding PolicyName}" FontWeight="SemiBold" />
+                  <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding PolicyId}" FontFamily="Consolas" Opacity="0.8" />
+                  <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding DriftReason}" Opacity="0.75" TextWrapping="Wrap" />
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Border>
+
+    <Border Grid.Row="2" Background="{DynamicResource PanelBrush}" CornerRadius="8" Padding="10" Margin="0,12,0,0">
+      <TextBlock Foreground="{DynamicResource ErrorBrush}" Text="{Binding ErrorMessage}" />
+    </Border>
+
+    <Panel Grid.RowSpan="3" IsVisible="{Binding IsLoading}" Background="#40000000">
+      <Border Background="{DynamicResource CardBrush}" CornerRadius="8" Padding="18" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <StackPanel Spacing="10" HorizontalAlignment="Center">
+          <ProgressBar IsIndeterminate="True" Width="240" />
+          <TextBlock Text="Detecting drift" />
+        </StackPanel>
+      </Border>
+    </Panel>
+  </Grid>
+</UserControl>

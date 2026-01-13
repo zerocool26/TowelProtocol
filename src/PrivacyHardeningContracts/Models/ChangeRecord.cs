@@ -11,6 +11,11 @@ public sealed class ChangeRecord
     public required string ChangeId { get; init; }
 
     /// <summary>
+    /// Whether this change represents an apply or revert operation.
+    /// </summary>
+    public required ChangeOperation Operation { get; init; }
+
+    /// <summary>
     /// Policy that caused this change
     /// </summary>
     public required string PolicyId { get; init; }
@@ -49,4 +54,9 @@ public sealed class ChangeRecord
     /// Error message if unsuccessful
     /// </summary>
     public string? ErrorMessage { get; init; }
+
+    /// <summary>
+    /// Optional snapshot/session identifier that this change belongs to.
+    /// </summary>
+    public string? SnapshotId { get; init; }
 }

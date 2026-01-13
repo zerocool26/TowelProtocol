@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Text.Json;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -32,8 +34,14 @@ public partial class App : Application
                 // Register service client
                 services.AddSingleton<ServiceClient>();
 
+                // Register settings related services
+                services.AddSingleton<SettingsService>();
+
+                // UI-only navigation coordinator
+                services.AddSingleton<NavigationService>();
+
                 // Register theme service
-                services.AddSingleton<IThemeService>(sp => new ThemeService(this));
+                services.AddSingleton<IThemeService>(sp => new ThemeService(this, sp.GetRequiredService<SettingsService>()));
 
                 // Register accessibility service (WCAG 2.1 Level AA)
                 services.AddSingleton<IAccessibilityService, AccessibilityService>();
@@ -42,13 +50,29 @@ public partial class App : Application
                 services.AddSingleton<ITelemetryMonitorService, TelemetryMonitorService>();
 
                 // Register ViewModels
-                services.AddTransient<MainViewModel>();
-                services.AddTransient<PolicySelectionViewModel>();
-                services.AddTransient<AuditViewModel>();
-                services.AddTransient<DiffViewModel>();
-                services.AddTransient<TelemetryMonitorViewModel>();
+                // Keep page viewmodels as singletons so selection/audit/preview state is consistent across navigation.
+                services.AddSingleton<DashboardViewModel>();
+                services.AddSingleton<StatusRailViewModel>();
+
+                services.AddSingleton<PolicySelectionViewModel>();
+                services.AddSingleton<ApplyViewModel>();
+
+                services.AddSingleton<AuditViewModel>();
+                services.AddSingleton<PreviewViewModel>();
+                services.AddSingleton<HistoryViewModel>();
+                services.AddSingleton<DriftViewModel>();
+                services.AddSingleton<ReportsViewModel>();
+
+                services.AddSingleton<DiffViewModel>();
+
+                services.AddSingleton<MainViewModel>();
+                services.AddSingleton<TelemetryMonitorViewModel>();
+
+                // Register settings VM
+                services.AddTransient<SettingsViewModel>();
 
                 // Register Views
+                services.AddTransient<SettingsWindow>();
                 services.AddTransient<MainWindow>();
             })
             .Build();
@@ -69,9 +93,17 @@ public partial class App : Application
     /// </summary>
     private void InitializeTheme()
     {
-        // Detect system theme preference (Windows 10/11)
-        var systemDarkMode = DetectSystemDarkMode();
-        SetTheme(systemDarkMode);
+        // Prefer saved user preference if present, otherwise detect system theme
+        var saved = LoadSavedThemePreference();
+        if (saved.HasValue)
+        {
+            SetTheme(saved.Value);
+        }
+        else
+        {
+            var systemDarkMode = DetectSystemDarkMode();
+            SetTheme(systemDarkMode);
+        }
     }
 
     /// <summary>
@@ -113,23 +145,57 @@ public partial class App : Application
         // Update RequestedThemeVariant for Fluent Theme
         RequestedThemeVariant = dark ? ThemeVariant.Dark : ThemeVariant.Light;
 
-        if (Resources?.MergedDictionaries == null) return;
+        // NOTE: Swapping theme resource dictionaries at runtime can cause Avalonia to
+        // evaluate control styles before the theme resources are available, leading
+        // to exceptions. To avoid startup/resource-ordering issues we only update
+        // the RequestedThemeVariant and persist the user's preference here. A
+        // safer runtime theme-swap implementation will be added that replaces the
+        // specific resource dictionary inside the consolidated Theme.axaml.
 
-        // Remove existing theme resources if present
-        var existing = Resources.MergedDictionaries
-            .OfType<ResourceInclude>()
-            .FirstOrDefault(r => r.Source != null && r.Source.OriginalString.Contains("ThemeResources"));
-
-        if (existing != null)
+        try
         {
-            Resources.MergedDictionaries.Remove(existing);
+            SaveThemePreference(dark);
         }
+        catch
+        {
+            // ignore persistence failures
+        }
+    }
 
-        // Load appropriate theme resources
-        var fileName = dark ? "ThemeResources.Dark.axaml" : "ThemeResources.Light.axaml";
-        var uri = new Uri($"avares://PrivacyHardeningUI/Styles/{fileName}");
+    private string GetSettingsPath()
+    {
+        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        var dir = Path.Combine(appData, "PrivacyHardeningUI");
+        if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+        return Path.Combine(dir, "settings.json");
+    }
 
-        Resources.MergedDictionaries.Add(new ResourceInclude(uri));
+    private void SaveThemePreference(bool dark)
+    {
+        var path = GetSettingsPath();
+        var doc = new { isDarkMode = dark };
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(doc, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllBytes(path, bytes);
+    }
+
+    private bool? LoadSavedThemePreference()
+    {
+        try
+        {
+            var path = GetSettingsPath();
+            if (!File.Exists(path)) return null;
+            var json = File.ReadAllText(path);
+            var doc = JsonSerializer.Deserialize<JsonElement>(json);
+            if (doc.TryGetProperty("isDarkMode", out var prop) && prop.ValueKind == JsonValueKind.True)
+                return true;
+            if (doc.TryGetProperty("isDarkMode", out prop) && prop.ValueKind == JsonValueKind.False)
+                return false;
+        }
+        catch
+        {
+            // ignore and treat as no preference
+        }
+        return null;
     }
 
     /// <summary>
@@ -172,11 +238,13 @@ public interface IThemeService
 public class ThemeService : IThemeService
 {
     private readonly App _app;
+    private readonly SettingsService _settings;
     public event EventHandler<bool>? ThemeChanged;
 
-    public ThemeService(App app)
+    public ThemeService(App app, SettingsService settings)
     {
         _app = app;
+        _settings = settings;
     }
 
     public bool IsDarkMode => _app.IsDarkMode;

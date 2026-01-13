@@ -1,20 +1,34 @@
-param(
+Param(
     [string]$ProjectPath = $(Join-Path $PSScriptRoot "src\PrivacyHardeningUI\PrivacyHardeningUI.csproj"),
+    [string]$ServiceProjectPath = $(Join-Path $PSScriptRoot "src\PrivacyHardeningService\PrivacyHardeningService.csproj"),
     [switch]$NoBuild,
+    [switch]$NoService,
     [switch]$Background,
+    [switch]$Foreground,
     [switch]$Legacy,
+    [int]$BuildTimeoutSeconds = 600,
     [switch]$Help
 )
 
+$common = Join-Path $PSScriptRoot 'scripts\DotNetSafe.Common.ps1'
+if (-not (Test-Path -LiteralPath $common)) {
+    Write-Host "ERROR: Missing shared helper: $common" -ForegroundColor Red
+    exit 5
+}
+
+. $common
+
 function Show-Help {
     Write-Host "Privacy Hardening Framework - GUI Launcher" -ForegroundColor Cyan
-    Write-Host "Usage: LaunchGUI.ps1 [-ProjectPath <path>] [-NoBuild] [-Background] [-Legacy] [-Help]" -ForegroundColor Gray
+    Write-Host "Usage: LaunchGUI.ps1 [-ProjectPath <path>] [-NoBuild] [-Foreground] [-Background] [-Legacy] [-BuildTimeoutSeconds <sec>] [-Help]" -ForegroundColor Gray
     Write-Host ""
     Write-Host "Options:" -ForegroundColor Green
     Write-Host "  -ProjectPath   Path to the UI project file (default: src\\PrivacyHardeningUI\\PrivacyHardeningUI.csproj)" -ForegroundColor Gray
-    Write-Host "  -NoBuild       Skip an explicit build before launching (dotnet run will still build if necessary)" -ForegroundColor Gray
-    Write-Host "  -Background    Launch the GUI in background (non-blocking) and return" -ForegroundColor Gray
+    Write-Host "  -NoBuild       Skip an explicit build before launching (dotnet run may restore/build if necessary)" -ForegroundColor Gray
+    Write-Host "  -Foreground    Run in the current console (blocking). Useful to see logs." -ForegroundColor Gray
+    Write-Host "  -Background    Explicitly launch in background (non-blocking)." -ForegroundColor Gray
     Write-Host "  -Legacy        Launch the legacy Windows Forms GUI embedded in this script" -ForegroundColor Gray
+    Write-Host "  -BuildTimeoutSeconds  Kill build if it runs longer than this many seconds (default: 600)" -ForegroundColor Gray
     Write-Host "  -Help          Show this help message" -ForegroundColor Gray
 }
 
@@ -36,28 +50,85 @@ if (-not $resolvedProjectPath) {
 }
 $resolvedProjectPath = $resolvedProjectPath.Path
 
-# Verify dotnet is available
-if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
-    Write-Host "ERROR: 'dotnet' CLI not found in PATH. Please install .NET SDK or add it to PATH." -ForegroundColor Red
+# Verify dotnet is available (prefer explicit dotnet.exe path)
+$dotnetExe = Get-DotNetExePath
+if (-not $dotnetExe) {
+    Write-Host "ERROR: 'dotnet' CLI not found. Please install the .NET SDK (recommended: .NET 8 SDK) or ensure dotnet.exe is available." -ForegroundColor Red
     exit 3
 }
+
+Initialize-DotNetSafeEnvironment -RepoRoot $PSScriptRoot
 
 Write-Host "Launching full-featured GUI (project: $resolvedProjectPath)" -ForegroundColor Green
 
 try {
     if (-not $NoBuild) {
-        Write-Host "Building UI project..." -ForegroundColor Gray
-        $build = dotnet build --project "$resolvedProjectPath" -c Release
-        if ($LASTEXITCODE -ne 0) {
+        Write-Host "Building Full Solution (including Service and UI)..." -ForegroundColor Gray
+
+        $solutionPath = Join-Path $PSScriptRoot "PrivacyHardeningFramework.sln"
+        $buildArgs = @(
+            'build', $solutionPath,
+            '-c', 'Release',
+            '--disable-build-servers',
+            '-p:RestoreDisableParallel=true',
+            '-p:BuildInParallel=false',
+            '-v', 'minimal'
+        )
+
+        $buildResult = Invoke-DotNetSafe -RepoRoot $PSScriptRoot -DotNetArgs $buildArgs -TimeoutSeconds $BuildTimeoutSeconds -LogPrefix 'full_build'
+        if ($buildResult.TimedOut) {
+            Write-Host "ERROR: Build timed out after ${BuildTimeoutSeconds}s and was terminated." -ForegroundColor Red
+            Write-Host "  Stdout: $($buildResult.Stdout)" -ForegroundColor Yellow
+            Write-Host "  Stderr: $($buildResult.Stderr)" -ForegroundColor Yellow
+            exit 124
+        }
+
+        if ($null -eq $buildResult.ExitCode -or $buildResult.ExitCode -ne 0) {
             Write-Host "ERROR: Build failed. Aborting launch." -ForegroundColor Red
-            exit $LASTEXITCODE
+            Write-Host "  Stdout: $($buildResult.Stdout)" -ForegroundColor Yellow
+            Write-Host "  Stderr: $($buildResult.Stderr)" -ForegroundColor Yellow
+            exit ($(if ($null -eq $buildResult.ExitCode) { 125 } else { $buildResult.ExitCode }))
         }
     }
 
-    $launchArgs = "run --project `"$resolvedProjectPath`" -c Release"
+    # Start Background Service if requested
+    if (-not $NoService) {
+        Write-Host "Ensuring Privacy Hardening Service is available..." -ForegroundColor Gray
+        
+        $serviceRunArgs = @('run', '--project', $ServiceProjectPath, '-c', 'Release', '--no-build')
+        
+        # In a dev environment, we use the process name or check if the pipe exists
+        $serviceRunning = Get-Process -Name "PrivacyHardeningService" -ErrorAction SilentlyContinue
+        if ($serviceRunning) {
+            Write-Host "Service process already running (PID: $($serviceRunning.Id))." -ForegroundColor Yellow
+        } else {
+            Write-Host "Starting background service locally..." -ForegroundColor Gray
+            # Launch in a separate window so we can see if it crashes, or hidden if background
+            $windowStyle = if ($Foreground) { "Normal" } else { "Hidden" }
+            Start-Process -FilePath $dotnetExe -ArgumentList $serviceRunArgs -WorkingDirectory (Split-Path $ServiceProjectPath -Parent) -WindowStyle $windowStyle
+            
+            Write-Host "Waiting for service to initialize..." -ForegroundColor Gray
+            Start-Sleep -Seconds 3
+        }
+    }
+
+    # If we just built successfully, avoid a second build (and potential restore/build stalls)
+    $runArgs = @('run', '--project', $resolvedProjectPath, '-c', 'Release')
+    if (-not $NoBuild) {
+        $runArgs += '--no-build'
+    }
+
     if ($Background) {
         Write-Host "Starting GUI in background..." -ForegroundColor Gray
-        Start-Process -FilePath "dotnet" -ArgumentList $launchArgs -WorkingDirectory (Split-Path $resolvedProjectPath -Parent) | Out-Null
+        Start-Process -FilePath $dotnetExe -ArgumentList $runArgs -WorkingDirectory (Split-Path $resolvedProjectPath -Parent) | Out-Null
+        Write-Host "GUI launched (background)." -ForegroundColor Green
+        exit 0
+    }
+
+    # Default behavior: background launch (non-blocking) unless user explicitly requests foreground.
+    if (-not $Foreground) {
+        Write-Host "Starting GUI in background (default). Use -Foreground to run in this console." -ForegroundColor Gray
+        Start-Process -FilePath $dotnetExe -ArgumentList $runArgs -WorkingDirectory (Split-Path $resolvedProjectPath -Parent) | Out-Null
         Write-Host "GUI launched (background)." -ForegroundColor Green
         exit 0
     }
@@ -67,7 +138,7 @@ try {
         # Fall through to legacy UI below (wrapped execution)
     } else {
         Write-Host "Starting GUI... (this window will show application output)" -ForegroundColor Gray
-        & dotnet run --project "$resolvedProjectPath" -c Release
+        & $dotnetExe @runArgs
         exit $LASTEXITCODE
     }
 } catch {
@@ -78,9 +149,6 @@ try {
 # LEGACY WINDOWS FORMS GUI BELOW (kept for reference and optional use)
 # It will only run when -Legacy switch is provided
 if (-not $Legacy) { return }
-
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Drawing
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
@@ -172,7 +240,7 @@ $btnAudit.Add_Click({
     if ($result -eq [System.Windows.Forms.DialogResult]::Yes) {
         $psi = New-Object System.Diagnostics.ProcessStartInfo
         $psi.FileName = "powershell"
-        $psi.Arguments = "-NoExit -Command `"cd '$PSScriptRoot'; dotnet run --project 'src\PrivacyHardeningCLI\PrivacyHardeningCLI.csproj' -- audit`""
+        $psi.Arguments = "-NoExit -Command ""cd '$PSScriptRoot'; & '.\\DotNetSafe.ps1' run --project 'src\PrivacyHardeningCLI\PrivacyHardeningCLI.csproj' -- audit"""
         $psi.WorkingDirectory = $PSScriptRoot
         [System.Diagnostics.Process]::Start($psi) | Out-Null
     }
@@ -200,7 +268,7 @@ $btnList.Add_Click({
     if ($result -eq [System.Windows.Forms.DialogResult]::Yes) {
         $psi = New-Object System.Diagnostics.ProcessStartInfo
         $psi.FileName = "powershell"
-        $psi.Arguments = "-NoExit -Command `"cd '$PSScriptRoot'; dotnet run --project 'src\PrivacyHardeningCLI\PrivacyHardeningCLI.csproj' -- list-policies`""
+        $psi.Arguments = "-NoExit -Command ""cd '$PSScriptRoot'; & '.\\DotNetSafe.ps1' run --project 'src\PrivacyHardeningCLI\PrivacyHardeningCLI.csproj' -- list-policies"""
         $psi.WorkingDirectory = $PSScriptRoot
         [System.Diagnostics.Process]::Start($psi) | Out-Null
     }
@@ -221,7 +289,7 @@ $btnTest.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
 $btnTest.Add_Click({
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName = "powershell"
-    $psi.Arguments = "-NoExit -Command `"cd '$PSScriptRoot'; dotnet run --project 'src\PrivacyHardeningCLI\PrivacyHardeningCLI.csproj' -- test-connection`""
+    $psi.Arguments = "-NoExit -Command ""cd '$PSScriptRoot'; & '.\\DotNetSafe.ps1' run --project 'src\PrivacyHardeningCLI\PrivacyHardeningCLI.csproj' -- test-connection"""
     $psi.WorkingDirectory = $PSScriptRoot
     [System.Diagnostics.Process]::Start($psi) | Out-Null
 })
@@ -248,7 +316,7 @@ $btnRevert.Add_Click({
     if ($result -eq [System.Windows.Forms.DialogResult]::Yes) {
         $psi = New-Object System.Diagnostics.ProcessStartInfo
         $psi.FileName = "powershell"
-        $psi.Arguments = "-NoExit -Command `"cd '$PSScriptRoot'; dotnet run --project 'src\PrivacyHardeningCLI\PrivacyHardeningCLI.csproj' -- revert-all`""
+        $psi.Arguments = "-NoExit -Command ""cd '$PSScriptRoot'; & '.\\DotNetSafe.ps1' run --project 'src\PrivacyHardeningCLI\PrivacyHardeningCLI.csproj' -- revert-all"""
         $psi.WorkingDirectory = $PSScriptRoot
         [System.Diagnostics.Process]::Start($psi) | Out-Null
     }
@@ -315,13 +383,13 @@ $commandsGroup.Controls.Add($btnGranular)
 
 # Status Bar
 $statusBar = New-Object System.Windows.Forms.StatusBar
-$statusBar.Text = "Ready | CLI Working | WinUI 3 UI: XAML Compiler Error (Pending Fix)"
+$statusBar.Text = "Ready | CLI available | Avalonia UI conversion in progress"
 $statusBar.Font = New-Object System.Drawing.Font("Segoe UI", 9)
 $form.Controls.Add($statusBar)
 
 # Note Label
 $noteLabel = New-Object System.Windows.Forms.Label
-$noteLabel.Text = "Note: This is a temporary Windows Forms GUI. The full WinUI 3 GUI is pending XAML compiler fix.`nAll CLI commands work perfectly. Service integration requires service to be running."
+$noteLabel.Text = "Note: This is a temporary Windows Forms GUI. The full Avalonia GUI is the long-term UI.`nCLI commands require the service to be running for most operations."
 $noteLabel.Font = New-Object System.Drawing.Font("Segoe UI", 8, [System.Drawing.FontStyle]::Italic)
 $noteLabel.Location = New-Object System.Drawing.Point(20, 590)
 $noteLabel.Size = New-Object System.Drawing.Size(850, 40)

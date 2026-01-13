@@ -51,3 +51,30 @@ Deliverable summary (what to commit):
 - Git commit with message: `ci: add release-on-tag workflow and release docs`
 
 Now run these steps and report back with the exact files created and the git commit hash.
+
+Design system & visual assets
+--------------------------------
+
+See `docs/design.md` for the UI design system, token locations, fonts, icon assets, and steps to update or add new visual resources (colors, typography, spacing, and themes).
+
+Key locations:
+- `src/PrivacyHardeningUI/Styles/` — existing theme and control styles (`ThemeResources.Light.axaml`, `ThemeResources.Dark.axaml`, `ControlStyles.axaml`).
+- `src/PrivacyHardeningUI/Assets/Fonts/` — bundled fonts (use `scripts/download-inter-fonts.ps1` and `scripts/download-icon-font.ps1` to populate).
+- `src/PrivacyHardeningUI/Assets/Icons/` — SVG icons (create if missing) and icon font fallbacks.
+
+Recommended quick steps to enable updated visuals locally:
+1. Run the helper scripts to fetch recommended fonts:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\download-inter-fonts.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\download-icon-font.ps1
+```
+
+2. Rebuild the solution and run the UI to verify fonts and theme:
+
+```powershell
+dotnet build "PrivacyHardeningFramework.sln" -c Release
+dotnet run --project src\PrivacyHardeningUI -c Release
+```
+
+3. See `docs/design.md` for how to add tokens, update themes, and include icons in XAML controls.

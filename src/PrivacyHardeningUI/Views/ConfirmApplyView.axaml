@@ -5,7 +5,7 @@
              xmlns:vm="using:PrivacyHardeningUI.ViewModels"
              Width="600" Height="360">
 
-  <Border Background="{StaticResource PanelBrush}" CornerRadius="8" Padding="18" Width="560">
+  <Border Background="{DynamicResource PanelBrush}" CornerRadius="8" Padding="18" Width="560">
     <StackPanel Spacing="12">
       <TextBlock Classes="title" Text="Confirm Apply" />
       <TextBlock Text="You are about to apply selected policies. Review the summary below and confirm to continue." TextWrapping="Wrap"/>

@@ -160,6 +160,30 @@ public partial class PolicySelectionViewModel : ObservableObject
         return AllPolicies.Where(p => p.IsSelected);
     }
 
+    /// <summary>
+    /// Replace the current selection with the provided policy IDs.
+    /// Intended for workflow jumps (e.g., Audit → Preview on a specific policy).
+    /// </summary>
+    public void SelectOnly(IEnumerable<string> policyIds)
+    {
+        var set = new HashSet<string>(policyIds ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+
+        foreach (var p in AllPolicies)
+        {
+            p.IsSelected = set.Contains(p.PolicyId);
+        }
+
+        ApplyFilters();
+    }
+
+    public void SelectOnly(string policyId)
+    {
+        if (string.IsNullOrWhiteSpace(policyId))
+            return;
+
+        SelectOnly(new[] { policyId });
+    }
+
     partial void OnSelectedCategoryChanged(PolicyCategory? value)
     {
         ApplyFilters();

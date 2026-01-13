@@ -10,6 +10,11 @@ public enum PolicyCategory
     Defender,
     UX,
     AI,
+    Copilot,
+    Edge,
+    OneDrive,
+    ScheduledTasks,
+    WindowsUpdate,
     Services,
     Updates,
     Cloud,
@@ -18,5 +23,7 @@ public enum PolicyCategory
     Logging,
     Privacy,
     Security,
-    Performance
+    Performance,
+    Sample,
+    sample = Sample
 }

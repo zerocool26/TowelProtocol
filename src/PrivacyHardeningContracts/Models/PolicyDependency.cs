@@ -66,5 +66,15 @@ public enum DependencyType
     /// <summary>
     /// Prerequisite - must be applied before this policy
     /// </summary>
-    Prerequisite
+    Prerequisite,
+
+    /// <summary>
+    /// Related - policies in the same area (informational or loosely linked)
+    /// </summary>
+    Related,
+
+    /// <summary>
+    /// Complementary - recommended pairing for completeness (but not required)
+    /// </summary>
+    Complementary
 }

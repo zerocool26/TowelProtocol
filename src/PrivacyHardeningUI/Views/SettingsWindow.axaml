@@ -1,0 +1,55 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:PrivacyHardeningUI.ViewModels"
+        x:Class="PrivacyHardeningUI.Views.SettingsWindow"
+        Width="500" Height="520" Title="Professional Settings"
+        mc:Ignorable="d">
+
+  <ScrollViewer>
+    <StackPanel Margin="16" Spacing="20">
+      <StackPanel Spacing="12">
+        <TextBlock Text="Appearance" FontSize="18" FontWeight="SemiBold"/>
+        
+        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+          <TextBlock Text="Dark theme" VerticalAlignment="Center"/>
+          <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsDarkTheme}"/>
+          
+          <TextBlock Grid.Row="1" Text="UI font size" VerticalAlignment="Center"/>
+          <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="10" Maximum="30" Value="{Binding FontSize}" Width="150"/>
+        </Grid>
+      </StackPanel>
+
+      <Separator/>
+
+      <StackPanel Spacing="12">
+        <TextBlock Text="Advanced Configuration" FontSize="18" FontWeight="SemiBold"/>
+
+        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+          <TextBlock Text="Auto-Audit on Launch" VerticalAlignment="Center"/>
+          <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoAuditOnStart}"/>
+
+          <TextBlock Grid.Row="1" Text="Redact Sensitive Info in Reports" VerticalAlignment="Center"/>
+          <ToggleSwitch Grid.Row="1" Grid.Column="1" IsChecked="{Binding RedactReports}"/>
+
+          <TextBlock Grid.Row="2" Text="Enable Detailed Evidence Logging" VerticalAlignment="Center"/>
+          <ToggleSwitch Grid.Row="2" Grid.Column="1" IsChecked="{Binding EnableEvidenceLogging}"/>
+        </Grid>
+
+        <TextBlock Text="Custom Policy Folder Path" FontWeight="SemiBold" Margin="0,8,0,0"/>
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBox Text="{Binding CustomPolicyPath}" Watermark="C:\Path\To\Policies"/>
+          <Button Grid.Column="1" Content="..." Command="{Binding PickPolicyPathAsyncCommand}" Margin="4,0,0,0"/>
+        </Grid>
+        <TextBlock Text="If empty, default application policies are used." Classes="Caption" Opacity="0.6"/>
+      </StackPanel>
+
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+        <Button Content="Import" Command="{Binding ImportAsyncCommand}" />
+        <Button Content="Export" Command="{Binding ExportAsyncCommand}" />
+        <Button Content="Save" Command="{Binding SaveCommand}" Theme="{StaticResource AccentButtonTheme}" />
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</Window>

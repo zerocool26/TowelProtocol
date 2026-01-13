@@ -13,16 +13,16 @@
         <Border Grid.Row="0" Padding="16" Background="{DynamicResource SystemChromeLowColor}">
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="Before/After Comparison" FontSize="20" FontWeight="Bold"/>
+                    <TextBlock Text="Before/After Comparison" FontSize="{DynamicResource FontSizeTitle}" FontWeight="{DynamicResource FontWeightSemiBold}" FontFamily="{DynamicResource AppFontFamily}" />
                     <TextBlock Text="Preview what will change before applying policies"
-                               FontSize="12" Opacity="0.7" Margin="0,4,0,0"/>
+                               FontSize="{DynamicResource FontSizeBody}" Opacity="0.7" Margin="0,4,0,0" FontFamily="{DynamicResource AppFontFamily}" />
                 </StackPanel>
 
                 <Button Grid.Column="1" Content="Generate Diff"
-                        Command="{Binding GenerateDiffCommand}"
-                        IsEnabled="{Binding !IsGenerating}"
-                        HorizontalAlignment="Right" VerticalAlignment="Center"
-                        Padding="24,8" FontSize="14" FontWeight="Bold"/>
+                    Command="{Binding GenerateDiffCommand}"
+                    IsEnabled="{Binding !IsGenerating}"
+                    HorizontalAlignment="Right" VerticalAlignment="Center"
+                    Padding="16,8" FontSize="{DynamicResource FontSizeBodyLarge}" FontWeight="{DynamicResource FontWeightMedium}" Classes="accent"/>
             </Grid>
         </Border>
 

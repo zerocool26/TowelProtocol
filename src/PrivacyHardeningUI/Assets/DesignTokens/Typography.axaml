@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Typography tokens -->
+  <FontFamily x:Key="AppFontFamily">avares://PrivacyHardeningUI/Assets/Fonts/Inter-Regular.ttf#Inter, "Segoe UI Variable", "Segoe UI", system-ui</FontFamily>
+
+  <!-- Base runtime-adjustable font size. Settings will update this and related tokens. -->
+  <x:Double x:Key="AppFontSize">14</x:Double>
+
+  <!-- Derived sizes (will be updated at runtime when AppFontSize changes) -->
+  <x:Double x:Key="FontSizeBody">14</x:Double>
+  <x:Double x:Key="FontSizeBodyLarge">16</x:Double>
+  <x:Double x:Key="FontSizeSubtitle">20</x:Double>
+  <x:Double x:Key="FontSizeTitle">24</x:Double>
+
+</ResourceDictionary>

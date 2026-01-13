@@ -6,8 +6,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceInclude Source="avares://PrivacyHardeningUI/Styles/ThemeResources.Light.axaml" />
-                <ResourceInclude Source="avares://PrivacyHardeningUI/Styles/Animations.axaml" />
+                <ResourceInclude Source="avares://PrivacyHardeningUI/Styles/Theme.axaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Value Converters -->
@@ -15,6 +14,7 @@
             <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
             <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
             <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+            <converters:NullToInverseVisibilityConverter x:Key="NullToInverseVisibilityConverter"/>
             <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
             <converters:RiskLevelToBrushConverter x:Key="RiskLevelToBrushConverter"/>
             <converters:EnumToStringConverter x:Key="EnumToStringConverter"/>
@@ -23,6 +23,7 @@
             <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
             <converters:BoolToCheckmarkConverter x:Key="BoolToCheckmarkConverter"/>
             <converters:BoolToStatusTextConverter x:Key="BoolToStatusTextConverter"/>
+            <converters:AuditStatusToBrushConverter x:Key="AuditStatusToBrushConverter"/>
 
             <!-- Diff View Converters -->
             <converters:ChangeTypeToColorConverter x:Key="ChangeTypeToColorConverter"/>

@@ -78,7 +78,7 @@ public sealed class TaskExecutor : IExecutor
         var details = ParseTaskDetails(policy.MechanismDetails);
         if (details == null)
         {
-            return CreateErrorRecord(policy, "Invalid task mechanism details");
+            return CreateErrorRecord(policy, ChangeOperation.Apply, "Invalid task mechanism details");
         }
 
         try
@@ -89,7 +89,7 @@ public sealed class TaskExecutor : IExecutor
             if (task == null)
             {
                 _logger.LogWarning("Task not found: {TaskPath}", details.TaskPath);
-                return CreateErrorRecord(policy, $"Scheduled task '{details.TaskPath}' does not exist on this system");
+                return CreateErrorRecord(policy, ChangeOperation.Apply, $"Scheduled task '{details.TaskPath}' does not exist on this system");
             }
 
             // Capture previous state
@@ -108,6 +108,7 @@ public sealed class TaskExecutor : IExecutor
             return new ChangeRecord
             {
                 ChangeId = Guid.NewGuid().ToString(),
+                Operation = ChangeOperation.Apply,
                 PolicyId = policy.PolicyId,
                 AppliedAt = DateTime.UtcNow,
                 Mechanism = MechanismType.ScheduledTask,
@@ -120,12 +121,12 @@ public sealed class TaskExecutor : IExecutor
         catch (UnauthorizedAccessException)
         {
             _logger.LogError("Access denied modifying task: {TaskPath}", details.TaskPath);
-            return CreateErrorRecord(policy, $"Access denied to task '{details.TaskPath}' (may be protected by Tamper Protection)");
+            return CreateErrorRecord(policy, ChangeOperation.Apply, $"Access denied to task '{details.TaskPath}' (may be protected by Tamper Protection)");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to modify task: {TaskPath}", details.TaskPath);
-            return CreateErrorRecord(policy, ex.Message);
+            return CreateErrorRecord(policy, ChangeOperation.Apply, ex.Message);
         }
     }
 
@@ -136,21 +137,21 @@ public sealed class TaskExecutor : IExecutor
         var details = ParseTaskDetails(policy.MechanismDetails);
         if (details == null)
         {
-            return CreateErrorRecord(policy, "Invalid task mechanism details");
+            return CreateErrorRecord(policy, ChangeOperation.Revert, "Invalid task mechanism details");
         }
 
         try
         {
             if (string.IsNullOrEmpty(originalChange.PreviousState))
             {
-                return CreateErrorRecord(policy, "No previous state recorded, cannot revert");
+                return CreateErrorRecord(policy, ChangeOperation.Revert, "No previous state recorded, cannot revert");
             }
 
             // Parse previous enabled state
             var previousEnabled = ExtractEnabledStateFromState(originalChange.PreviousState);
             if (previousEnabled == null)
             {
-                return CreateErrorRecord(policy, "Could not parse previous enabled state");
+                return CreateErrorRecord(policy, ChangeOperation.Revert, "Could not parse previous enabled state");
             }
 
             using var ts = new TaskService();
@@ -158,7 +159,7 @@ public sealed class TaskExecutor : IExecutor
 
             if (task == null)
             {
-                return CreateErrorRecord(policy, $"Task '{details.TaskPath}' no longer exists");
+                return CreateErrorRecord(policy, ChangeOperation.Revert, $"Task '{details.TaskPath}' no longer exists");
             }
 
             task.Enabled = previousEnabled.Value;
@@ -169,6 +170,7 @@ public sealed class TaskExecutor : IExecutor
             return new ChangeRecord
             {
                 ChangeId = Guid.NewGuid().ToString(),
+                Operation = ChangeOperation.Revert,
                 PolicyId = policy.PolicyId,
                 AppliedAt = DateTime.UtcNow,
                 Mechanism = MechanismType.ScheduledTask,
@@ -181,7 +183,7 @@ public sealed class TaskExecutor : IExecutor
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to revert task: {TaskPath}", details.TaskPath);
-            return CreateErrorRecord(policy, ex.Message);
+            return CreateErrorRecord(policy, ChangeOperation.Revert, ex.Message);
         }
     }
 
@@ -190,7 +192,10 @@ public sealed class TaskExecutor : IExecutor
         try
         {
             var json = JsonSerializer.Serialize(mechanismDetails);
-            return JsonSerializer.Deserialize<TaskDetails>(json);
+            return JsonSerializer.Deserialize<TaskDetails>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
         }
         catch
         {
@@ -209,11 +214,12 @@ public sealed class TaskExecutor : IExecutor
         return bool.TryParse(value, out var enabled) ? enabled : null;
     }
 
-    private ChangeRecord CreateErrorRecord(PolicyDefinition policy, string error)
+    private ChangeRecord CreateErrorRecord(PolicyDefinition policy, ChangeOperation operation, string error)
     {
         return new ChangeRecord
         {
             ChangeId = Guid.NewGuid().ToString(),
+            Operation = operation,
             PolicyId = policy.PolicyId,
             AppliedAt = DateTime.UtcNow,
             Mechanism = MechanismType.ScheduledTask,

@@ -88,7 +88,7 @@ public sealed class ServiceExecutor : IExecutor
         var details = ParseServiceDetails(policy.MechanismDetails);
         if (details == null)
         {
-            return CreateErrorRecord(policy, "Invalid service mechanism details");
+            return CreateErrorRecord(policy, ChangeOperation.Apply, "Invalid service mechanism details");
         }
 
         try
@@ -139,6 +139,7 @@ public sealed class ServiceExecutor : IExecutor
             return new ChangeRecord
             {
                 ChangeId = Guid.NewGuid().ToString(),
+                Operation = ChangeOperation.Apply,
                 PolicyId = policy.PolicyId,
                 AppliedAt = DateTime.UtcNow,
                 Mechanism = MechanismType.Service,
@@ -151,17 +152,17 @@ public sealed class ServiceExecutor : IExecutor
         catch (InvalidOperationException ex) when (ex.Message.Contains("does not exist"))
         {
             _logger.LogWarning("Service not found: {ServiceName}", details.ServiceName);
-            return CreateErrorRecord(policy, $"Service '{details.ServiceName}' does not exist on this system");
+            return CreateErrorRecord(policy, ChangeOperation.Apply, $"Service '{details.ServiceName}' does not exist on this system");
         }
         catch (System.ServiceProcess.TimeoutException)
         {
             _logger.LogError("Timeout stopping service: {ServiceName}", details.ServiceName);
-            return CreateErrorRecord(policy, $"Timeout stopping service '{details.ServiceName}'");
+            return CreateErrorRecord(policy, ChangeOperation.Apply, $"Timeout stopping service '{details.ServiceName}'");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to configure service: {ServiceName}", details.ServiceName);
-            return CreateErrorRecord(policy, ex.Message);
+            return CreateErrorRecord(policy, ChangeOperation.Apply, ex.Message);
         }
     }
 
@@ -172,7 +173,7 @@ public sealed class ServiceExecutor : IExecutor
         var details = ParseServiceDetails(policy.MechanismDetails);
         if (details == null)
         {
-            return CreateErrorRecord(policy, "Invalid service mechanism details");
+            return CreateErrorRecord(policy, ChangeOperation.Revert, "Invalid service mechanism details");
         }
 
         try
@@ -180,14 +181,14 @@ public sealed class ServiceExecutor : IExecutor
             // Parse previous state
             if (string.IsNullOrEmpty(originalChange.PreviousState))
             {
-                return CreateErrorRecord(policy, "No previous state recorded, cannot revert");
+                return CreateErrorRecord(policy, ChangeOperation.Revert, "No previous state recorded, cannot revert");
             }
 
             // Extract previous startup type from state string
             var previousStartupType = ExtractStartupTypeFromState(originalChange.PreviousState);
             if (previousStartupType == null)
             {
-                return CreateErrorRecord(policy, "Could not parse previous startup type");
+                return CreateErrorRecord(policy, ChangeOperation.Revert, "Could not parse previous startup type");
             }
 
             // Restore previous startup type
@@ -214,6 +215,7 @@ public sealed class ServiceExecutor : IExecutor
             return new ChangeRecord
             {
                 ChangeId = Guid.NewGuid().ToString(),
+                Operation = ChangeOperation.Revert,
                 PolicyId = policy.PolicyId,
                 AppliedAt = DateTime.UtcNow,
                 Mechanism = MechanismType.Service,
@@ -226,7 +228,7 @@ public sealed class ServiceExecutor : IExecutor
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to revert service: {ServiceName}", details.ServiceName);
-            return CreateErrorRecord(policy, ex.Message);
+            return CreateErrorRecord(policy, ChangeOperation.Revert, ex.Message);
         }
     }
 
@@ -235,7 +237,10 @@ public sealed class ServiceExecutor : IExecutor
         try
         {
             var json = JsonSerializer.Serialize(mechanismDetails);
-            var details = JsonSerializer.Deserialize<ServiceDetails>(json);
+            var details = JsonSerializer.Deserialize<ServiceDetails>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
 
             // Validate required fields to avoid nullable reference warnings and runtime issues
             if (details == null
@@ -327,11 +332,12 @@ public sealed class ServiceExecutor : IExecutor
         return Enum.TryParse<ServiceStartMode>(value, out var mode) ? mode : null;
     }
 
-    private ChangeRecord CreateErrorRecord(PolicyDefinition policy, string error)
+    private ChangeRecord CreateErrorRecord(PolicyDefinition policy, ChangeOperation operation, string error)
     {
         return new ChangeRecord
         {
             ChangeId = Guid.NewGuid().ToString(),
+            Operation = operation,
             PolicyId = policy.PolicyId,
             AppliedAt = DateTime.UtcNow,
             Mechanism = MechanismType.Service,

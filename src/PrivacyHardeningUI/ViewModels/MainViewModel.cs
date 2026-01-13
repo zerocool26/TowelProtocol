@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
@@ -8,6 +9,7 @@ using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PrivacyHardeningUI.Services;
+using PrivacyHardeningUI.Views;
 
 namespace PrivacyHardeningUI.ViewModels;
 
@@ -17,6 +19,15 @@ namespace PrivacyHardeningUI.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     private readonly ServiceClient _serviceClient;
+    private readonly IThemeService _themeService;
+    private readonly PrivacyHardeningUI.Services.NavigationService _navigation;
+
+    public ObservableCollection<NavItemViewModel> NavItems { get; } = new();
+
+    [ObservableProperty]
+    private NavItemViewModel? _selectedNavItem;
+
+    public object? CurrentPage => SelectedNavItem?.ViewModel;
 
     [ObservableProperty]
     private int _selectedTabIndex;
@@ -49,23 +60,69 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isDarkTheme;
 
+    public StatusRailViewModel StatusRail { get; }
+
+    public DashboardViewModel Dashboard { get; }
     public PolicySelectionViewModel PolicySelection { get; }
     public AuditViewModel Audit { get; }
     public DiffViewModel Diff { get; }
 
+    public PreviewViewModel Preview { get; }
+    public ApplyViewModel Apply { get; }
+    public HistoryViewModel History { get; }
+    public DriftViewModel Drift { get; }
+    public ReportsViewModel Reports { get; }
+
     public MainViewModel(ServiceClient serviceClient,
+        IThemeService themeService,
+        PrivacyHardeningUI.Services.NavigationService navigation,
+        DashboardViewModel dashboard,
+        StatusRailViewModel statusRail,
         PolicySelectionViewModel policySelection,
+        ApplyViewModel apply,
         AuditViewModel audit,
+        PreviewViewModel preview,
+        HistoryViewModel history,
+        DriftViewModel drift,
+        ReportsViewModel reports,
         DiffViewModel diff)
     {
         _serviceClient = serviceClient;
+        _themeService = themeService;
+        _navigation = navigation;
+
+        Dashboard = dashboard;
+        StatusRail = statusRail;
         PolicySelection = policySelection;
+        Apply = apply;
         Audit = audit;
+        Preview = preview;
+        History = history;
+        Drift = drift;
+        Reports = reports;
         Diff = diff;
 
         // Initialize theme state from application
-        var app = Application.Current;
-        IsDarkTheme = app?.RequestedThemeVariant == ThemeVariant.Dark;
+        IsDarkTheme = _themeService.IsDarkMode;
+
+        _themeService.ThemeChanged += (_, dark) =>
+        {
+            IsDarkTheme = dark;
+        };
+
+        // Build task-based navigation
+        NavItems.Add(new NavItemViewModel(AppPage.Dashboard, "Dashboard", "home", Dashboard));
+        NavItems.Add(new NavItemViewModel(AppPage.Audit, "Audit", "search", Audit));
+        NavItems.Add(new NavItemViewModel(AppPage.Preview, "Preview", "diff", Preview));
+        NavItems.Add(new NavItemViewModel(AppPage.Apply, "Apply", "shield", Apply));
+        NavItems.Add(new NavItemViewModel(AppPage.History, "History", "history", History));
+        NavItems.Add(new NavItemViewModel(AppPage.Drift, "Drift", "warning", Drift));
+        NavItems.Add(new NavItemViewModel(AppPage.Reports, "Reports", "report", Reports));
+
+        SelectedNavItem = NavItems.FirstOrDefault(i => i.Page == AppPage.Dashboard) ?? NavItems.FirstOrDefault();
+
+        // Allow other viewmodels to request navigation (workflow jumps).
+        _navigation.NavigateRequested += page => Navigate(page);
 
         // Subscribe to service progress updates
         _serviceClient.ProgressReceived += (percent, message) =>
@@ -73,6 +130,26 @@ public partial class MainViewModel : ObservableObject
             ProgressValue = percent;
             if (!string.IsNullOrEmpty(message)) StatusMessage = message;
         };
+
+        StatusMessage = "Initializing system state...";
+
+        // Kick status rail refresh (non-blocking)
+        _ = StatusRail.RefreshAsync();
+    }
+
+    partial void OnSelectedNavItemChanged(NavItemViewModel? value)
+    {
+        OnPropertyChanged(nameof(CurrentPage));
+    }
+
+    [RelayCommand]
+    private void Navigate(AppPage page)
+    {
+        var item = NavItems.FirstOrDefault(i => i.Page == page);
+        if (item != null)
+        {
+            SelectedNavItem = item;
+        }
     }
 
     [RelayCommand]
@@ -243,23 +320,37 @@ public partial class MainViewModel : ObservableObject
     private async Task RunAuditAsync()
     {
         await Audit.RunAuditAsync();
-        SelectedTabIndex = 1; // Switch to Audit tab
+        Navigate(AppPage.Audit);
     }
 
     [RelayCommand]
     private void ToggleTheme()
     {
-        var app = Application.Current;
-        if (app == null) return;
+        _themeService.ToggleTheme();
+        IsDarkTheme = _themeService.IsDarkMode;
+    }
 
-        var current = app.RequestedThemeVariant;
-        app.RequestedThemeVariant = current == ThemeVariant.Dark ? ThemeVariant.Light : ThemeVariant.Dark;
-        IsDarkTheme = app.RequestedThemeVariant == ThemeVariant.Dark;
-
-        // Also swap resource dictionaries for custom brushes
-        if (Application.Current is App a)
+    [RelayCommand]
+    private void OpenSettings()
+    {
+        try
         {
-            a.SetTheme(IsDarkTheme);
+            var window = App.GetService<SettingsWindow>();
+            var desktop = Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime;
+            var owner = desktop?.MainWindow;
+            if (owner != null)
+            {
+                // Show as dialog with owner
+                _ = window.ShowDialog(owner);
+            }
+            else
+            {
+                window.Show();
+            }
+        }
+        catch
+        {
+            // ignore failures to open settings
         }
     }
 }

@@ -4,10 +4,10 @@
 
   <!-- Icon style placeholder. Uses system icon font by default; can be replaced with bundled font later. -->
   <Style Selector="TextBlock.icon">
-    <Setter Property="FontFamily" Value="{StaticResource AppIconFontFamily}" />
+    <Setter Property="FontFamily" Value="{DynamicResource AppIconFontFamily}" />
     <Setter Property="FontSize" Value="16" />
     <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
     <Setter Property="Margin" Value="0,0,6,0" />
   </Style>
 

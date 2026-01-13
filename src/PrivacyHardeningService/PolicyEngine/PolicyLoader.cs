@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using PrivacyHardeningContracts.Models;
+using System.Threading;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -8,15 +9,29 @@ namespace PrivacyHardeningService.PolicyEngine;
 /// <summary>
 /// Loads policy definitions from YAML files
 /// </summary>
-public sealed class PolicyLoader
+public sealed class PolicyLoader : IDisposable
 {
     private readonly ILogger<PolicyLoader> _logger;
+    private readonly DependencyResolver _dependencyResolver;
     private readonly IDeserializer _yamlDeserializer;
     private readonly string _policyDirectory;
 
-    public PolicyLoader(ILogger<PolicyLoader> logger)
+    private FileSystemWatcher? _policyWatcher;
+    private Timer? _invalidateTimer;
+    private readonly object _invalidateGate = new();
+
+    /// <summary>
+    /// Raised when policy YAML files change on disk.
+    /// Consumers should invalidate any in-memory caches and reload on next request.
+    /// </summary>
+    public event EventHandler? PoliciesChanged;
+
+    public string PolicyDirectory => _policyDirectory;
+
+    public PolicyLoader(ILogger<PolicyLoader> logger, DependencyResolver dependencyResolver)
     {
         _logger = logger;
+        _dependencyResolver = dependencyResolver;
 
         // Enhanced deserializer with support for granular control models
         _yamlDeserializer = new DeserializerBuilder()
@@ -39,6 +54,26 @@ public sealed class PolicyLoader
         }
 
         _logger.LogInformation("Policy directory set to: {Directory}", _policyDirectory);
+
+        TryStartWatcher();
+    }
+
+    public void Dispose()
+    {
+        try
+        {
+            _policyWatcher?.Dispose();
+            _invalidateTimer?.Dispose();
+        }
+        catch
+        {
+            // Best-effort cleanup. Service shutdown should not throw.
+        }
+        finally
+        {
+            _policyWatcher = null;
+            _invalidateTimer = null;
+        }
     }
 
     public async Task<PolicyDefinition[]> LoadAllPoliciesAsync(CancellationToken cancellationToken)
@@ -50,6 +85,9 @@ public sealed class PolicyLoader
             _logger.LogWarning("Policy directory does not exist: {Directory}", _policyDirectory);
             return Array.Empty<PolicyDefinition>();
         }
+
+        // If policies become available after startup, start watching once they exist.
+        TryStartWatcher();
 
         // Recursively find all YAML files
         var yamlFiles = Directory.EnumerateFiles(_policyDirectory, "*.yaml", SearchOption.AllDirectories);
@@ -74,7 +112,84 @@ public sealed class PolicyLoader
         }
 
         _logger.LogInformation("Loaded {Count} policies", policies.Count);
-        return policies.ToArray();
+        
+        var policyArray = policies.ToArray();
+        
+        try 
+        {
+            _dependencyResolver.ValidateGraph(policyArray);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical(ex, "Dependency graph validation failed. The policy engine cannot start with circular dependencies.");
+            // We rethrow as it's a fatal configuration error for a security product
+            throw;
+        }
+
+        return policyArray;
+    }
+
+    private void TryStartWatcher()
+    {
+        if (_policyWatcher != null)
+        {
+            return;
+        }
+
+        if (!Directory.Exists(_policyDirectory))
+        {
+            return;
+        }
+
+        try
+        {
+            _policyWatcher = new FileSystemWatcher(_policyDirectory, "*.yaml")
+            {
+                IncludeSubdirectories = true,
+                NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite
+            };
+
+            _policyWatcher.Changed += (_, __) => ScheduleInvalidate();
+            _policyWatcher.Created += (_, __) => ScheduleInvalidate();
+            _policyWatcher.Deleted += (_, __) => ScheduleInvalidate();
+            _policyWatcher.Renamed += (_, __) => ScheduleInvalidate();
+            _policyWatcher.EnableRaisingEvents = true;
+
+            _logger.LogInformation("Policy watcher enabled for: {Directory}", _policyDirectory);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to initialize policy file watcher. Policy cache will require service restart to refresh.");
+            _policyWatcher = null;
+        }
+    }
+
+    private void ScheduleInvalidate()
+    {
+        // Debounce rapid file changes (e.g., editor save temp files) to a single invalidation.
+        lock (_invalidateGate)
+        {
+            if (_invalidateTimer == null)
+            {
+                _invalidateTimer = new Timer(_ => RaisePoliciesChanged(), null, 500, Timeout.Infinite);
+                return;
+            }
+
+            _invalidateTimer.Change(500, Timeout.Infinite);
+        }
+    }
+
+    private void RaisePoliciesChanged()
+    {
+        try
+        {
+            _logger.LogInformation("Policy files changed; signaling cache invalidation.");
+            PoliciesChanged?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed while notifying PoliciesChanged subscribers.");
+        }
     }
 
     /// <summary>

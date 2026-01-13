@@ -7,7 +7,21 @@
     <LangVersion>latest</LangVersion>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Temporarily disable creating native apphost during build to avoid MSBuild CreateAppHost errors on some environments -->
+    <UseAppHost>false</UseAppHost>
   </PropertyGroup>
+
+  <!-- Guardrail: ensure any leftover WinUI 3 XAML files are not considered by the build. -->
+  <ItemGroup>
+    <None Remove="Views\*.xaml" />
+    <Content Remove="Views\*.xaml" />
+    <Compile Remove="Views\*.xaml.cs" />
+  </ItemGroup>
+
+  <!-- Guardrail: exclude legacy/misnamed code-behind files (Avalonia uses .axaml.cs). -->
+  <ItemGroup>
+    <Compile Remove="Views\*.xaml.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- Avalonia UI Packages (upgraded to 11.3.10 for latest features and performance) -->
@@ -31,5 +45,8 @@
   <!-- Include any bundled fonts under Assets/Fonts as Avalonia resources -->
   <ItemGroup>
     <AvaloniaResource Include="Assets\Fonts\**\*.ttf" />
+    <AvaloniaResource Include="Assets\Fonts\**\*.otf" />
+    <AvaloniaResource Include="Assets\Icons\**\*.svg" />
+    <AvaloniaResource Include="Assets\DesignTokens\**\*.axaml" />
   </ItemGroup>
 </Project>

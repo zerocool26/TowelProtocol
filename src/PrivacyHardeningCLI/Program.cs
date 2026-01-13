@@ -170,7 +170,7 @@ class Program
 
         var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-        await JsonSerializer.SerializeAsync(client, command, command.GetType(), jsonOptions);
+        await JsonSerializer.SerializeAsync(client, command, typeof(CommandBase), jsonOptions);
         await client.FlushAsync();
 
         var response = await JsonSerializer.DeserializeAsync<TResponse>(client, jsonOptions);

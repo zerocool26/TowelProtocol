@@ -11,9 +11,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrivacyHardeningContracts",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrivacyHardeningCLI", "src\PrivacyHardeningCLI\PrivacyHardeningCLI.csproj", "{A4B4C4D4-E4F4-4444-8444-444444444444}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrivacyHardeningTests", "tests\PrivacyHardeningTests\PrivacyHardeningTests.csproj", "{B5B5C5D5-E5F5-5555-9555-555555555555}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrivacyHardeningElevated", "src\PrivacyHardeningElevated\PrivacyHardeningElevated.csproj", "{C6C6D6D6-F6F6-6666-A666-666666666666}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrivacyHardeningService.Tests", "tests\PrivacyHardeningService.Tests\PrivacyHardeningService.Tests.csproj", "{B7B7C7D7-E7F7-4777-8777-777777777777}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,14 +55,6 @@ Global
 		{A4B4C4D4-E4F4-4444-8444-444444444444}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A4B4C4D4-E4F4-4444-8444-444444444444}.Release|x64.ActiveCfg = Release|x64
 		{A4B4C4D4-E4F4-4444-8444-444444444444}.Release|x64.Build.0 = Release|x64
-		{B5B5C5D5-E5F5-5555-9555-555555555555}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B5B5C5D5-E5F5-5555-9555-555555555555}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B5B5C5D5-E5F5-5555-9555-555555555555}.Debug|x64.ActiveCfg = Debug|x64
-		{B5B5C5D5-E5F5-5555-9555-555555555555}.Debug|x64.Build.0 = Debug|x64
-		{B5B5C5D5-E5F5-5555-9555-555555555555}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B5B5C5D5-E5F5-5555-9555-555555555555}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B5B5C5D5-E5F5-5555-9555-555555555555}.Release|x64.ActiveCfg = Release|x64
-		{B5B5C5D5-E5F5-5555-9555-555555555555}.Release|x64.Build.0 = Release|x64
 		{C6C6D6D6-F6F6-6666-A666-666666666666}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C6C6D6D6-F6F6-6666-A666-666666666666}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C6C6D6D6-F6F6-6666-A666-666666666666}.Debug|x64.ActiveCfg = Debug|x64
@@ -71,5 +63,13 @@ Global
 		{C6C6D6D6-F6F6-6666-A666-666666666666}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C6C6D6D6-F6F6-6666-A666-666666666666}.Release|x64.ActiveCfg = Release|x64
 		{C6C6D6D6-F6F6-6666-A666-666666666666}.Release|x64.Build.0 = Release|x64
+		{B7B7C7D7-E7F7-4777-8777-777777777777}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7B7C7D7-E7F7-4777-8777-777777777777}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7B7C7D7-E7F7-4777-8777-777777777777}.Debug|x64.ActiveCfg = Debug|x64
+		{B7B7C7D7-E7F7-4777-8777-777777777777}.Debug|x64.Build.0 = Debug|x64
+		{B7B7C7D7-E7F7-4777-8777-777777777777}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7B7C7D7-E7F7-4777-8777-777777777777}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7B7C7D7-E7F7-4777-8777-777777777777}.Release|x64.ActiveCfg = Release|x64
+		{B7B7C7D7-E7F7-4777-8777-777777777777}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 EndGlobal

@@ -1,0 +1,74 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PrivacyHardeningUI.ViewModels"
+             xmlns:controls="using:PrivacyHardeningUI.Controls"
+             x:Class="PrivacyHardeningUI.Views.StatusRailView"
+             x:DataType="vm:StatusRailViewModel">
+
+  <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
+    <StackPanel Spacing="16">
+
+      <!-- Unified Health Score & Identity -->
+      <StackPanel Spacing="8">
+        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <controls:IconHelper Name="shield" />
+          <TextBlock FontWeight="SemiBold" Text="Security Posture" FontSize="16" />
+        </StackPanel>
+
+        <Border Background="{Binding HealthColor}" CornerRadius="20" Padding="12,4" HorizontalAlignment="Left">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+             <TextBlock Text="{Binding HealthScore}" Foreground="White" FontWeight="Bold" IsVisible="{Binding HealthScore, Converter={StaticResource CountToVisibilityConverter}}" />
+             <TextBlock Text="%" Foreground="White" Opacity="0.8" IsVisible="{Binding HealthScore, Converter={StaticResource CountToVisibilityConverter}}" />
+             <TextBlock Text="{Binding HealthStatus}" Foreground="White" FontWeight="SemiBold" />
+          </StackPanel>
+        </Border>
+
+        <ProgressBar Minimum="0" Maximum="100" Value="{Binding HealthScore}" Height="4" Margin="0,4" Foreground="{Binding HealthColor}" />
+      </StackPanel>
+
+      <Separator Opacity="0.3"/>
+
+      <!-- System Details Grid -->
+      <StackPanel Spacing="4">
+        <TextBlock Text="MANAGEMENT SIGNALS" FontSize="10" FontWeight="Bold" Opacity="0.5" LetterSpacing="1" Margin="0,0,0,4"/>
+        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="6" ColumnSpacing="12">
+          <TextBlock Grid.Row="0" Grid.Column="0" Opacity="0.75" Text="Service State" VerticalAlignment="Center"/>
+          <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ConnectionState}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+
+          <TextBlock Grid.Row="1" Grid.Column="0" Opacity="0.75" Text="Last Audit" VerticalAlignment="Center"/>
+          <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding LastAuditAt, StringFormat=\{0:G\}}" FontSize="12" VerticalAlignment="Center"/>
+
+          <TextBlock Grid.Row="2" Grid.Column="0" Opacity="0.75" Text="AD Joined" VerticalAlignment="Center"/>
+          <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SystemInfo.IsDomainJoined, Converter={StaticResource BoolToStatusTextConverter}}" VerticalAlignment="Center"/>
+
+          <TextBlock Grid.Row="3" Grid.Column="0" Opacity="0.75" Text="Entra Joined" VerticalAlignment="Center"/>
+          <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SystemInfo.IsEntraIDJoined, Converter={StaticResource BoolToStatusTextConverter}}" VerticalAlignment="Center"/>
+
+          <TextBlock Grid.Row="4" Grid.Column="0" Opacity="0.75" Text="MDM / Intune" VerticalAlignment="Center"/>
+          <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SystemInfo.IsMDMManaged, Converter={StaticResource BoolToStatusTextConverter}}" VerticalAlignment="Center"/>
+
+          <TextBlock Grid.Row="5" Grid.Column="0" Opacity="0.75" Text="ConfigMgr / SCCM" VerticalAlignment="Center"/>
+          <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SystemInfo.IsSCCMManaged, Converter={StaticResource BoolToStatusTextConverter}}" VerticalAlignment="Center"/>
+        </Grid>
+      </StackPanel>
+
+      <!-- Snapshot Context -->
+      <Border Background="{DynamicResource OverlayLightBrush}" Padding="8" CornerRadius="6">
+        <StackPanel Spacing="4">
+          <TextBlock Text="ACTIVE SNAPSHOT" FontSize="10" FontWeight="Bold" Opacity="0.5" LetterSpacing="1"/>
+          <TextBlock Text="{Binding CurrentSnapshotId}" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" Opacity="0.8"/>
+        </StackPanel>
+      </Border>
+
+      <Border Background="{DynamicResource OverlayLightBrush}" CornerRadius="6" Padding="10" IsVisible="{Binding LastError, Converter={StaticResource NullToVisibilityConverter}}">
+        <StackPanel Spacing="4">
+          <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource ErrorBrush}" Text="Error" />
+          <TextBlock Text="{Binding LastError}" TextWrapping="Wrap" Opacity="0.9" FontSize="12" />
+        </StackPanel>
+      </Border>
+
+      <Button Content="Refresh Data" Command="{Binding RefreshCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+
+    </StackPanel>
+  </Border>
+</UserControl>

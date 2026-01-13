@@ -3,11 +3,20 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="PrivacyHardeningUI.Controls.IconHelper">
 
-  <TextBlock x:Name="PART_Icon"
-             Classes="icon"
-             Text="{Binding Name, Mode=OneWay}"
-             FontSize="16"
-             VerticalAlignment="Center"
-             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+    <Grid>
+        <Image x:Name="PART_Svg"
+                     Width="20"
+                     Height="20"
+                     Stretch="Uniform"
+                     VerticalAlignment="Center"
+                     IsVisible="False" />
+
+        <TextBlock x:Name="PART_Icon"
+                             Classes="icon"
+                             Text="{Binding Name, Mode=OneWay}"
+                             FontSize="16"
+                             VerticalAlignment="Center"
+                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+    </Grid>
 
 </UserControl>

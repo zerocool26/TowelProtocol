@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Consolidated theme that composes design tokens and control styles -->
+  <ResourceDictionary.MergedDictionaries>
+    <!-- Load a default theme resources (light) so control styles have required keys at startup -->
+    <ResourceInclude Source="avares://PrivacyHardeningUI/Styles/ThemeResources.Light.axaml" />
+    <ResourceInclude Source="avares://PrivacyHardeningUI/Assets/DesignTokens/Colors.axaml" />
+    <ResourceInclude Source="avares://PrivacyHardeningUI/Assets/DesignTokens/Typography.axaml" />
+    <ResourceInclude Source="avares://PrivacyHardeningUI/Styles/Animations.axaml" />
+  </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>
