@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PrivacyHardeningContracts.Responses;
@@ -11,6 +12,9 @@ namespace PrivacyHardeningUI.ViewModels;
 public sealed partial class StatusRailViewModel : ObservableObject
 {
     private readonly ServiceClient _serviceClient;
+
+    private readonly object _autoReconnectLock = new();
+    private CancellationTokenSource? _autoReconnectCts;
 
     [ObservableProperty]
     private string _connectionState = "Unknown";
@@ -56,6 +60,86 @@ public sealed partial class StatusRailViewModel : ObservableObject
     public StatusRailViewModel(ServiceClient serviceClient)
     {
         _serviceClient = serviceClient;
+
+        _serviceClient.StandaloneModeChanged += (_, standalone) =>
+        {
+            if (standalone)
+            {
+                StartAutoReconnect();
+            }
+            else
+            {
+                StopAutoReconnect();
+            }
+        };
+
+        if (_serviceClient.IsStandaloneMode)
+        {
+            StartAutoReconnect();
+        }
+    }
+
+    private void StartAutoReconnect()
+    {
+        lock (_autoReconnectLock)
+        {
+            if (_autoReconnectCts != null)
+            {
+                return;
+            }
+
+            _autoReconnectCts = new CancellationTokenSource();
+            var token = _autoReconnectCts.Token;
+
+            _ = Task.Run(async () =>
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    if (!_serviceClient.IsStandaloneMode)
+                    {
+                        break;
+                    }
+
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(5), token);
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        break;
+                    }
+
+                    try
+                    {
+                        await RefreshAsync();
+                    }
+                    catch
+                    {
+                        // Best-effort: RefreshAsync already normalizes errors.
+                    }
+                }
+            }, token);
+        }
+    }
+
+    private void StopAutoReconnect()
+    {
+        lock (_autoReconnectLock)
+        {
+            try
+            {
+                _autoReconnectCts?.Cancel();
+            }
+            catch
+            {
+                // Best-effort.
+            }
+            finally
+            {
+                _autoReconnectCts?.Dispose();
+                _autoReconnectCts = null;
+            }
+        }
     }
 
     public bool IsDomainJoined => SystemInfo?.IsDomainJoined == true;

@@ -48,6 +48,7 @@ public partial class App : Application
 
                 // Register telemetry monitoring service
                 services.AddSingleton<ITelemetryMonitorService, TelemetryMonitorService>();
+                services.AddSingleton<INetworkTrafficMonitorService, NetworkTrafficMonitorService>();
 
                 // Register ViewModels
                 // Keep page viewmodels as singletons so selection/audit/preview state is consistent across navigation.

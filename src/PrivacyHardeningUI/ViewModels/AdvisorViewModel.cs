@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PrivacyHardeningContracts.Responses;
 using PrivacyHardeningUI.Services;
+using Avalonia.Threading;
 
 namespace PrivacyHardeningUI.ViewModels;
 
@@ -43,6 +44,19 @@ public partial class AdvisorViewModel : ObservableObject
         _selectionViewModel = selectionViewModel;
         _auditViewModel = auditViewModel;
         _previewViewModel = previewViewModel;
+
+        _client.StandaloneModeChanged += (_, __) =>
+        {
+            // Keep enablement in sync and opportunistically reload if we regain connectivity.
+            Dispatcher.UIThread.Post(() =>
+            {
+                UpdateDerivedState();
+                if (!_client.IsStandaloneMode)
+                {
+                    _ = LoadAsync();
+                }
+            });
+        };
 
         Recommendations.CollectionChanged += OnRecommendationsChanged;
         _ = LoadAsync();

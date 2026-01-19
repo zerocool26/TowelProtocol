@@ -1,17 +1,59 @@
-id: sample.policies.powershell.snapshot_revert
-title: Sample PowerShell policy (snapshot + revert)
-description: Demonstrates PowerShell mechanism with snapshot and revert scripts (non-destructive sample).
-category: sample
-risk: low
+# ============================================================================
+# Sample Policy: PowerShell with snapshot + revert
+# ============================================================================
+# Demonstrates PowerShell mechanism details with optional snapshot/revert scripts
+# ============================================================================
+
+policyId: "sample-powershell-snapshot-revert"
+version: "1.0.0"
+name: "Sample PowerShell Policy (Snapshot + Revert)"
+category: Sample
+
+description: |
+  Demonstrates a PowerShell mechanism with optional snapshot and revert scripts.
+  This is a NON-DESTRUCTIVE sample policy meant for development/testing.
+
+mechanism: PowerShell
+
+mechanismDetails:
+  ScriptPath: "samples/main_example.ps1"        # main script to apply
+  SnapshotScriptPath: "samples/snapshot_example.ps1"
+  RevertScriptPath: "samples/revert_example.ps1"
+  RequiresSignature: false
+
+supportStatus: Unsupported
+riskLevel: Low
+reversible: true
+
+revertMechanism: |
+  Run the revert script to restore the previous state.
+
 applicability:
-  - all
-mechanism:
-  type: PowerShell
-  details:
-    ScriptPath: "samples/main_example.ps1"        # main script to apply (not provided here - replace with real script)
-    SnapshotScriptPath: "samples/snapshot_example.ps1"
-    RevertScriptPath: "samples/revert_example.ps1"
-    RequiresSignature: false
+  minBuild: 10240
+  maxBuild: null
+  supportedSkus:
+    - "Enterprise"
+    - "Pro"
+    - "Home"
+    - "Education"
+  excludedSkus: []
+  deviceRequirement: null
+  deprecatedAsOfBuild: null
+
+dependencies: []
+knownBreakage: []
+references: []
+tags:
+  - sample
+  - powershell
+  - snapshot
+  - revert
 notes: |
-  - This is a sample policy to demonstrate how to wire `SnapshotScriptPath` and `RevertScriptPath`.
-  - Replace `ScriptPath` with your actual apply script. Sign scripts in production and enable `RequiresSignature`.
+  Replace ScriptPath with your real apply script.
+  In production, sign scripts and set RequiresSignature to true.
+
+enabledByDefault: false
+includedInProfiles: []
+autoApply: false
+requiresConfirmation: true
+showInUI: true

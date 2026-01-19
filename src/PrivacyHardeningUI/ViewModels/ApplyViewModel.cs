@@ -64,8 +64,9 @@ public sealed partial class ApplyViewModel : ObservableObject
 
         if (_serviceClient.IsStandaloneMode)
         {
-            LastOperationResult = "Standalone (read-only): start the service to apply policies.";
-            return;
+            // Don't hard-stop: the service might have started after the UI.
+            // We'll attempt the operation and surface a clean message if the service is still unavailable.
+            _serviceClient.Reconnect();
         }
 
         var policies = Selection.GetSelectedPolicies().ToList();
@@ -144,6 +145,10 @@ public sealed partial class ApplyViewModel : ObservableObject
 
             // Refresh dashboards/state if needed
             // Selection.Refresh...?
+        }
+        catch (ServiceUnavailableException)
+        {
+            LastOperationResult = "Service is not running or not reachable. Start the background service, then try again.";
         }
         catch (Exception ex)
         {

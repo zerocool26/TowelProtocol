@@ -22,6 +22,11 @@ public sealed class ServiceClient : IDisposable
     private const string PipeName = "PrivacyHardeningService_v1";
     private const int TimeoutMs = 1500; // Fast fallback for local named pipe
 
+    // When we enter standalone mode (e.g., service not started yet), avoid hammering the pipe.
+    // We still want to automatically recover once the service becomes available.
+    private static readonly TimeSpan StandaloneProbeInterval = TimeSpan.FromSeconds(4);
+    private DateTime _lastStandaloneProbeUtc = DateTime.MinValue;
+
     private readonly JsonSerializerOptions _jsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -56,6 +61,24 @@ public sealed class ServiceClient : IDisposable
     public void Reconnect()
     {
         SetStandaloneMode(false);
+        _lastStandaloneProbeUtc = DateTime.MinValue;
+    }
+
+    private bool ShouldProbeServiceWhileStandalone()
+    {
+        if (!_standaloneMode)
+        {
+            return true;
+        }
+
+        var now = DateTime.UtcNow;
+        if (now - _lastStandaloneProbeUtc < StandaloneProbeInterval)
+        {
+            return false;
+        }
+
+        _lastStandaloneProbeUtc = now;
+        return true;
     }
 
     private void SetStandaloneMode(bool value)
@@ -271,24 +294,19 @@ public sealed class ServiceClient : IDisposable
 
     public async Task<GetPoliciesResult> GetPoliciesAsync(bool onlyApplicable = true)
     {
-        // Try standalone mode if previously detected service is down
-        if (_standaloneMode)
-        {
+        // If we previously detected the service is down, periodically probe to auto-recover.
+        if (_standaloneMode && !ShouldProbeServiceWhileStandalone())
             return await GetPoliciesStandaloneAsync(onlyApplicable);
-        }
 
-        try
+        var command = new GetPoliciesCommand
         {
-            var command = new GetPoliciesCommand
-            {
-                OnlyApplicable = onlyApplicable
-            };
+            OnlyApplicable = onlyApplicable
+        };
 
-            return await SendCommandAsync<GetPoliciesResult>(command);
-        }
-        catch
+        try { return await SendCommandAsync<GetPoliciesResult>(command); }
+        catch (ServiceUnavailableException)
         {
-            // Fallback to standalone mode
+            // Fallback to standalone mode only when the service/pipe isn't reachable.
             SetStandaloneMode(true);
             return await GetPoliciesStandaloneAsync(onlyApplicable);
         }
@@ -434,10 +452,8 @@ public sealed class ServiceClient : IDisposable
 
     public async Task<AuditResult> AuditAsync(string[]? policyIds = null)
     {
-        if (_standaloneMode)
-        {
+        if (_standaloneMode && !ShouldProbeServiceWhileStandalone())
             return CreateStandaloneAudit();
-        }
 
         var command = new AuditCommand
         {
@@ -456,11 +472,6 @@ public sealed class ServiceClient : IDisposable
 
     public async Task<ApplyResult> ApplyAsync(string[] policyIds, Dictionary<string, string>? overrides = null, bool createRestorePoint = true, bool dryRun = false)
     {
-        if (_standaloneMode)
-        {
-            throw new InvalidOperationException("Cannot apply policies in standalone mode. The background service must be running.");
-        }
-
         var command = new ApplyCommand
         {
             PolicyIds = policyIds,
@@ -470,21 +481,28 @@ public sealed class ServiceClient : IDisposable
             ContinueOnError = false
         };
 
-        return await SendCommandAsync<ApplyResult>(command);
+        // Even if we *think* we're in standalone mode, attempt the operation; if the service was
+        // started after the UI, this should succeed without requiring a manual reconnect.
+        try { return await SendCommandAsync<ApplyResult>(command); }
+        catch (ServiceUnavailableException)
+        {
+            SetStandaloneMode(true);
+            throw;
+        }
     }
 
     public async Task<RecommendationResult> GetRecommendationsAsync()
     {
-        if (_standaloneMode)
+        if (_standaloneMode && !ShouldProbeServiceWhileStandalone())
         {
             return new RecommendationResult
             {
-                 CommandId = Guid.NewGuid().ToString(),
-                 Success = false,
-                 Errors = new[] { ServiceUnavailableError() },
-                 PrivacyScore = 0,
-                 Grade = "N/A",
-                 Recommendations = Array.Empty<RecommendationItem>()
+                CommandId = Guid.NewGuid().ToString(),
+                Success = false,
+                Errors = new[] { ServiceUnavailableError() },
+                PrivacyScore = 0,
+                Grade = "N/A",
+                Recommendations = Array.Empty<RecommendationItem>()
             };
         }
 
@@ -506,11 +524,6 @@ public sealed class ServiceClient : IDisposable
 
     public async Task<RevertResult> RevertAsync(string[]? policyIds = null, string? snapshotId = null)
     {
-        if (_standaloneMode)
-        {
-            throw new InvalidOperationException("Cannot revert policies in standalone mode. The background service must be running.");
-        }
-
         var command = new RevertCommand
         {
             PolicyIds = policyIds,
@@ -518,15 +531,18 @@ public sealed class ServiceClient : IDisposable
             CreateRestorePoint = true
         };
 
-        return await SendCommandAsync<RevertResult>(command);
+        try { return await SendCommandAsync<RevertResult>(command); }
+        catch (ServiceUnavailableException)
+        {
+            SetStandaloneMode(true);
+            throw;
+        }
     }
 
     public async Task<GetStateResult> GetStateAsync(bool includeHistory = false)
     {
-        if (_standaloneMode)
-        {
+        if (_standaloneMode && !ShouldProbeServiceWhileStandalone())
             return CreateStandaloneState(includeHistory);
-        }
 
         var command = new GetStateCommand
         {
@@ -543,7 +559,7 @@ public sealed class ServiceClient : IDisposable
 
     public async Task<GetServiceConfigResult> GetServiceConfigAsync()
     {
-        if (_standaloneMode)
+        if (_standaloneMode && !ShouldProbeServiceWhileStandalone())
         {
             return new GetServiceConfigResult
             {
@@ -570,7 +586,7 @@ public sealed class ServiceClient : IDisposable
 
     public async Task<ResponseBase> UpdateServiceConfigAsync(ServiceConfiguration config)
     {
-        if (_standaloneMode)
+        if (_standaloneMode && !ShouldProbeServiceWhileStandalone())
         {
             return new ErrorResponse
             {
@@ -595,10 +611,8 @@ public sealed class ServiceClient : IDisposable
 
     public async Task<DriftDetectionResult> DetectDriftAsync(string? snapshotId = null)
     {
-        if (_standaloneMode)
-        {
+        if (_standaloneMode && !ShouldProbeServiceWhileStandalone())
             return CreateStandaloneDrift();
-        }
 
         var command = new DetectDriftCommand
         {

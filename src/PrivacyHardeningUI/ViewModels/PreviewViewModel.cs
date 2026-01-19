@@ -203,6 +203,10 @@ public sealed partial class PreviewViewModel : ObservableObject
         {
             ErrorMessage = "Preview requires the service/elevated helper to authorize changes. Please ensure the service is running.";
         }
+        catch (ServiceUnavailableException)
+        {
+            ErrorMessage = "Service is not running or not reachable. Start the background service, then generate the preview again.";
+        }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
