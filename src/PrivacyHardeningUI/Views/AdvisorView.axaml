@@ -25,7 +25,12 @@
                       </StackPanel>
                   </StackPanel>
 
-                  <Button Grid.Column="2" Content="Refresh Analysis" Command="{Binding LoadCommand}" VerticalAlignment="Center"/>
+                  <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                      <Button Content="Audit All" Command="{Binding AuditAllCommand}" IsEnabled="{Binding CanAuditAll}"/>
+                      <Button Content="Review All" Command="{Binding ReviewAllCommand}" IsEnabled="{Binding CanReviewAll}"/>
+                      <Button Classes="accent" Content="Apply Recommended" Command="{Binding ApplyRecommendedPackCommand}" IsEnabled="{Binding CanApplyPack}"/>
+                      <Button Content="Refresh Analysis" Command="{Binding LoadCommand}"/>
+                  </StackPanel>
               </Grid>
 
               <Border Background="#22CC3333" BorderBrush="#66CC3333" BorderThickness="1" CornerRadius="6" Padding="8"
@@ -37,35 +42,49 @@
 
       <!-- Recommendations List -->
       <ScrollViewer Grid.Row="1" Margin="16,0,16,16">
-          <ItemsControl ItemsSource="{Binding Recommendations}">
-              <ItemsControl.ItemTemplate>
-                  <DataTemplate x:DataType="m:RecommendationItem">
-                      <Border Background="{DynamicResource CardBrush}" Margin="0,0,0,10" Padding="15" CornerRadius="6" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
-                          <Grid ColumnDefinitions="4,*,Auto">
-                              <!-- Severity Stripe -->
-                              <Border Grid.Column="0" CornerRadius="2">
-                                  <Border.Background>
-                                      <SolidColorBrush Color="{Binding Severity, Converter={StaticResource SeverityColorConverter}}"/>
-                                  </Border.Background>
-                              </Border>
-                              
-                              <StackPanel Grid.Column="1" Margin="15,0,0,0" Spacing="5">
-                                  <StackPanel Orientation="Horizontal" Spacing="10">
-                                      <Border Background="#20888888" CornerRadius="4" Padding="6,2">
-                                         <TextBlock Text="{Binding Severity}" FontSize="11" FontWeight="Bold"/>
-                                      </Border>
-                                      <TextBlock Text="{Binding Title}" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                  </StackPanel>
-                                  <TextBlock Text="{Binding Description}" Opacity="0.8" TextWrapping="Wrap"/>
-                              </StackPanel>
+          <StackPanel Spacing="10">
+              <Border Background="{DynamicResource PanelBrush}" CornerRadius="6" Padding="16"
+                      IsVisible="{Binding ShowEmptyState}">
+                  <StackPanel Spacing="4">
+                      <TextBlock Text="No recommendations found" FontWeight="SemiBold"/>
+                      <TextBlock Text="Your current configuration looks solid. Refresh if you make changes." Opacity="0.7" TextWrapping="Wrap"/>
+                  </StackPanel>
+              </Border>
 
-                              <Button Grid.Column="2" Content="Review" Command="{Binding $parent[UserControl].((vm:AdvisorViewModel)DataContext).FixIssueCommand}" 
-                                      CommandParameter="{Binding}" VerticalAlignment="Center" IsVisible="{Binding RelatedPolicyIds, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                          </Grid>
-                      </Border>
-                  </DataTemplate>
-              </ItemsControl.ItemTemplate>
-          </ItemsControl>
+              <ItemsControl ItemsSource="{Binding Recommendations}">
+                  <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="m:RecommendationItem">
+                          <Border Background="{DynamicResource CardBrush}" Margin="0,0,0,10" Padding="15" CornerRadius="6" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                              <Grid ColumnDefinitions="4,*,Auto">
+                                  <!-- Severity Stripe -->
+                                  <Border Grid.Column="0" CornerRadius="2">
+                                      <Border.Background>
+                                          <SolidColorBrush Color="{Binding Severity, Converter={StaticResource SeverityColorConverter}}"/>
+                                      </Border.Background>
+                                  </Border>
+                                  
+                                  <StackPanel Grid.Column="1" Margin="15,0,0,0" Spacing="5">
+                                      <StackPanel Orientation="Horizontal" Spacing="10">
+                                          <Border Background="#20888888" CornerRadius="4" Padding="6,2">
+                                             <TextBlock Text="{Binding Severity}" FontSize="11" FontWeight="Bold"/>
+                                          </Border>
+                                          <TextBlock Text="{Binding Title}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                      </StackPanel>
+                                      <TextBlock Text="{Binding Description}" Opacity="0.8" TextWrapping="Wrap"/>
+                                  </StackPanel>
+
+                                  <StackPanel Grid.Column="2" Spacing="6" VerticalAlignment="Center">
+                                      <Button Content="Audit" Command="{Binding $parent[UserControl].((vm:AdvisorViewModel)DataContext).AuditIssueCommand}" 
+                                              CommandParameter="{Binding}" IsVisible="{Binding RelatedPolicyIds, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                      <Button Content="Review" Command="{Binding $parent[UserControl].((vm:AdvisorViewModel)DataContext).FixIssueCommand}" 
+                                              CommandParameter="{Binding}" IsVisible="{Binding RelatedPolicyIds, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                  </StackPanel>
+                              </Grid>
+                          </Border>
+                      </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+              </ItemsControl>
+          </StackPanel>
       </ScrollViewer>
       
        <StackPanel Grid.RowSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10" IsVisible="{Binding IsLoading}">

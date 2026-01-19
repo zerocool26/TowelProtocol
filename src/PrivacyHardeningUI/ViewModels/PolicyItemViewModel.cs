@@ -26,7 +26,7 @@ public partial class PolicyItemViewModel : ObservableObject
     public required SupportStatus SupportStatus { get; init; }
     public required MechanismType Mechanism { get; init; }
     public required BreakageScenario[] KnownBreakage { get; init; }
-    public required string[] Dependencies { get; init; }
+    public required PolicyDependency[] Dependencies { get; init; }
     public required string[] References { get; init; }
     public required string[] IncludedInProfiles { get; init; }
     public required string? Notes { get; init; }

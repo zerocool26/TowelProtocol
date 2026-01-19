@@ -56,10 +56,15 @@
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
                   <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="8,6">
-                    <StackPanel Spacing="2">
-                      <TextBlock FontWeight="SemiBold" Text="{Binding Title}" />
-                      <TextBlock Opacity="0.8" Text="{Binding Details}" TextWrapping="Wrap" />
-                    </StackPanel>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                      <StackPanel Spacing="2">
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Title}" />
+                        <TextBlock Opacity="0.8" Text="{Binding Details}" TextWrapping="Wrap" />
+                      </StackPanel>
+                      <Button Grid.Column="1" Content="{Binding ActionLabel}"
+                              Command="{Binding $parent[UserControl].((vm:PreviewViewModel)DataContext).ResolveSelectionIssueCommand}"
+                              CommandParameter="{Binding}" />
+                    </Grid>
                   </Border>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
@@ -168,6 +173,13 @@
             <StackPanel Spacing="4">
               <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource ErrorBrush}" Text="Preview shows failures" />
               <TextBlock Opacity="0.8" TextWrapping="Wrap" Text="If the dry-run reports failures, applying will likely fail for those items. Review the error details in the change list." />
+            </StackPanel>
+          </Border>
+
+          <Border Background="{DynamicResource OverlayLightBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10" IsVisible="{Binding HasBlockingSelectionIssues}">
+            <StackPanel Spacing="4">
+              <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource ErrorBrush}" Text="Conflicts must be resolved" />
+              <TextBlock Opacity="0.8" TextWrapping="Wrap" Text="Remove or fix conflicting policies in Selection health before applying." />
             </StackPanel>
           </Border>
 

@@ -20,11 +20,19 @@ public enum PreviewIssueSeverity
     Error
 }
 
+public enum PreviewSelectionIssueKind
+{
+    MissingDependencies,
+    Conflicts
+}
+
 public sealed record PreviewSelectionIssueViewModel(
     PreviewIssueSeverity Severity,
+    PreviewSelectionIssueKind Kind,
     string Title,
     string Details,
-    string[] RelatedPolicies);
+    string[] RelatedPolicies,
+    string ActionLabel);
 
 public sealed partial class PreviewViewModel : ObservableObject
 {
@@ -90,6 +98,8 @@ public sealed partial class PreviewViewModel : ObservableObject
 
     public bool HasSelectionIssues => SelectionIssues.Count > 0;
 
+    public bool HasBlockingSelectionIssues => SelectionIssues.Any(i => i.Kind == PreviewSelectionIssueKind.Conflicts);
+
     public int ChangeCount => Changes.Count;
 
     public int FailureCount => Changes.Count(c => !c.Success);
@@ -98,7 +108,7 @@ public sealed partial class PreviewViewModel : ObservableObject
 
     public bool HasPreviewFailures => FailureCount > 0;
 
-    public bool CanProceedToApply => HasPreview && CanApplyAfterPreview;
+    public bool CanProceedToApply => HasPreview && CanApplyAfterPreview && !HasBlockingSelectionIssues;
 
     public bool HasSelectedChange => SelectedChange != null;
 
@@ -182,6 +192,7 @@ public sealed partial class PreviewViewModel : ObservableObject
             OnPropertyChanged(nameof(HasHighRiskSelected));
             OnPropertyChanged(nameof(CanApplyAfterPreview));
             OnPropertyChanged(nameof(HasSelectionIssues));
+            OnPropertyChanged(nameof(HasBlockingSelectionIssues));
             OnPropertyChanged(nameof(ChangeCount));
             OnPropertyChanged(nameof(FailureCount));
             OnPropertyChanged(nameof(HasPreview));
@@ -246,6 +257,33 @@ public sealed partial class PreviewViewModel : ObservableObject
             OnPropertyChanged(nameof(HasHighRiskSelected));
             OnPropertyChanged(nameof(CanApplyAfterPreview));
             OnPropertyChanged(nameof(HasSelectionIssues));
+            OnPropertyChanged(nameof(HasBlockingSelectionIssues));
+        }
+    }
+
+    [RelayCommand]
+    private async Task ResolveSelectionIssueAsync(PreviewSelectionIssueViewModel issue)
+    {
+        if (issue == null)
+            return;
+
+        ErrorMessage = null;
+        try
+        {
+            if (issue.Kind == PreviewSelectionIssueKind.MissingDependencies)
+            {
+                await _selection.AddPoliciesAsync(issue.RelatedPolicies);
+            }
+            else if (issue.Kind == PreviewSelectionIssueKind.Conflicts)
+            {
+                await _selection.RemovePoliciesAsync(issue.RelatedPolicies);
+            }
+
+            await RefreshSelectionInfoAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
         }
     }
 
@@ -334,9 +372,11 @@ public sealed partial class PreviewViewModel : ObservableObject
 
             SelectionIssues.Add(new PreviewSelectionIssueViewModel(
                 PreviewIssueSeverity.Warning,
+                PreviewSelectionIssueKind.MissingDependencies,
                 "Missing required dependencies",
                 details,
-                missingRequired.Select(m => m.dep.PolicyId).Distinct(StringComparer.OrdinalIgnoreCase).ToArray()));
+                missingRequired.Select(m => m.dep.PolicyId).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
+                "Add dependencies"));
         }
 
         if (conflicts.Count > 0)
@@ -349,11 +389,15 @@ public sealed partial class PreviewViewModel : ObservableObject
 
             SelectionIssues.Add(new PreviewSelectionIssueViewModel(
                 PreviewIssueSeverity.Error,
+                PreviewSelectionIssueKind.Conflicts,
                 "Conflicting policies selected",
                 details,
-                conflicts.Select(c => c.dep.PolicyId).Distinct(StringComparer.OrdinalIgnoreCase).ToArray()));
+                conflicts.Select(c => c.dep.PolicyId).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
+                "Remove conflicts"));
         }
 
         OnPropertyChanged(nameof(HasSelectionIssues));
+        OnPropertyChanged(nameof(HasBlockingSelectionIssues));
+        OnPropertyChanged(nameof(CanProceedToApply));
     }
 }

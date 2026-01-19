@@ -88,7 +88,7 @@ public partial class PolicySelectionViewModel : ObservableObject
                     SupportStatus = policy.SupportStatus,
                     Mechanism = policy.Mechanism,
                     KnownBreakage = policy.KnownBreakage,
-                    Dependencies = policy.Dependencies.Select(d => d.PolicyId).ToArray(),
+                    Dependencies = policy.Dependencies,
                     References = policy.References,
                     IncludedInProfiles = policy.IncludedInProfiles,
                     Notes = policy.Notes,
@@ -127,13 +127,19 @@ public partial class PolicySelectionViewModel : ObservableObject
         // Auto-select dependencies
         if (changedPolicy.IsSelected)
         {
-            if (changedPolicy.Dependencies != null && changedPolicy.Dependencies.Length > 0)
+            var autoDeps = changedPolicy.Dependencies
+                .Where(d => d.Type is DependencyType.Required or DependencyType.Prerequisite || d.AutoSelect)
+                .Select(d => d.PolicyId)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            if (autoDeps.Length > 0)
             {
                 _suppressSelectionEvents = true;
                 try
                 {
                     var count = 0;
-                    foreach (var depId in changedPolicy.Dependencies)
+                    foreach (var depId in autoDeps)
                     {
                         var dep = AllPolicies.FirstOrDefault(p => string.Equals(p.PolicyId, depId, StringComparison.OrdinalIgnoreCase));
                         if (dep != null && !dep.IsSelected)
@@ -160,14 +166,15 @@ public partial class PolicySelectionViewModel : ObservableObject
         }
         else
         {
-            // Reverse check: Unselecting a dependency typically should unselect the child?
-            // "If Policy A depends on B, and I unselect B, A is broken."
-            // So we should unselect A.
-            
             _suppressSelectionEvents = true;
             try
             {
-                var dependents = AllPolicies.Where(p => p.Dependencies.Contains(changedPolicy.PolicyId)).ToList();
+                var dependents = AllPolicies.Where(p =>
+                    p.Dependencies.Any(d =>
+                        d.PolicyId.Equals(changedPolicy.PolicyId, StringComparison.OrdinalIgnoreCase)
+                        && d.Type is DependencyType.Required or DependencyType.Prerequisite))
+                    .ToList();
+
                 var count = 0;
                 foreach(var dep in dependents)
                 {
@@ -177,14 +184,14 @@ public partial class PolicySelectionViewModel : ObservableObject
                         count++;
                     }
                 }
-                 if (count > 0)
-                    {
-                        StatusMessage = $"Auto-unselected {count} dependent{(count == 1 ? "s" : "")} of {changedPolicy.Name}";
-                        Dispatcher.UIThread.InvokeAsync(async () => {
-                             await Task.Delay(3000);
-                             if (StatusMessage?.Contains("Auto-unselected") == true) StatusMessage = null;
-                        });
-                    }
+                if (count > 0)
+                {
+                    StatusMessage = $"Auto-unselected {count} dependent{(count == 1 ? "s" : "")} of {changedPolicy.Name}";
+                    Dispatcher.UIThread.InvokeAsync(async () => {
+                         await Task.Delay(3000);
+                         if (StatusMessage?.Contains("Auto-unselected") == true) StatusMessage = null;
+                    });
+                }
             }
             finally
             {
@@ -304,6 +311,122 @@ public partial class PolicySelectionViewModel : ObservableObject
     {
         await EnsurePoliciesLoadedAsync();
         SelectOnly(policyIds);
+    }
+
+    public async Task AddPoliciesAsync(IEnumerable<string> policyIds)
+    {
+        await EnsurePoliciesLoadedAsync();
+        AddPolicies(policyIds);
+    }
+
+    public async Task RemovePoliciesAsync(IEnumerable<string> policyIds)
+    {
+        await EnsurePoliciesLoadedAsync();
+        RemovePolicies(policyIds);
+    }
+
+    public void AddPolicies(IEnumerable<string> policyIds)
+    {
+        if (policyIds == null) return;
+
+        var toSelect = GetRequiredDependencyClosure(policyIds);
+        _suppressSelectionEvents = true;
+        try
+        {
+            foreach (var p in AllPolicies)
+            {
+                if (toSelect.Contains(p.PolicyId))
+                {
+                    p.IsSelected = true;
+                }
+            }
+        }
+        finally
+        {
+            _suppressSelectionEvents = false;
+        }
+
+        ApplyFilters();
+    }
+
+    public void RemovePolicies(IEnumerable<string> policyIds)
+    {
+        if (policyIds == null) return;
+
+        var toRemove = GetDependentRemovalSet(policyIds);
+        _suppressSelectionEvents = true;
+        try
+        {
+            foreach (var p in AllPolicies)
+            {
+                if (toRemove.Contains(p.PolicyId))
+                {
+                    p.IsSelected = false;
+                }
+            }
+        }
+        finally
+        {
+            _suppressSelectionEvents = false;
+        }
+
+        ApplyFilters();
+    }
+
+    private HashSet<string> GetRequiredDependencyClosure(IEnumerable<string> policyIds)
+    {
+        var set = new HashSet<string>(policyIds, StringComparer.OrdinalIgnoreCase);
+        var changed = true;
+
+        while (changed)
+        {
+            changed = false;
+            foreach (var id in set.ToArray())
+            {
+                var policy = AllPolicies.FirstOrDefault(p => string.Equals(p.PolicyId, id, StringComparison.OrdinalIgnoreCase));
+                if (policy == null) continue;
+
+                foreach (var dep in policy.Dependencies)
+                {
+                    if (dep.Type is DependencyType.Required or DependencyType.Prerequisite)
+                    {
+                        if (set.Add(dep.PolicyId))
+                        {
+                            changed = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return set;
+    }
+
+    private HashSet<string> GetDependentRemovalSet(IEnumerable<string> policyIds)
+    {
+        var toRemove = new HashSet<string>(policyIds, StringComparer.OrdinalIgnoreCase);
+        var changed = true;
+
+        while (changed)
+        {
+            changed = false;
+            foreach (var policy in AllPolicies)
+            {
+                if (!policy.IsSelected) continue;
+
+                if (policy.Dependencies.Any(d =>
+                        toRemove.Contains(d.PolicyId)
+                        && d.Type is DependencyType.Required or DependencyType.Prerequisite))
+                {
+                    if (toRemove.Add(policy.PolicyId))
+                    {
+                        changed = true;
+                    }
+                }
+            }
+        }
+
+        return toRemove;
     }
 
     /// <summary>

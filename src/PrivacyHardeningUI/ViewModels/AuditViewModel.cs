@@ -217,6 +217,22 @@ public partial class AuditViewModel : ObservableObject
     [RelayCommand]
     public async Task RunAuditAsync()
     {
+        await RunAuditInternalAsync(policyIds: null);
+    }
+
+    public async Task RunAuditForPoliciesAsync(string[] policyIds)
+    {
+        if (policyIds == null || policyIds.Length == 0)
+        {
+            ErrorMessage = "No policies were provided for the scoped audit.";
+            return;
+        }
+
+        await RunAuditInternalAsync(policyIds);
+    }
+
+    private async Task RunAuditInternalAsync(string[]? policyIds)
+    {
         if (_serviceClient.IsStandaloneMode)
         {
             ErrorMessage = null;
@@ -239,7 +255,7 @@ public partial class AuditViewModel : ObservableObject
         try
         {
             await EnsurePolicyIndexAsync();
-            var result = await _serviceClient.AuditAsync();
+            var result = await _serviceClient.AuditAsync(policyIds);
 
             if (!result.Success)
             {

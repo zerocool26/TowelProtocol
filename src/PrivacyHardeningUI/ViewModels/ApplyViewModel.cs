@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PrivacyHardeningUI.Services;
-using PrivacyHardeningContracts.Commands;
 using Avalonia.Controls.Notifications;
 using System.Text;
 using System;
@@ -13,6 +12,9 @@ namespace PrivacyHardeningUI.ViewModels;
 public sealed partial class ApplyViewModel : ObservableObject
 {
     private readonly ServiceClient _serviceClient;
+    private readonly PreviewViewModel _preview;
+    private readonly AuditViewModel _audit;
+    private readonly NavigationService _navigation;
     private readonly INotificationManager? _notificationManager;
 
     public PolicySelectionViewModel Selection { get; }
@@ -26,10 +28,18 @@ public sealed partial class ApplyViewModel : ObservableObject
     [ObservableProperty]
     private string lastOperationResult = string.Empty;
 
-    public ApplyViewModel(PolicySelectionViewModel selection, ServiceClient serviceClient)
+    public ApplyViewModel(
+        PolicySelectionViewModel selection,
+        ServiceClient serviceClient,
+        PreviewViewModel preview,
+        AuditViewModel audit,
+        NavigationService navigation)
     {
         Selection = selection;
         _serviceClient = serviceClient;
+        _preview = preview;
+        _audit = audit;
+        _navigation = navigation;
         
         // Try to resolve notification manager if available in App (optional)
         _notificationManager = App.Current?.Resources["NotificationManager"] as INotificationManager;
@@ -52,10 +62,38 @@ public sealed partial class ApplyViewModel : ObservableObject
     {
         if (IsApplying) return;
 
+        if (_serviceClient.IsStandaloneMode)
+        {
+            LastOperationResult = "Standalone (read-only): start the service to apply policies.";
+            return;
+        }
+
         var policies = Selection.GetSelectedPolicies().ToList();
         if (policies.Count == 0)
         {
             LastOperationResult = "No policies selected.";
+            return;
+        }
+
+        // Safety gate: require preview first.
+        if (!_preview.HasPreview)
+        {
+            LastOperationResult = "Preview required. Go to Preview, generate a preview, then return here to apply.";
+            _navigation.Navigate(AppPage.Preview);
+            return;
+        }
+
+        if (!_preview.CanApplyAfterPreview)
+        {
+            LastOperationResult = "High-risk selection requires acknowledgement in Preview before applying.";
+            _navigation.Navigate(AppPage.Preview);
+            return;
+        }
+
+        if (_preview.HasBlockingSelectionIssues)
+        {
+            LastOperationResult = "Resolve conflicting policies in Preview before applying.";
+            _navigation.Navigate(AppPage.Preview);
             return;
         }
 
@@ -92,6 +130,17 @@ public sealed partial class ApplyViewModel : ObservableObject
             }
 
             LastOperationResult = sb.ToString();
+
+            // Verify: run a scoped audit and jump to Audit for the results.
+            try
+            {
+                await _audit.RunAuditForPoliciesAsync(policies.Select(p => p.PolicyId).ToArray());
+                _navigation.Navigate(AppPage.Audit);
+            }
+            catch
+            {
+                // Verification is best-effort; keep Apply stable.
+            }
 
             // Refresh dashboards/state if needed
             // Selection.Refresh...?

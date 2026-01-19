@@ -55,10 +55,10 @@ public partial class App : Application
                 services.AddSingleton<StatusRailViewModel>();
 
                 services.AddSingleton<PolicySelectionViewModel>();
-                services.AddSingleton<ApplyViewModel>();
+                services.AddSingleton<PreviewViewModel>();
 
                 services.AddSingleton<AuditViewModel>();
-                services.AddSingleton<PreviewViewModel>();
+                services.AddSingleton<ApplyViewModel>();
                 services.AddSingleton<HistoryViewModel>();
                 services.AddSingleton<DriftViewModel>();
                 services.AddSingleton<ReportsViewModel>();
