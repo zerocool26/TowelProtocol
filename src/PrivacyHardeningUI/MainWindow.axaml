@@ -33,6 +33,9 @@
         <DataTemplate DataType="vm:ReportsViewModel">
             <views:ReportsView />
         </DataTemplate>
+        <DataTemplate DataType="vm:AdvisorViewModel">
+            <views:AdvisorView />
+        </DataTemplate>
     </Window.DataTemplates>
 
     <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="240,*,320" Margin="12">

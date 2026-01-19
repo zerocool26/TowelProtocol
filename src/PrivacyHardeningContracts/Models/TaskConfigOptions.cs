@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace PrivacyHardeningContracts.Models;
 
 /// <summary>
@@ -9,6 +11,7 @@ public sealed record TaskConfigOptions
     /// <summary>
     /// Primary action to take on the task
     /// </summary>
+    [JsonPropertyName("actionOptions")]
     public required SelectableOption<TaskAction> Action { get; init; }
 
     /// <summary>
@@ -30,6 +33,7 @@ public sealed record TaskConfigOptions
 /// <summary>
 /// Actions that can be taken on a scheduled task
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TaskAction
 {
     /// <summary>

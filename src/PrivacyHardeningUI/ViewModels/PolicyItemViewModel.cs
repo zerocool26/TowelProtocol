@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using PrivacyHardeningContracts.Models;
+using System.Collections.Generic;
 
 namespace PrivacyHardeningUI.ViewModels;
 
@@ -27,8 +28,25 @@ public partial class PolicyItemViewModel : ObservableObject
     public required BreakageScenario[] KnownBreakage { get; init; }
     public required string[] Dependencies { get; init; }
     public required string[] References { get; init; }
+    public required string[] IncludedInProfiles { get; init; }
     public required string? Notes { get; init; }
     public required bool Reversible { get; init; }
+
+    [ObservableProperty]
+    private string _selectedBehavior = "Default";
+
+    public List<string> AvailableBehaviors
+    {
+        get
+        {
+            if (Mechanism == MechanismType.ScheduledTask)
+            {
+                return new List<string> { "Default", "Disable", "Delete" };
+            }
+            // Add other mechanisms here as they become supported for overrides
+            return new List<string> { "Default" };
+        }
+    }
 
     public string RiskBadge => RiskLevel switch
     {

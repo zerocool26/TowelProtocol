@@ -14,7 +14,7 @@ public partial class ReportsView : UserControl
         InitializeComponent();
     }
 
-    private async Task SaveTextAsync(string suggestedName, string text)
+    private async Task SaveTextAsync(string suggestedName, string text, string extension = "json", string filterName = "JSON")
     {
         var top = TopLevel.GetTopLevel(this);
         if (top?.StorageProvider is null) return;
@@ -22,10 +22,10 @@ public partial class ReportsView : UserControl
         var file = await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
             SuggestedFileName = suggestedName,
-            DefaultExtension = "json",
+            DefaultExtension = extension,
             FileTypeChoices = new[]
             {
-                new FilePickerFileType("JSON") { Patterns = new[] { "*.json" } }
+                new FilePickerFileType(filterName) { Patterns = new[] { $"*.{extension}" } }
             }
         });
 
@@ -52,5 +52,12 @@ public partial class ReportsView : UserControl
     {
         if (DataContext is not ReportsViewModel vm) return;
         await SaveTextAsync($"history_{DateTime.Now:yyyyMMdd_HHmmss}.json", vm.ExportHistoryJson());
+    }
+
+    private async void GenerateFullReport(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (DataContext is not ReportsViewModel vm) return;
+        var text = await vm.GenerateFullReportAsync();
+        await SaveTextAsync($"PrivacyReport_{DateTime.Now:yyyyMMdd}.md", text, "md", "Markdown");
     }
 }

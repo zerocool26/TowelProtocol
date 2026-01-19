@@ -577,6 +577,69 @@ public sealed class ChangeLog : IDisposable
         return changes.ToArray();
     }
 
+    public async Task<ChangeRecord[]> GetChangesBySnapshotIdAsync(string snapshotId, CancellationToken cancellationToken)
+    {
+        await _dbLock.WaitAsync(cancellationToken);
+        try
+        {
+            using var connection = new SqliteConnection($"Data Source={_databasePath}");
+            await connection.OpenAsync(cancellationToken);
+
+            // Re-use private helper logic but with new connection
+            return await GetChangesForSnapshotAsync(connection, snapshotId, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get changes for snapshot {SnapshotId}", snapshotId);
+            return Array.Empty<ChangeRecord>();
+        }
+        finally
+        {
+            _dbLock.Release();
+        }
+    }
+
+    public async Task<SnapshotPolicyState[]> GetSnapshotPolicyStatesAsync(string snapshotId, CancellationToken cancellationToken)
+    {
+        await _dbLock.WaitAsync(cancellationToken);
+        try
+        {
+            using var connection = new SqliteConnection($"Data Source={_databasePath}");
+            await connection.OpenAsync(cancellationToken);
+
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+                SELECT policy_id, is_applied, current_value
+                FROM snapshot_policies
+                WHERE snapshot_id = @snapshotId
+            ";
+            command.Parameters.AddWithValue("@snapshotId", snapshotId);
+
+            var states = new List<SnapshotPolicyState>();
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                states.Add(new SnapshotPolicyState
+                {
+                    PolicyId = reader.GetString(0),
+                    IsApplied = reader.GetInt32(1) == 1,
+                    CurrentValue = reader.IsDBNull(2) ? null : reader.GetString(2)
+                });
+            }
+
+            return states.ToArray();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load policy states for snapshot {SnapshotId}", snapshotId);
+            return Array.Empty<SnapshotPolicyState>();
+        }
+        finally
+        {
+            _dbLock.Release();
+        }
+    }
+
     public void Dispose()
     {
         _dbLock?.Dispose();

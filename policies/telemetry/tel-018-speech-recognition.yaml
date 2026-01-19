@@ -5,7 +5,7 @@
 # Prevents speech data from being sent to Microsoft cloud services
 # ============================================================================
 
-policyId: "tel-009"
+policyId: "tel-018"
 version: "1.0.0"
 name: "Disable Online Speech Recognition"
 category: Telemetry

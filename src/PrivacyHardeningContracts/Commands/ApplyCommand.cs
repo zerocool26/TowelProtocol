@@ -28,6 +28,13 @@ public sealed class ApplyCommand : CommandBase
     public string? ProfileName { get; init; }
 
     /// <summary>
+    /// Optional configuration overrides map.
+    /// Key: PolicyId
+    /// Value: JSON string representing the configuration (deserialized by service)
+    /// </summary>
+    public Dictionary<string, string>? ConfigurationOverrides { get; init; }
+
+    /// <summary>
     /// Continue on error or stop at first failure
     /// </summary>
     public bool ContinueOnError { get; init; } = false;

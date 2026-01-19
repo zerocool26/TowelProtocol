@@ -454,7 +454,7 @@ public sealed class ServiceClient : IDisposable
         }
     }
 
-    public async Task<ApplyResult> ApplyAsync(string[] policyIds, bool createRestorePoint = true, bool dryRun = false)
+    public async Task<ApplyResult> ApplyAsync(string[] policyIds, Dictionary<string, string>? overrides = null, bool createRestorePoint = true, bool dryRun = false)
     {
         if (_standaloneMode)
         {
@@ -464,12 +464,44 @@ public sealed class ServiceClient : IDisposable
         var command = new ApplyCommand
         {
             PolicyIds = policyIds,
+            ConfigurationOverrides = overrides,
             CreateRestorePoint = createRestorePoint,
             DryRun = dryRun,
             ContinueOnError = false
         };
 
         return await SendCommandAsync<ApplyResult>(command);
+    }
+
+    public async Task<RecommendationResult> GetRecommendationsAsync()
+    {
+        if (_standaloneMode)
+        {
+            return new RecommendationResult
+            {
+                 CommandId = Guid.NewGuid().ToString(),
+                 Success = false,
+                 Errors = new[] { ServiceUnavailableError() },
+                 PrivacyScore = 0,
+                 Grade = "N/A",
+                 Recommendations = Array.Empty<RecommendationItem>()
+            };
+        }
+
+        try { return await SendCommandAsync<RecommendationResult>(new GetRecommendationsCommand()); }
+        catch (ServiceUnavailableException)
+        {
+            SetStandaloneMode(true);
+            return new RecommendationResult
+            {
+                 CommandId = Guid.NewGuid().ToString(),
+                 Success = false,
+                 Errors = new[] { ServiceUnavailableError() },
+                 PrivacyScore = 0,
+                 Grade = "N/A",
+                 Recommendations = Array.Empty<RecommendationItem>()
+            };
+        }
     }
 
     public async Task<RevertResult> RevertAsync(string[]? policyIds = null, string? snapshotId = null)
@@ -506,6 +538,58 @@ public sealed class ServiceClient : IDisposable
         {
             SetStandaloneMode(true);
             return CreateStandaloneState(includeHistory);
+        }
+    }
+
+    public async Task<GetServiceConfigResult> GetServiceConfigAsync()
+    {
+        if (_standaloneMode)
+        {
+            return new GetServiceConfigResult
+            {
+                CommandId = Guid.NewGuid().ToString(),
+                Success = false,
+                Errors = new[] { ServiceUnavailableError() },
+                Configuration = new ServiceConfiguration()
+            };
+        }
+
+        try { return await SendCommandAsync<GetServiceConfigResult>(new GetServiceConfigCommand()); }
+        catch (ServiceUnavailableException)
+        {
+            SetStandaloneMode(true);
+            return new GetServiceConfigResult 
+            {
+                CommandId = Guid.NewGuid().ToString(),
+                Success = false,
+                Errors = new[] { ServiceUnavailableError() },
+                Configuration = new ServiceConfiguration()
+            };
+        }
+    }
+
+    public async Task<ResponseBase> UpdateServiceConfigAsync(ServiceConfiguration config)
+    {
+        if (_standaloneMode)
+        {
+            return new ErrorResponse
+            {
+                CommandId = Guid.NewGuid().ToString(),
+                Success = false,
+                Errors = new[] { ServiceUnavailableError() }
+            };
+        }
+
+        try { return await SendCommandAsync<CommandSuccessResponse>(new UpdateServiceConfigCommand { Configuration = config }); }
+        catch (ServiceUnavailableException)
+        {
+            SetStandaloneMode(true);
+            return new ErrorResponse
+            {
+                CommandId = Guid.NewGuid().ToString(),
+                Success = false,
+                Errors = new[] { ServiceUnavailableError() }
+            };
         }
     }
 

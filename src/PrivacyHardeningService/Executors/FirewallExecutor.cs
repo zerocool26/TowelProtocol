@@ -705,6 +705,8 @@ internal sealed class FirewallRuleTarget
     public required string RemoteAddress { get; init; }
     public required string Group { get; init; }
     public required bool Enabled { get; init; }
+    public string? Program { get; init; }
+    public string? Service { get; init; }
 }
 
 internal sealed class FirewallApplyState

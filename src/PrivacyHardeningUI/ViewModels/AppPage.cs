@@ -9,5 +9,6 @@ public enum AppPage
     History,
     Drift,
     Reports,
+    Advisor,
     Settings
 }

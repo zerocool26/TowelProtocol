@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace PrivacyHardeningContracts.Models;
 
 /// <summary>
@@ -10,21 +12,31 @@ public sealed record SelectableOption<T>
     /// <summary>
     /// Whether the user can select from multiple options
     /// </summary>
+    [JsonPropertyName("userSelectable")]
     public required bool UserSelectable { get; init; }
 
     /// <summary>
     /// Available options for user to choose from
     /// </summary>
+    [JsonPropertyName("options")]
     public required OptionChoice<T>[] Options { get; init; }
 
     /// <summary>
     /// Current value in the system (for comparison)
     /// </summary>
+    [JsonPropertyName("currentValue")]
     public T? CurrentValue { get; init; }
+
+    /// <summary>
+    /// The value selected by the user to be applied
+    /// </summary>
+    [JsonPropertyName("selectedValue")]
+    public T? SelectedValue { get; init; }
 
     /// <summary>
     /// Recommended value (informational only - user decides)
     /// </summary>
+    [JsonPropertyName("recommendedValue")]
     public T? RecommendedValue { get; init; }
 
     /// <summary>

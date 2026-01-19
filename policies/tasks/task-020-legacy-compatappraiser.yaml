@@ -1,4 +1,4 @@
-policyId: "task-001"
+policyId: "task-020"
 version: "1.0.0"
 name: "Disable Microsoft Compatibility Appraiser"
 category: Telemetry

@@ -16,29 +16,34 @@ public sealed class PolicyEngineCore
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
     private readonly ILogger<PolicyEngineCore> _logger;
-    private readonly PolicyLoader _loader;
+    private readonly IPolicyLoader _loader;
     private readonly PolicyValidator _validator;
     private readonly CompatibilityChecker _compatibility;
     private readonly DependencyResolver _dependencyResolver;
-    private readonly ExecutorFactory _executorFactory;
+    private readonly IExecutorFactory _executorFactory;
     private readonly ChangeLog _changeLog;
     private readonly SystemStateCapture _stateCapture;
     private readonly RestorePointManager _restorePointManager;
     private readonly DriftDetector _driftDetector;
+    private readonly PolicyOverrideManager _overrideManager;
+    private readonly Advisor.RecommendationEngine _recommendationEngine;
 
     private PolicyDefinition[]? _cachedPolicies;
 
     public PolicyEngineCore(
         ILogger<PolicyEngineCore> logger,
-        PolicyLoader loader,
+        IPolicyLoader loader,
         PolicyValidator validator,
         CompatibilityChecker compatibility,
         DependencyResolver dependencyResolver,
-        ExecutorFactory executorFactory,
+        IExecutorFactory executorFactory,
         ChangeLog changeLog,
         SystemStateCapture stateCapture,
         RestorePointManager restorePointManager,
-        DriftDetector driftDetector)
+        DriftDetector driftDetector,
+        PolicyOverrideManager overrideManager,
+        Configuration.ServiceConfigManager serviceConfig,
+        Advisor.RecommendationEngine recommendationEngine)
     {
         _logger = logger;
         _loader = loader;
@@ -50,12 +55,70 @@ public sealed class PolicyEngineCore
         _stateCapture = stateCapture;
         _restorePointManager = restorePointManager;
         _driftDetector = driftDetector;
+        _overrideManager = overrideManager;
+        _serviceConfig = serviceConfig;
+        _recommendationEngine = recommendationEngine;
 
         _loader.PoliciesChanged += (_, _) =>
         {
             _logger.LogInformation("Policy cache invalidated due to on-disk policy changes.");
             Interlocked.Exchange(ref _cachedPolicies, null);
         };
+    }
+
+    private readonly Configuration.ServiceConfigManager _serviceConfig;
+    
+    public Task<GetServiceConfigResult> GetServiceConfigAsync(GetServiceConfigCommand command, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(new GetServiceConfigResult
+        {
+            CommandId = command.CommandId,
+            Success = true,
+            Configuration = _serviceConfig.CurrentConfig
+        });
+    }
+
+    public async Task<ResponseBase> UpdateConfigAsync(UpdateServiceConfigCommand command, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _serviceConfig.SaveAsync(command.Configuration);
+            return new CommandSuccessResponse { CommandId = command.CommandId, Success = true };
+        }
+        catch (Exception ex)
+        {
+            return new ErrorResponse 
+            { 
+                CommandId = command.CommandId, 
+                Success = false,
+                Errors = new[] { new ErrorInfo { Code = "UpdateConfigFailed", Message = ex.Message } } 
+            };
+        }
+    }
+
+    public async Task<ResponseBase> GetRecommendationsAsync(GetRecommendationsCommand command, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _recommendationEngine.AnalyzeAsync(cancellationToken);
+            return new RecommendationResult
+            {
+                CommandId = command.CommandId,
+                Success = true,
+                PrivacyScore = result.PrivacyScore,
+                Grade = result.Grade,
+                Recommendations = result.Recommendations
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ErrorResponse
+            {
+                CommandId = command.CommandId,
+                Success = false,
+                Errors = new[] { new ErrorInfo { Code = "RecommendationEngineFailed", Message = ex.Message } }
+            };
+        }
     }
 
     public async Task<GetPoliciesResult> GetPoliciesAsync(GetPoliciesCommand command, CancellationToken cancellationToken)
@@ -116,9 +179,16 @@ public sealed class PolicyEngineCore
                 try
                 {
                     var executor = _executorFactory.GetExecutor(policy.Mechanism);
-                    isApplied = await executor.IsAppliedAsync(policy, cancellationToken);
-                    currentValue = await executor.GetCurrentValueAsync(policy, cancellationToken);
-                    matches = isApplied;
+                    if (executor != null)
+                    {
+                        isApplied = await executor.IsAppliedAsync(policy, cancellationToken);
+                        currentValue = await executor.GetCurrentValueAsync(policy, cancellationToken);
+                        matches = isApplied;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("No executor for mechanism: {Mechanism}", policy.Mechanism);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -164,7 +234,7 @@ public sealed class PolicyEngineCore
 
             return policy.Mechanism switch
             {
-                MechanismType.Registry => JsonSerializer.Deserialize<RegistryDetails>(json, JsonOptions)?.ExpectedValue,
+                MechanismType.Registry => BuildRegistryExpectedValue(JsonSerializer.Deserialize<RegistryDetails>(json, JsonOptions)),
                 MechanismType.Service => BuildServiceExpectedValue(JsonSerializer.Deserialize<ServiceDetails>(json, JsonOptions)),
                 MechanismType.ScheduledTask => BuildTaskExpectedValue(JsonSerializer.Deserialize<TaskDetails>(json, JsonOptions)),
                 MechanismType.Firewall => BuildFirewallExpectedValue(JsonSerializer.Deserialize<FirewallMechanismDetails>(json, JsonOptions)),
@@ -180,6 +250,14 @@ public sealed class PolicyEngineCore
         {
             return null;
         }
+    }
+
+    private static string? BuildRegistryExpectedValue(RegistryDetails? details)
+    {
+        if (details == null) return null;
+        if (details.Action == RegistryAction.DeleteKey) return "[Key Missing]";
+        if (details.Action == RegistryAction.DeleteValue) return "[Value Missing]";
+        return details.ExpectedValue;
     }
 
     private static string? BuildServiceExpectedValue(ServiceDetails? details)
@@ -200,12 +278,22 @@ public sealed class PolicyEngineCore
 
     private static string? BuildTaskExpectedValue(TaskDetails? details)
     {
-        if (details == null || string.IsNullOrWhiteSpace(details.Action))
+        if (details == null)
         {
             return null;
         }
 
-        var shouldBeEnabled = !string.Equals(details.Action, "disable", StringComparison.OrdinalIgnoreCase);
+        if (details.Action == TaskAction.Delete)
+        {
+            return "[Deleted]";
+        }
+        else if (details.Action == TaskAction.ModifyTriggers)
+        {
+            return "Triggers=0";
+        }
+
+        // Action is now an Enum (TaskAction)
+        var shouldBeEnabled = details.Action != TaskAction.Disable;
         return $"Enabled={shouldBeEnabled}";
     }
 
@@ -249,6 +337,34 @@ public sealed class PolicyEngineCore
 
         // Resolve dependencies
         var policiesToApply = _dependencyResolver.ResolveDependencies(policies, command.PolicyIds);
+
+        // Save persistent overrides first
+        if (command.ConfigurationOverrides != null && command.ConfigurationOverrides.Count > 0)
+        {
+            await _overrideManager.UpdateOverridesAsync(command.ConfigurationOverrides, cancellationToken);
+             // Invalidate cache so we reload with new overrides immediately if checked later
+            Interlocked.Exchange(ref _cachedPolicies, null);
+        }
+
+        // Apply configuration overrides if present (in-memory for this run, but also persisted above)
+        if (command.ConfigurationOverrides != null && command.ConfigurationOverrides.Count > 0)
+        {
+            policiesToApply = ApplyConfigurationOverrides(policiesToApply, command.ConfigurationOverrides);
+        }
+        else
+        {
+            // If explicit overrides were NOT provided for this apply, 
+            // we should still ensure the policiesToApply reflect the persistent overrides
+            // (Note: policies loaded by LoadPoliciesAsync should already have them, so this might be redundant 
+            // but harmless if we re-loaded. If we used cached policies, they need the overrides applied).
+            // Actually, LoadPoliciesAsync applies them. So 'policies' (local var) already has them IF _cachedPolicies came from LoadPoliciesAsync.
+            // But if we just updated them above, we cleared cache.
+            // If we cleared cache, we should arguably reload 'policies' to get the fresh persistence?
+            // Or just trust the in-memory 'ApplyConfigurationOverrides' works on the 'policiesToApply' subset.
+            // The logic: policiesToApply is a subset of 'policies'. 'policies' was loaded at start of method.
+            // If we JUST saved new overrides, 'policies' (loaded before save) doesn't have them.
+            // So ApplyConfigurationOverrides(policiesToApply, command.ConfigurationOverrides) is CORRECT and NECESSARY.
+        }
 
         // Create a snapshot BEFORE applying so we can reliably undo, group changes, and support drift baselines.
         var systemInfo = await _stateCapture.GetSystemInfoAsync(cancellationToken);
@@ -342,6 +458,13 @@ public sealed class PolicyEngineCore
             try
             {
                 var executor = _executorFactory.GetExecutor(policy.Mechanism);
+                if (executor == null)
+                {
+                    _logger.LogError("No executor found for mechanism {Mechanism} (Policy: {PolicyId})", policy.Mechanism, policy.PolicyId);
+                    failedPolicies.Add(policy.PolicyId);
+                    continue;
+                }
+                
                 var change = await executor.ApplyAsync(policy, cancellationToken);
                 changes.Add(WithSnapshotId(change, snapshotId));
 
@@ -417,12 +540,102 @@ public sealed class PolicyEngineCore
         var errors = new List<ErrorInfo>();
         var warnings = new List<string>();
 
-        if (!string.IsNullOrWhiteSpace(command.SnapshotId) || !string.IsNullOrWhiteSpace(command.RestorePointId))
+        if (!string.IsNullOrWhiteSpace(command.SnapshotId))
         {
-            errors.Add(new ErrorInfo
+            var changesToRevert = await _changeLog.GetChangesBySnapshotIdAsync(command.SnapshotId, cancellationToken);
+            
+            if (changesToRevert.Length == 0)
+            {
+               warnings.Add($"No change records found for snapshot '{command.SnapshotId}'. The snapshot might be a baseline snapshot only, or invalid.");
+            }
+            else
+            {
+                // Revert changes in reverse chronological order (LIFO)
+                foreach (var change in changesToRevert.OrderByDescending(c => c.AppliedAt))
+                {
+                    if (!change.Success || change.Operation != ChangeOperation.Apply)
+                    {
+                        continue;
+                    }
+
+                    var policy = policies.FirstOrDefault(p => p.PolicyId == change.PolicyId);
+                    if (policy == null)
+                    {
+                        errors.Add(new ErrorInfo 
+                        { 
+                            Code = "PolicyNotFound", 
+                            PolicyId = change.PolicyId, 
+                            Message = "Policy definition not found; cannot revert." 
+                        });
+                        continue;
+                    }
+
+                    try
+                    {
+                        var executor = _executorFactory.GetExecutor(policy.Mechanism);
+                        if (executor != null)
+                        {
+                            var revertChange = await executor.RevertAsync(policy, change, cancellationToken);
+                            changes.Add(revertChange);
+                            
+                            if (revertChange.Success)
+                            {
+                                revertedPolicies.Add(policy.PolicyId);
+                                _logger.LogInformation("Reverted policy {PolicyId} from snapshot {SnapshotId}", policy.PolicyId, command.SnapshotId);
+                            }
+                            else
+                            {
+                                failedPolicies.Add(policy.PolicyId);
+                                errors.Add(new ErrorInfo
+                                {
+                                    Code = "RevertFailed",
+                                    PolicyId = policy.PolicyId,
+                                    Message = revertChange.ErrorMessage ?? "Unknown revert error"
+                                });
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to revert policy {PolicyId}", policy.PolicyId);
+                        failedPolicies.Add(policy.PolicyId);
+                         errors.Add(new ErrorInfo
+                        {
+                            Code = "RevertError",
+                            PolicyId = policy.PolicyId,
+                            Message = ex.Message
+                        });
+                    }
+                }
+            }
+
+            // If a RestorePointId was ALSO provided, we could warn that we only did the snapshot revert?
+            // Or if ONLY RestorePointId was provided:
+            if (!string.IsNullOrWhiteSpace(command.RestorePointId))
+            {
+                 warnings.Add("Revert by RestorePointId is not supported directly by this tool. Please use Windows System Restore.");
+            }
+
+            return new RevertResult
+            {
+                CommandId = command.CommandId,
+                Success = failedPolicies.Count == 0,
+                RevertedPolicies = revertedPolicies.ToArray(),
+                FailedPolicies = failedPolicies.ToArray(),
+                Changes = changes.ToArray(),
+                CompletedAt = DateTime.UtcNow,
+                Errors = errors.ToArray(),
+                Warnings = warnings.ToArray()
+            };
+        }
+        
+        // Fallback for just RestorePointId (without SnapshotId)
+        if (!string.IsNullOrWhiteSpace(command.RestorePointId))
+        {
+             errors.Add(new ErrorInfo
             {
                 Code = "NotImplemented",
-                Message = "Revert by SnapshotId/RestorePointId is not implemented yet"
+                Message = "Revert by RestorePointId is not implemented yet. Use Windows System Restore."
             });
 
             return new RevertResult
@@ -610,6 +823,13 @@ public sealed class PolicyEngineCore
 
                 // Execute revert using the executor
                 var executor = _executorFactory.GetExecutor(policy.Mechanism);
+                if (executor == null)
+                {
+                    _logger.LogError("No executor for {Mechanism}", policy.Mechanism);
+                    failedPolicies.Add(policy.PolicyId);
+                    continue;
+                }
+                
                 var revertChange = await executor.RevertAsync(policy, lastChange, cancellationToken);
                 changes.Add(snapshotId != null ? WithSnapshotId(revertChange, snapshotId) : revertChange);
 
@@ -759,15 +979,46 @@ public sealed class PolicyEngineCore
 
     public async Task<DriftDetectionResult> DetectDriftAsync(DetectDriftCommand command, CancellationToken cancellationToken)
     {
-        // TODO: Implement drift detection
-        await Task.CompletedTask;
+        var snapshotId = command.SnapshotId;
+        
+        // If no snapshot specified, try to find the latest valid baseline
+        // A baseline is usually a snapshot created during an "Apply" operation.
+        if (string.IsNullOrEmpty(snapshotId))
+        {
+            var latest = await _changeLog.GetLatestSnapshotAsync(includeHistory: false, cancellationToken);
+            if (latest != null)
+            {
+                snapshotId = latest.SnapshotId;
+            }
+        }
+
+        if (string.IsNullOrEmpty(snapshotId))
+        {
+            return new DriftDetectionResult
+            {
+                CommandId = command.CommandId,
+                Success = false,
+                DriftDetected = false,
+                DriftedPolicies = Array.Empty<DriftItem>(),
+                Errors = new[] { new ErrorInfo { Code = "NoSnapshot", Message = "No baseline snapshot found to compare against." } }
+            };
+        }
+
+        var expectedStates = await _changeLog.GetSnapshotPolicyStatesAsync(snapshotId, cancellationToken);
+        
+        // Use effective policies (with overrides) for drift detection
+        var policies = await LoadPoliciesAsync(cancellationToken);
+        
+        var driftItems = await _driftDetector.DetectDriftAsync(expectedStates, policies, cancellationToken);
 
         return new DriftDetectionResult
         {
             CommandId = command.CommandId,
             Success = true,
-            DriftDetected = false,
-            DriftedPolicies = Array.Empty<DriftItem>()
+            DriftDetected = driftItems.Count > 0,
+            DriftedPolicies = driftItems.ToArray(),
+            BaselineSnapshotId = snapshotId,
+            LastAppliedAt = DateTime.UtcNow // Approximation
         };
     }
 
@@ -935,15 +1186,27 @@ public sealed class PolicyEngineCore
             try
             {
                 var executor = _executorFactory.GetExecutor(policy.Mechanism);
-                var isApplied = await executor.IsAppliedAsync(policy, cancellationToken);
-                var currentValue = await executor.GetCurrentValueAsync(policy, cancellationToken);
-
-                states.Add(new SnapshotPolicyState
+                if (executor != null)
                 {
-                    PolicyId = policy.PolicyId,
-                    IsApplied = isApplied,
-                    CurrentValue = currentValue
-                });
+                    var isApplied = await executor.IsAppliedAsync(policy, cancellationToken);
+                    var currentValue = await executor.GetCurrentValueAsync(policy, cancellationToken);
+
+                    states.Add(new SnapshotPolicyState
+                    {
+                        PolicyId = policy.PolicyId,
+                        IsApplied = isApplied,
+                        CurrentValue = currentValue
+                    });
+                }
+                else
+                {
+                     states.Add(new SnapshotPolicyState
+                    {
+                        PolicyId = policy.PolicyId,
+                        IsApplied = false,
+                        CurrentValue = "No executor found"
+                    });
+                }
             }
             catch (Exception ex)
             {
@@ -960,12 +1223,67 @@ public sealed class PolicyEngineCore
         return states.ToArray();
     }
 
+    private PolicyDefinition[] ApplyConfigurationOverrides(PolicyDefinition[] policies, Dictionary<string, string> overrides)
+    {
+        var result = new List<PolicyDefinition>(policies.Length);
+        foreach (var policy in policies)
+        {
+            if (overrides.TryGetValue(policy.PolicyId, out var jsonOverride))
+            {
+                try
+                {
+                    object? newDetails = null;
+                    switch (policy.Mechanism)
+                    {
+                        case MechanismType.Registry:
+                            newDetails = JsonSerializer.Deserialize<RegistryDetails>(jsonOverride, JsonOptions);
+                            break;
+                        case MechanismType.Service:
+                            newDetails = JsonSerializer.Deserialize<ServiceDetails>(jsonOverride, JsonOptions);
+                            break;
+                        case MechanismType.ScheduledTask:
+                            newDetails = JsonSerializer.Deserialize<TaskDetails>(jsonOverride, JsonOptions);
+                            break;
+                        case MechanismType.Firewall:
+                            newDetails = JsonSerializer.Deserialize<FirewallMechanismDetails>(jsonOverride, JsonOptions);
+                            break;
+                        case MechanismType.PowerShell:
+                            newDetails = JsonSerializer.Deserialize<PowerShellDetails>(jsonOverride, JsonOptions);
+                            break;
+                    }
+
+                    if (newDetails != null)
+                    {
+                        result.Add(policy with { MechanismDetails = newDetails });
+                        _logger.LogInformation("Applied configuration override for policy {PolicyId}", policy.PolicyId);
+                        continue;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to apply configuration override for policy {PolicyId}", policy.PolicyId);
+                }
+            }
+            result.Add(policy);
+        }
+        return result.ToArray();
+    }
+
     private async Task<PolicyDefinition[]> LoadPoliciesAsync(CancellationToken cancellationToken)
     {
         if (_cachedPolicies == null)
         {
-            // Ensure loader result is non-null to avoid possible null-reference assignments
-            _cachedPolicies = await _loader.LoadAllPoliciesAsync(cancellationToken) ?? Array.Empty<PolicyDefinition>();
+            // Ensure loader result is non-null
+            var loaded = await _loader.LoadAllPoliciesAsync(cancellationToken) ?? Array.Empty<PolicyDefinition>();
+
+            // Apply persistent overrides
+            var overrides = await _overrideManager.LoadOverridesAsync(cancellationToken);
+            if (overrides.Count > 0)
+            {
+                loaded = ApplyConfigurationOverrides(loaded, overrides);
+            }
+
+            _cachedPolicies = loaded;
         }
 
         return _cachedPolicies;

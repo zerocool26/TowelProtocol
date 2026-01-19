@@ -1,5 +1,6 @@
 using System.Runtime.Versioning;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Globalization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
@@ -27,6 +28,32 @@ public sealed class RegistryExecutor : IExecutor
         var details = ParseRegistryDetails(policy.MechanismDetails);
         if (details == null) return false;
 
+        // Verify based on Action
+        if (details.Action == RegistryAction.DeleteKey)
+        {
+            try 
+            {
+                var (hive, subKey) = ParseKeyPath(details);
+                using var key = hive.OpenSubKey(subKey, writable: false);
+                return key == null;
+            }
+            catch { return false; }
+        }
+
+        if (details.Action == RegistryAction.DeleteValue)
+        {
+            try 
+            {
+                var (hive, subKey) = ParseKeyPath(details);
+                using var key = hive.OpenSubKey(subKey, writable: false);
+                if (key == null) return true; // Key missing implies value missing
+                return key.GetValue(details.ValueName) == null;
+            }
+            catch { return false; }
+        }
+
+        // Default: Set Value (check against expected)
+        if (details.ExpectedValue == null) return false;
         var currentValue = await GetCurrentValueAsync(policy, cancellationToken);
         return currentValue == details.ExpectedValue;
     }
@@ -40,13 +67,13 @@ public sealed class RegistryExecutor : IExecutor
 
         try
         {
-            var (hive, subKey) = ParseKeyPath(details.KeyPath);
+            var (hive, subKey) = ParseKeyPath(details);
             using var key = hive.OpenSubKey(subKey, writable: false);
 
-            if (key == null) return null;
+            if (key == null) return "[Key Missing]";
 
             var value = key.GetValue(details.ValueName);
-            if (value == null) return null;
+            if (value == null) return "[Value Missing]";
 
             // Convert to string for comparison
             return details.ValueType switch
@@ -59,8 +86,9 @@ public sealed class RegistryExecutor : IExecutor
         }
         catch (Exception ex)
         {
+            var path = details.KeyPath ?? $"{details.Hive}\\{details.Path}";
             _logger.LogWarning(ex, "Failed to read registry value: {KeyPath}\\{ValueName}",
-                details.KeyPath, details.ValueName);
+                path, details.ValueName);
             return null;
         }
     }
@@ -74,14 +102,61 @@ public sealed class RegistryExecutor : IExecutor
         {
             return CreateErrorRecord(policy, ChangeOperation.Apply, "Invalid registry mechanism details");
         }
+        
+        if (details.Action == RegistryAction.Set && details.ValueData == null)
+        {
+             return CreateErrorRecord(policy, ChangeOperation.Apply, "Registry mechanism details missing ValueData");
+        }
 
         try
         {
-            var (hive, subKey) = ParseKeyPath(details.KeyPath);
+            var (hive, subKey) = ParseKeyPath(details);
 
             // Capture previous state
             var previousValue = await GetCurrentValueAsync(policy, cancellationToken);
 
+            if (details.Action == RegistryAction.DeleteKey)
+            {
+                hive.DeleteSubKeyTree(subKey, throwOnMissingSubKey: false);
+                _logger.LogInformation("Deleted registry key: {KeyPath}", details.KeyPath);
+
+                return new ChangeRecord
+                {
+                    ChangeId = Guid.NewGuid().ToString(),
+                    Operation = ChangeOperation.Apply,
+                    PolicyId = policy.PolicyId,
+                    AppliedAt = DateTime.UtcNow,
+                    Mechanism = MechanismType.Registry,
+                    Description = $"Deleted Key {details.KeyPath}",
+                    PreviousState = previousValue,
+                    NewState = "[deleted]",
+                    Success = true
+                };
+            }
+            else if (details.Action == RegistryAction.DeleteValue)
+            {
+                using var regKey = hive.OpenSubKey(subKey, writable: true);
+                if (regKey != null)
+                {
+                    regKey.DeleteValue(details.ValueName, throwOnMissingValue: false);
+                    _logger.LogInformation("Deleted registry value: {KeyPath}\\{ValueName}", details.KeyPath, details.ValueName);
+                }
+
+                return new ChangeRecord
+                {
+                    ChangeId = Guid.NewGuid().ToString(),
+                    Operation = ChangeOperation.Apply,
+                    PolicyId = policy.PolicyId,
+                    AppliedAt = DateTime.UtcNow,
+                    Mechanism = MechanismType.Registry,
+                    Description = $"Deleted Value {details.KeyPath}\\{details.ValueName}",
+                    PreviousState = previousValue,
+                    NewState = "[deleted]",
+                    Success = true
+                };
+            }
+
+            // Default: Set value
             // Create key if it doesn't exist
             using var key = hive.CreateSubKey(subKey, writable: true);
             if (key == null)
@@ -94,9 +169,9 @@ public sealed class RegistryExecutor : IExecutor
             {
                 RegistryValueKind.DWord => Convert.ToInt32(details.ValueData),
                 RegistryValueKind.QWord => Convert.ToInt64(details.ValueData),
-                RegistryValueKind.String => details.ValueData.ToString() ?? string.Empty,
-                RegistryValueKind.ExpandString => details.ValueData.ToString() ?? string.Empty,
-                _ => details.ValueData
+                RegistryValueKind.String => details.ValueData?.ToString() ?? string.Empty,
+                RegistryValueKind.ExpandString => details.ValueData?.ToString() ?? string.Empty,
+                _ => details.ValueData ?? string.Empty
             };
 
             key.SetValue(details.ValueName, valueToSet, details.ValueType);
@@ -136,7 +211,7 @@ public sealed class RegistryExecutor : IExecutor
 
         try
         {
-            var (hive, subKey) = ParseKeyPath(details.KeyPath);
+            var (hive, subKey) = ParseKeyPath(details);
 
             if (originalChange.PreviousState == null)
             {
@@ -221,10 +296,25 @@ public sealed class RegistryExecutor : IExecutor
         try
         {
             var json = JsonSerializer.Serialize(mechanismDetails);
-            return JsonSerializer.Deserialize<RegistryDetails>(json, new JsonSerializerOptions
+            var details = JsonSerializer.Deserialize<RegistryDetails>(json, new JsonSerializerOptions
             {
-                PropertyNameCaseInsensitive = true
+                PropertyNameCaseInsensitive = true,
+                Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
             });
+
+            if (details == null) return null;
+
+            // Handle legacy KeyPath vs new Hive/Path split
+            if (string.IsNullOrEmpty(details.KeyPath) && !string.IsNullOrEmpty(details.Hive) && !string.IsNullOrEmpty(details.Path))
+            {
+                // We must use reflection or change the property to be settable if it's init-only? 
+                // Wait, it is init-only. 
+                // But we can just use a calculated property or constructor. 
+                // Best to fix the DTO class structure.
+                return details; 
+            }
+            
+            return details;
         }
         catch
         {
@@ -232,13 +322,32 @@ public sealed class RegistryExecutor : IExecutor
         }
     }
 
-    private (RegistryKey Hive, string SubKey) ParseKeyPath(string keyPath)
+    private (RegistryKey Hive, string SubKey) ParseKeyPath(RegistryDetails details)
     {
-        var parts = keyPath.Split('\\', 2);
+        // Prefer explicit Hive + Path if available
+        if (!string.IsNullOrEmpty(details.Hive) && !string.IsNullOrEmpty(details.Path))
+        {
+            var hive = details.Hive.ToUpperInvariant() switch
+            {
+                "HKLM" or "HKEY_LOCAL_MACHINE" => Registry.LocalMachine,
+                "HKCU" or "HKEY_CURRENT_USER" => Registry.CurrentUser,
+                "HKCR" or "HKEY_CLASSES_ROOT" => Registry.ClassesRoot,
+                "HKU" or "HKEY_USERS" => Registry.Users,
+                "HKCC" or "HKEY_CURRENT_CONFIG" => Registry.CurrentConfig,
+                _ => throw new ArgumentException($"Unknown registry hive: {details.Hive}")
+            };
+            return (hive, details.Path);
+        }
+
+        // Fallback to KeyPath parsing
+        if (string.IsNullOrEmpty(details.KeyPath)) 
+            throw new ArgumentException("Neither KeyPath nor Hive/Path provided");
+
+        var parts = details.KeyPath.Split('\\', 2);
         var hiveName = parts[0];
         var subKey = parts.Length > 1 ? parts[1] : string.Empty;
 
-        var hive = hiveName.ToUpperInvariant() switch
+        var registryHive = hiveName.ToUpperInvariant() switch
         {
             "HKLM" or "HKEY_LOCAL_MACHINE" => Registry.LocalMachine,
             "HKCU" or "HKEY_CURRENT_USER" => Registry.CurrentUser,
@@ -248,7 +357,7 @@ public sealed class RegistryExecutor : IExecutor
             _ => throw new ArgumentException($"Unknown registry hive: {hiveName}")
         };
 
-        return (hive, subKey);
+        return (registryHive, subKey);
     }
 
     private ChangeRecord CreateErrorRecord(PolicyDefinition policy, ChangeOperation operation, string error)
@@ -271,9 +380,20 @@ public sealed class RegistryExecutor : IExecutor
 
 internal sealed class RegistryDetails
 {
-    public required string KeyPath { get; init; }
+    public string? KeyPath { get; init; }
+    public string? Hive { get; init; }
+    public string? Path { get; init; }
     public required string ValueName { get; init; }
     public required RegistryValueKind ValueType { get; init; }
-    public required object ValueData { get; init; }
-    public required string ExpectedValue { get; init; }
+    public object? ValueData { get; init; }
+    public string? ExpectedValue { get; init; }
+    public RegistryAction Action { get; init; } = RegistryAction.Set;
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+internal enum RegistryAction
+{
+    Set,
+    DeleteValue,
+    DeleteKey
 }

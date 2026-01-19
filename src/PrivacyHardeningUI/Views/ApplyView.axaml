@@ -28,6 +28,21 @@
         </Border>
 
         <Button Content="Refresh summary" Command="{Binding RefreshSummaryCommand}" />
+
+        <Separator/>
+
+        <TextBlock Text="Options" FontWeight="SemiBold"/>
+        <CheckBox Content="Create System Restore Point" IsChecked="{Binding CreateRestorePoint}" 
+                  ToolTip.Tip="Highly Recommended: Creates a restore point before applying changes so you can undo if anything breaks."/>
+
+        <Button Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" 
+                Content="APPLY CHANGES" FontWeight="Bold" Padding="12"
+                Command="{Binding ApplyCommand}" IsEnabled="{Binding !IsApplying}"/>
+
+        <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsApplying}" />
+        
+        <TextBlock Text="{Binding LastOperationResult}" TextWrapping="Wrap" Classes="Caption" />
+
       </StackPanel>
     </Border>
 

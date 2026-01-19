@@ -6,7 +6,7 @@ namespace PrivacyHardeningService.Executors;
 /// <summary>
 /// Factory to get appropriate executor for a policy mechanism
 /// </summary>
-public sealed class ExecutorFactory
+public sealed class ExecutorFactory : IExecutorFactory
 {
     private readonly Dictionary<MechanismType, IExecutor> _executors;
     private readonly ILogger<ExecutorFactory> _logger;
@@ -17,13 +17,14 @@ public sealed class ExecutorFactory
         _logger = logger;
     }
 
-    public IExecutor GetExecutor(MechanismType mechanism)
+    public IExecutor? GetExecutor(MechanismType mechanism)
     {
         if (_executors.TryGetValue(mechanism, out var executor))
         {
             return executor;
         }
 
-        throw new NotSupportedException($"No executor available for mechanism: {mechanism}");
+        _logger.LogWarning("No executor available for mechanism: {Mechanism}", mechanism);
+        return null;
     }
 }

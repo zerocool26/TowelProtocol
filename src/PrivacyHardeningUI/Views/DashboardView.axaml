@@ -10,7 +10,7 @@
       <TextBlock Opacity="0.75" Text="Advanced Privacy &amp; Security Hardening Orchestrator" />
     </StackPanel>
 
-    <Grid Grid.Row="1" ColumnDefinitions="*,*" RowDefinitions="Auto,*" Margin="0,24,0,0" ColumnSpacing="16" RowSpacing="16">
+    <Grid Grid.Row="1" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,*" Margin="0,24,0,0" ColumnSpacing="16" RowSpacing="16">
       
       <!-- System Status Card -->
       <Border Grid.Row="0" Grid.Column="0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16">
@@ -35,8 +35,8 @@
               <TextBlock Text="{Binding PolicyCount}" FontSize="20" FontWeight="SemiBold"/>
             </StackPanel>
              <StackPanel Grid.Column="1" Spacing="2">
-              <TextBlock Text="Health Score" FontSize="11" Opacity="0.6"/>
-              <TextBlock Text="Pending" FontSize="20" FontWeight="SemiBold" Opacity="0.5"/>
+              <TextBlock Text="Diagnostic Level" FontSize="11" Opacity="0.6"/>
+              <TextBlock Text="{Binding DiagnosticLevel}" FontSize="16" FontWeight="SemiBold" Opacity="0.9"/>
             </StackPanel>
           </Grid>
         </StackPanel>
@@ -60,12 +60,89 @@
                 <TextBlock Text="→" Grid.Column="2" />
               </Grid>
             </Button>
+             <Button HorizontalAlignment="Stretch" Padding="12,8" Command="{Binding RefreshSummaryCommand}" Background="Transparent" BorderBrush="{DynamicResource BorderBrush}">
+              <Grid ColumnDefinitions="Auto,*,Auto">
+                  <StackPanel Orientation="Horizontal" Grid.Column="1" Spacing="8">
+                     <TextBlock Text="Refresh Monitor" VerticalAlignment="Center" Margin="8,0" />
+                     <ProgressBar IsIndeterminate="True" Width="20" Height="20" IsVisible="{Binding IsScanningTelemetry}" />
+                  </StackPanel>
+                 <TextBlock Text="↻" Grid.Column="2" />
+              </Grid>
+            </Button>
           </StackPanel>
         </StackPanel>
       </Border>
+      
+      <!-- Monitoring Row -->
+      <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" ColumnDefinitions="*,*" ColumnSpacing="16" MinHeight="150">
+          <!-- Real-Time Activity -->
+          <Border Grid.Column="0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16">
+              <StackPanel Spacing="12">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                      <TextBlock Text="Real-Time Monitor" FontWeight="SemiBold" FontSize="16"/>
+                      <Border CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                           <Border.Styles>
+                               <Style Selector="Border">
+                                   <Setter Property="Background" Value="{DynamicResource SystemFillColorSuccessBrush}"/>
+                               </Style>
+                               <Style Selector="Border[Tag=Activity Detected]">
+                                   <Setter Property="Background" Value="#CC3333"/>
+                               </Style>
+                               <Style Selector="Border[Tag=High (Full Telemetry)]">
+                                   <Setter Property="Background" Value="#CC3333"/>
+                               </Style>
+                           </Border.Styles>
+                          <TextBlock Text="{Binding TelemetryRiskStatus}" FontSize="11" FontWeight="Bold" Foreground="White" />
+                      </Border>
+                  </StackPanel>
+                  
+                  <Grid ColumnDefinitions="*,*,*" Margin="0,8,0,0">
+                      <StackPanel Grid.Column="0">
+                          <TextBlock Text="Active Services" FontSize="11" Opacity="0.6"/>
+                          <TextBlock Text="{Binding ActiveTelemetryServices}" FontSize="24" FontWeight="Light"/>
+                      </StackPanel>
+                      <StackPanel Grid.Column="1">
+                          <TextBlock Text="Active Tasks" FontSize="11" Opacity="0.6"/>
+                          <TextBlock Text="{Binding ActiveTelemetryTasks}" FontSize="24" FontWeight="Light"/>
+                      </StackPanel>
+                      <StackPanel Grid.Column="2">
+                          <TextBlock Text="Connections" FontSize="11" Opacity="0.6"/>
+                          <TextBlock Text="{Binding ActiveTelemetryConnections}" FontSize="24" FontWeight="Light" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                      </StackPanel>
+                  </Grid>
+              </StackPanel>
+          </Border>
+          
+          <!-- Detected Connections -->
+          <Border Grid.Column="1" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16">
+              <Grid RowDefinitions="Auto,*">
+                  <TextBlock Grid.Row="0" Text="Detected Telemetry Traffic (Top 5)" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,12"/>
+                  
+                  <ListBox Grid.Row="1" ItemsSource="{Binding DetectedConnections}" Background="Transparent" BorderThickness="0" Padding="0">
+                      <ListBox.ItemTemplate>
+                          <DataTemplate>
+                              <Grid ColumnDefinitions="*,Auto" Margin="0,4">
+                                  <StackPanel Grid.Column="0">
+                                      <TextBlock Text="{Binding Description}" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                      <TextBlock Text="{Binding Connection.RemoteAddress}" FontSize="11" Opacity="0.6" FontFamily="Consolas"/>
+                                  </StackPanel>
+                                  <Border Grid.Column="1" Background="#CC3333" CornerRadius="3" Padding="4,1" VerticalAlignment="Center" IsVisible="{Binding IsTelemetry}">
+                                      <TextBlock Text="BLOCK" FontSize="9" Foreground="White" FontWeight="Bold"/>
+                                  </Border>
+                              </Grid>
+                          </DataTemplate>
+                      </ListBox.ItemTemplate>
+                  </ListBox>
+                  
+                  <TextBlock Grid.Row="1" Text="No active telemetry connections detected." 
+                             IsVisible="{Binding !DetectedConnections.Count}"
+                             VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.5" FontStyle="Italic"/>
+              </Grid>
+          </Border>
+      </Grid>
 
       <!-- Workflow Guide -->
-      <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Background="{DynamicResource PanelBrush}" CornerRadius="8" Padding="20">
+      <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Background="{DynamicResource PanelBrush}" CornerRadius="8" Padding="20">
         <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="12">
            <StackPanel Grid.Column="0" Spacing="6">
              <TextBlock Text="1. AUDIT" FontWeight="Bold" FontSize="12" Opacity="0.5"/>

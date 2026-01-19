@@ -27,6 +27,16 @@
           </StackPanel>
         </Border>
 
+        <Button Height="60" HorizontalAlignment="Stretch" Click="GenerateFullReport" Classes="accent">
+             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12">
+                 <TextBlock Text="📄" FontSize="20"/>
+                 <StackPanel VerticalAlignment="Center">
+                     <TextBlock Text="Generate Comprehensive Privacy Report" FontWeight="SemiBold"/>
+                     <TextBlock Text="Combines audit, monitor, and history data into a readable Markdown file" FontSize="11" Opacity="0.8"/>
+                 </StackPanel>
+             </StackPanel>
+        </Button>
+
         <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
           <Button Grid.Column="0" Height="120" HorizontalAlignment="Stretch" Click="ExportAuditJson" IsEnabled="{Binding HasAudit}">
             <StackPanel Spacing="8" VerticalAlignment="Center">

@@ -5,7 +5,7 @@
 # Prevents apps from accessing diagnostic data about other apps
 # ============================================================================
 
-policyId: "tel-006"
+policyId: "tel-015"
 version: "1.0.0"
 name: "Disable App Diagnostic Access"
 category: Telemetry

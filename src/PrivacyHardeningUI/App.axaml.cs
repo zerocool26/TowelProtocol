@@ -62,6 +62,7 @@ public partial class App : Application
                 services.AddSingleton<HistoryViewModel>();
                 services.AddSingleton<DriftViewModel>();
                 services.AddSingleton<ReportsViewModel>();
+                services.AddSingleton<AdvisorViewModel>();
 
                 services.AddSingleton<DiffViewModel>();
 

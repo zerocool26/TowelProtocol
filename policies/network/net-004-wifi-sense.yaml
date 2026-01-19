@@ -1,4 +1,4 @@
-policyId: "net-001"
+policyId: "net-004"
 version: "1.0.0"
 name: "Disable Wi-Fi Sense"
 category: Network

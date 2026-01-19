@@ -4,7 +4,7 @@ namespace PrivacyHardeningContracts.Models;
 /// Complete definition of a single privacy/hardening policy
 /// Deserialized from YAML policy files
 /// </summary>
-public sealed class PolicyDefinition
+public sealed record PolicyDefinition
 {
     /// <summary>
     /// Unique policy identifier (e.g., "tel-001")

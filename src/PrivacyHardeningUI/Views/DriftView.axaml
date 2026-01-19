@@ -4,7 +4,7 @@
              x:Class="PrivacyHardeningUI.Views.DriftView"
              x:DataType="vm:DriftViewModel">
 
-  <Grid RowDefinitions="Auto,*,Auto" Margin="12">
+  <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="12">
     <Border Grid.Row="0" Background="{DynamicResource PanelBrush}" Padding="12" CornerRadius="8">
       <Grid ColumnDefinitions="*,Auto">
         <StackPanel Spacing="4">
@@ -14,8 +14,30 @@
         <Button Grid.Column="1" Classes="accent" Content="Detect drift" Command="{Binding DetectDriftCommand}" />
       </Grid>
     </Border>
+    
+    <!-- Drift Actions -->
+    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="16" Margin="0,12,0,0">
+       <Button Content="Fix All Drift" Command="{Binding FixDriftCommand}" 
+               Classes="accent" IsVisible="{Binding !!DriftedPolicies.Count}"
+               ToolTip.Tip="Re-applies policies to correct the detected drift.">
+             <Button.Content>
+                 <StackPanel Orientation="Horizontal" Spacing="8">
+                     <TextBlock Text="🔧"/>
+                     <TextBlock Text="Remediate All"/>
+                 </StackPanel>
+             </Button.Content>
+       </Button>
+       
+       <TextBlock VerticalAlignment="Center" IsVisible="{Binding !!DriftedPolicies.Count}" Opacity="0.7">
+           <TextBlock.Text>
+               <MultiBinding StringFormat="Found {0} drifted policies">
+                    <Binding Path="DriftedPolicies.Count"/>
+               </MultiBinding>
+           </TextBlock.Text>
+       </TextBlock>
+    </StackPanel>
 
-    <Border Grid.Row="1" Margin="0,12,0,0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8">
+    <Border Grid.Row="2" Margin="0,12,0,0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8">
       <ScrollViewer>
         <ItemsControl ItemsSource="{Binding DriftedPolicies}">
           <ItemsControl.ItemsPanel>
@@ -38,7 +60,7 @@
       </ScrollViewer>
     </Border>
 
-    <Border Grid.Row="2" Background="{DynamicResource PanelBrush}" CornerRadius="8" Padding="10" Margin="0,12,0,0">
+    <Border Grid.Row="3" Background="{DynamicResource PanelBrush}" CornerRadius="8" Padding="10" Margin="0,12,0,0">
       <TextBlock Foreground="{DynamicResource ErrorBrush}" Text="{Binding ErrorMessage}" />
     </Border>
 

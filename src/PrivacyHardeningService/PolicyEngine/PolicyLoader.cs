@@ -9,7 +9,7 @@ namespace PrivacyHardeningService.PolicyEngine;
 /// <summary>
 /// Loads policy definitions from YAML files
 /// </summary>
-public sealed class PolicyLoader : IDisposable
+public sealed class PolicyLoader : IDisposable, IPolicyLoader
 {
     private readonly ILogger<PolicyLoader> _logger;
     private readonly DependencyResolver _dependencyResolver;

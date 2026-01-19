@@ -32,14 +32,17 @@ public sealed class ServiceExecutor : IExecutor
         try
         {
             // Check startup type
-            var currentStartupType = GetServiceStartupType(details.ServiceName);
-            var expectedStartupType = ParseStartupType(details.StartupType);
-
-            if (currentStartupType != expectedStartupType)
+            if (!string.IsNullOrEmpty(details.StartupType))
             {
-                return false;
-            }
+                var currentStartupType = GetServiceStartupType(details.ServiceName);
+                var expectedStartupType = ParseStartupType(details.StartupType);
 
+                if (currentStartupType != expectedStartupType)
+                {
+                    return false;
+                }
+            }
+            
             // If we also need to stop the service, check status
             if (details.StopService)
             {
@@ -104,14 +107,18 @@ public sealed class ServiceExecutor : IExecutor
             }
 
             var previousState = $"StartupType={previousStartupType}, Status={previousStatus}";
+            var targetStartupType = previousStartupType;
 
             // Change startup type
-            var targetStartupType = ParseStartupType(details.StartupType);
-            SetServiceStartupType(details.ServiceName, targetStartupType);
+            if (!string.IsNullOrEmpty(details.StartupType))
+            {
+                targetStartupType = ParseStartupType(details.StartupType);
+                SetServiceStartupType(details.ServiceName, targetStartupType);
 
-            _logger.LogInformation("Changed service {ServiceName} startup type: {Previous} -> {New}",
-                details.ServiceName, previousStartupType, targetStartupType);
-
+                _logger.LogInformation("Changed service {ServiceName} startup type: {Previous} -> {New}",
+                    details.ServiceName, previousStartupType, targetStartupType);
+            }
+            
             // Stop service if requested
             if (details.StopService)
             {
@@ -237,25 +244,87 @@ public sealed class ServiceExecutor : IExecutor
         try
         {
             var json = JsonSerializer.Serialize(mechanismDetails);
-            var details = JsonSerializer.Deserialize<ServiceDetails>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
 
-            // Validate required fields to avoid nullable reference warnings and runtime issues
-            if (details == null
-                || string.IsNullOrWhiteSpace(details.ServiceName)
-                || string.IsNullOrWhiteSpace(details.StartupType))
+            var serviceName = GetStringProperty(root, "serviceName");
+            if (string.IsNullOrEmpty(serviceName)) return null;
+
+            var displayName = GetStringProperty(root, "displayName");
+
+            // Check if Legacy or Granular
+            var isGranular = root.TryGetProperty("type", out var typeProp) &&
+                             typeProp.GetString()?.Equals("ServiceConfiguration", StringComparison.OrdinalIgnoreCase) == true;
+
+            string? startupType = null;
+            bool stopService = false;
+
+            if (isGranular)
             {
-                return null;
+                // If wrapped in configurableOptions
+                JsonElement optionsRoot = root;
+                if (root.TryGetProperty("configurableOptions", out var configOptions) || 
+                    root.TryGetProperty("ConfigurableOptions", out configOptions))
+                {
+                    optionsRoot = configOptions;
+                }
+
+                // Deserialize options
+                var optionsJson = optionsRoot.GetRawText();
+                var options = JsonSerializer.Deserialize<ServiceConfigOptions>(optionsJson, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (options != null)
+                {
+                    // Resolve Startup Type
+                    startupType = options.StartupType?.SelectedValue ?? options.StartupType?.RecommendedValue;
+                    
+                    // Resolve Action (Stop)
+                    var action = options.ServiceAction?.SelectedValue ?? options.ServiceAction?.RecommendedValue;
+                    stopService = action?.Contains("Stop", StringComparison.OrdinalIgnoreCase) == true;
+                    // Note: Action might be "Stop" or "Stop and Disable". Both imply stopping.
+                    // If "Stop and Disable", startup type might also be impacted if not set explicitly?
+                    // Usually StartupType controls disable state. "Stop" just stops current instance.
+                }
+            }
+            else
+            {
+                // Legacy
+                startupType = GetStringProperty(root, "startupType");
+                stopService = root.TryGetProperty("stopService", out var stopProp) && stopProp.GetBoolean();
             }
 
-            return details;
+            // Fallback validation
+            if (string.IsNullOrWhiteSpace(startupType) && !stopService)
+            {
+                // If neither configured, maybe invalid? or just info only?
+                // Allow valid parse if we have at least service name, but ApplyAsync might fail if no action needed.
+            }
+
+            return new ServiceDetails
+            {
+                ServiceName = serviceName,
+                DisplayName = displayName,
+                StartupType = startupType,
+                StopService = stopService
+            };
         }
         catch
         {
             return null;
         }
+    }
+
+    private string? GetStringProperty(JsonElement element, string propertyName)
+    {
+        if (element.TryGetProperty(propertyName, out var prop) ||
+            element.TryGetProperty(propertyName.ToLowerInvariant(), out prop))
+        {
+            return prop.GetString();
+        }
+        return null;
     }
 
     private ServiceStartMode GetServiceStartupType(string serviceName)
@@ -354,6 +423,6 @@ internal sealed class ServiceDetails
 {
     public required string ServiceName { get; init; }
     public string? DisplayName { get; init; }
-    public required string StartupType { get; init; }
+    public string? StartupType { get; init; }
     public bool StopService { get; init; }
 }

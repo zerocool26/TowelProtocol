@@ -2,6 +2,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PrivacyHardeningService.Executors;
 using PrivacyHardeningService.IPC;
+using PrivacyHardeningService.Configuration;
+using PrivacyHardeningService.Monitoring;
 using PrivacyHardeningService.PolicyEngine;
 using PrivacyHardeningService.Security;
 using PrivacyHardeningService.StateManager;
@@ -25,11 +27,19 @@ public class Program
         builder.Services.AddSingleton<CommandValidator>();
         builder.Services.AddSingleton<CallerValidator>();
 
+        // Register config & monitoring
+        builder.Services.AddSingleton<ServiceConfigManager>();
+        builder.Services.AddSingleton<DriftMonitorService>();
+        builder.Services.AddHostedService(sp => sp.GetRequiredService<DriftMonitorService>());
+
         // Register policy engine components
         builder.Services.AddSingleton<PolicyLoader>();
+        builder.Services.AddSingleton<IPolicyLoader>(sp => sp.GetRequiredService<PolicyLoader>());
         builder.Services.AddSingleton<PolicyValidator>();
         builder.Services.AddSingleton<CompatibilityChecker>();
         builder.Services.AddSingleton<DependencyResolver>();
+        builder.Services.AddSingleton<PolicyOverrideManager>();
+        builder.Services.AddSingleton<Advisor.RecommendationEngine>();
         builder.Services.AddSingleton<PolicyEngineCore>();
 
         // Register executors
@@ -38,7 +48,7 @@ public class Program
         builder.Services.AddSingleton<IExecutor, TaskExecutor>();
         builder.Services.AddSingleton<IExecutor, FirewallExecutor>();
         builder.Services.AddSingleton<IExecutor, PowerShellExecutor>();
-        builder.Services.AddSingleton<ExecutorFactory>();
+        builder.Services.AddSingleton<IExecutorFactory, ExecutorFactory>();
 
         // Register state management
         builder.Services.AddSingleton<SystemStateCapture>();

@@ -62,4 +62,44 @@ public sealed partial class DriftViewModel : ObservableObject
             IsLoading = false;
         }
     }
+
+    [RelayCommand]
+    public async Task FixDriftAsync()
+    {
+        if (DriftedPolicies.Count == 0) return;
+
+        IsLoading = true;
+        try
+        {
+            var policyIds = DriftedPolicies.Select(p => p.PolicyId).ToArray();
+            
+            // Re-apply these policies using the standard ApplyAsync flow
+            // This ensures restore points are created and logic is consistent
+            var result = await _serviceClient.ApplyAsync(
+                policyIds, 
+                createRestorePoint: true, 
+                dryRun: false
+            );
+
+            if (result.Success)
+            {
+                // Refresh drift status to confirm fix
+                await DetectDriftAsync();
+            }
+            else
+            {
+                ErrorMessage = "Failed to fix some policies. Check logs.";
+                // Refresh to see what remains
+                await DetectDriftAsync(); 
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Fix failed: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
 }

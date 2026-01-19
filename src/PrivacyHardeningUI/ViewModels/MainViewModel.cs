@@ -10,6 +10,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PrivacyHardeningUI.Services;
 using PrivacyHardeningUI.Views;
+using System.Text.Json;
+using System.Collections.Generic;
+using PrivacyHardeningContracts.Models;
 
 namespace PrivacyHardeningUI.ViewModels;
 
@@ -72,6 +75,7 @@ public partial class MainViewModel : ObservableObject
     public HistoryViewModel History { get; }
     public DriftViewModel Drift { get; }
     public ReportsViewModel Reports { get; }
+    public AdvisorViewModel Advisor { get; }
 
     public MainViewModel(ServiceClient serviceClient,
         IThemeService themeService,
@@ -85,7 +89,8 @@ public partial class MainViewModel : ObservableObject
         HistoryViewModel history,
         DriftViewModel drift,
         ReportsViewModel reports,
-        DiffViewModel diff)
+        DiffViewModel diff,
+        AdvisorViewModel advisor)
     {
         _serviceClient = serviceClient;
         _themeService = themeService;
@@ -101,6 +106,7 @@ public partial class MainViewModel : ObservableObject
         Drift = drift;
         Reports = reports;
         Diff = diff;
+        Advisor = advisor;
 
         // Initialize theme state from application
         IsDarkTheme = _themeService.IsDarkMode;
@@ -112,6 +118,7 @@ public partial class MainViewModel : ObservableObject
 
         // Build task-based navigation
         NavItems.Add(new NavItemViewModel(AppPage.Dashboard, "Dashboard", "home", Dashboard));
+        NavItems.Add(new NavItemViewModel(AppPage.Advisor, "Advisor", "lightbulb", Advisor));
         NavItems.Add(new NavItemViewModel(AppPage.Audit, "Audit", "search", Audit));
         NavItems.Add(new NavItemViewModel(AppPage.Preview, "Preview", "diff", Preview));
         NavItems.Add(new NavItemViewModel(AppPage.Apply, "Apply", "shield", Apply));
@@ -197,7 +204,29 @@ public partial class MainViewModel : ObservableObject
             var selectedPolicies = PolicySelection.GetSelectedPolicies().ToArray();
             var policyIds = selectedPolicies.Select(p => p.PolicyId).ToArray();
 
-            var applyTask = Task.Run(() => _serviceClient.ApplyAsync(policyIds, createRestorePoint: true, dryRun: false));
+            // Build configuration overrides from user selections
+            var overrides = new Dictionary<string, string>();
+            foreach (var p in selectedPolicies)
+            {
+                if (p.SelectedBehavior != "Default")
+                {
+                    object? config = null;
+                    if (p.Mechanism == MechanismType.ScheduledTask)
+                    {
+                        if (Enum.TryParse<TaskAction>(p.SelectedBehavior, true, out var action))
+                        {
+                            config = new { Action = action };
+                        }
+                    }
+                    
+                    if (config != null)
+                    {
+                        overrides[p.PolicyId] = JsonSerializer.Serialize(config);
+                    }
+                }
+            }
+
+            var applyTask = Task.Run(() => _serviceClient.ApplyAsync(policyIds, overrides, createRestorePoint: true, dryRun: false));
             while (!applyTask.IsCompleted)
             {
                 if (_applyCts?.IsCancellationRequested == true)

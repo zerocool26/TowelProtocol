@@ -1,0 +1,76 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PrivacyHardeningUI.ViewModels"
+             xmlns:m="using:PrivacyHardeningContracts.Responses"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="PrivacyHardeningUI.Views.AdvisorView"
+             x:DataType="vm:AdvisorViewModel">
+
+  <Grid RowDefinitions="Auto,*">
+      
+      <!-- Header / Score -->
+      <Border Background="{DynamicResource CardBrush}" Grid.Row="0" Margin="16" Padding="20" CornerRadius="8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+          <StackPanel Spacing="10">
+              <Grid ColumnDefinitions="Auto,*,Auto">
+                  <StackPanel Orientation="Horizontal" Spacing="20">
+                      <Border Width="80" Height="80" CornerRadius="40" Background="{DynamicResource AccentBrush}" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding Grade}" FontSize="40" FontWeight="Bold" Foreground="White" 
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                      </Border>
+                      <StackPanel VerticalAlignment="Center" Spacing="4">
+                          <TextBlock Text="Privacy Score" Classes="Caption" />
+                          <TextBlock Text="{Binding PrivacyScore, StringFormat='{}{0} / 100'}" FontSize="24" FontWeight="SemiBold"/>
+                      </StackPanel>
+                  </StackPanel>
+
+                  <Button Grid.Column="2" Content="Refresh Analysis" Command="{Binding LoadCommand}" VerticalAlignment="Center"/>
+              </Grid>
+
+              <Border Background="#22CC3333" BorderBrush="#66CC3333" BorderThickness="1" CornerRadius="6" Padding="8"
+                      IsVisible="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}">
+                  <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap" Foreground="#CC3333"/>
+              </Border>
+          </StackPanel>
+      </Border>
+
+      <!-- Recommendations List -->
+      <ScrollViewer Grid.Row="1" Margin="16,0,16,16">
+          <ItemsControl ItemsSource="{Binding Recommendations}">
+              <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="m:RecommendationItem">
+                      <Border Background="{DynamicResource CardBrush}" Margin="0,0,0,10" Padding="15" CornerRadius="6" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                          <Grid ColumnDefinitions="4,*,Auto">
+                              <!-- Severity Stripe -->
+                              <Border Grid.Column="0" CornerRadius="2">
+                                  <Border.Background>
+                                      <SolidColorBrush Color="{Binding Severity, Converter={StaticResource SeverityColorConverter}}"/>
+                                  </Border.Background>
+                              </Border>
+                              
+                              <StackPanel Grid.Column="1" Margin="15,0,0,0" Spacing="5">
+                                  <StackPanel Orientation="Horizontal" Spacing="10">
+                                      <Border Background="#20888888" CornerRadius="4" Padding="6,2">
+                                         <TextBlock Text="{Binding Severity}" FontSize="11" FontWeight="Bold"/>
+                                      </Border>
+                                      <TextBlock Text="{Binding Title}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                  </StackPanel>
+                                  <TextBlock Text="{Binding Description}" Opacity="0.8" TextWrapping="Wrap"/>
+                              </StackPanel>
+
+                              <Button Grid.Column="2" Content="Review" Command="{Binding $parent[UserControl].((vm:AdvisorViewModel)DataContext).FixIssueCommand}" 
+                                      CommandParameter="{Binding}" VerticalAlignment="Center" IsVisible="{Binding RelatedPolicyIds, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                          </Grid>
+                      </Border>
+                  </DataTemplate>
+              </ItemsControl.ItemTemplate>
+          </ItemsControl>
+      </ScrollViewer>
+      
+       <StackPanel Grid.RowSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10" IsVisible="{Binding IsLoading}">
+           <ProgressBar IsIndeterminate="True"/>
+           <TextBlock Text="Analyzing system security posture..."/>
+       </StackPanel>
+  </Grid>
+</UserControl>

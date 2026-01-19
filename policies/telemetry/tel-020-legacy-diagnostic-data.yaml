@@ -1,4 +1,4 @@
-policyId: "tel-001"
+policyId: "tel-020"
 version: "1.0.0"
 name: "Set Diagnostic Data to Security Level (Enterprise)"
 category: Telemetry

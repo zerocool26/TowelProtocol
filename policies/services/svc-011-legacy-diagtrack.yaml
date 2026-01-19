@@ -1,4 +1,4 @@
-policyId: "svc-001"
+policyId: "svc-011"
 version: "1.0.0"
 name: "Disable DiagTrack Service"
 category: Services

@@ -65,14 +65,25 @@
 
         <!-- Quick Selection Buttons Row -->
         <Border Grid.Row="1" Padding="16,8" Background="{DynamicResource SurfaceBrush}">
-                <WrapPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                <Button Classes="accent" Content="Load Policies" Command="{Binding LoadPoliciesCommand}" Margin="0,0,8,0" AutomationProperties.Name="Load Policies" TabIndex="20"/>
-                <Button Content="Select All" Command="{Binding SelectAllCommand}" Margin="0,0,8,0" AutomationProperties.Name="Select All" TabIndex="21"/>
-                <Button Content="Select None" Command="{Binding SelectNoneCommand}" Margin="0,0,8,0" AutomationProperties.Name="Select None" TabIndex="22"/>
-                <Button Content="Low Risk Only" Command="{Binding SelectByRiskCommand}" CommandParameter="Low" Margin="0,0,8,0" AutomationProperties.Name="Select Low Risk" TabIndex="23"/>
-                <Button Content="Medium Risk and Below" Command="{Binding SelectByRiskCommand}" CommandParameter="Medium" Margin="0,0,8,0" AutomationProperties.Name="Select Medium Risk" TabIndex="24"/>
-                <Button Content="High Risk and Below" Command="{Binding SelectByRiskCommand}" CommandParameter="High" Margin="0,0,8,0" AutomationProperties.Name="Select High Risk" TabIndex="25"/>
-            </WrapPanel>
+            <Grid ColumnDefinitions="*,Auto">
+                <WrapPanel Grid.Column="0" HorizontalAlignment="Left" Orientation="Horizontal">
+                    <Button Classes="accent" Content="Load Policies" Command="{Binding LoadPoliciesCommand}" Margin="0,0,8,0" AutomationProperties.Name="Load Policies" TabIndex="20"/>
+                    <Button Content="Select All" Command="{Binding SelectAllCommand}" Margin="0,0,8,0" AutomationProperties.Name="Select All" TabIndex="21"/>
+                    <Button Content="Select None" Command="{Binding SelectNoneCommand}" Margin="0,0,8,0" AutomationProperties.Name="Select None" TabIndex="22"/>
+                    <Button Content="Low Risk Only" Command="{Binding SelectByRiskCommand}" CommandParameter="Low" Margin="0,0,8,0" AutomationProperties.Name="Select Low Risk" TabIndex="23"/>
+                </WrapPanel>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Apply Profile:" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                    <ComboBox ItemsSource="{Binding AvailableProfiles}" Width="150" PlaceholderText="Select Profile..." SelectionChanged="OnProfileChanged">
+                         <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" FontWeight="Bold"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
         </Border>
 
         <!-- Policies List -->
@@ -137,6 +148,16 @@
                                         <TextBlock Text="Mechanism:" FontWeight="Bold" FontSize="12"/>
                                         <TextBlock Text="{Binding Mechanism, Converter={StaticResource EnumToStringConverter}}"
                                                    FontSize="12"/>
+                                    </StackPanel>
+
+                                    <!-- Action Override -->
+                                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                                        <TextBlock Text="Behavior:" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
+                                        <ComboBox ItemsSource="{Binding AvailableBehaviors}"
+                                                  SelectedItem="{Binding SelectedBehavior}"
+                                                  FontSize="12" MinWidth="120"
+                                                  Padding="8,4"/>
+                                        <TextBlock Text="(Modify Policy Behavior)" FontSize="10" VerticalAlignment="Center" Opacity="0.5"/>
                                     </StackPanel>
 
                                     <!-- Known Breakage -->

@@ -5,7 +5,7 @@
 # Prevents Microsoft from collecting handwriting samples
 # ============================================================================
 
-policyId: "tel-008"
+policyId: "tel-017"
 version: "1.0.0"
 name: "Disable Handwriting Data Collection"
 category: Telemetry

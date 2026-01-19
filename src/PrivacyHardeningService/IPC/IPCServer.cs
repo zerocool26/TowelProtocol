@@ -273,8 +273,11 @@ public sealed class IPCServer
                 RevertCommand revert => await _policyEngine.RevertAsync(revert, cancellationToken),
                 GetPoliciesCommand getPolicies => await _policyEngine.GetPoliciesAsync(getPolicies, cancellationToken),
                 GetStateCommand getState => await _policyEngine.GetStateAsync(getState, cancellationToken),
+                GetServiceConfigCommand getConfig => await _policyEngine.GetServiceConfigAsync(getConfig, cancellationToken),
                 DetectDriftCommand detectDrift => await _policyEngine.DetectDriftAsync(detectDrift, cancellationToken),
                 CreateSnapshotCommand createSnapshot => await _policyEngine.CreateSnapshotAsync(createSnapshot, cancellationToken),
+                UpdateServiceConfigCommand updateConfig => await _policyEngine.UpdateConfigAsync(updateConfig, cancellationToken),
+                GetRecommendationsCommand getRec => await _policyEngine.GetRecommendationsAsync(getRec, cancellationToken),
                 _ => throw new NotSupportedException($"Command type {command.CommandType} not supported")
             };
         }

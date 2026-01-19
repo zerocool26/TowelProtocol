@@ -1,4 +1,4 @@
-policyId: "tel-005"
+policyId: "tel-014"
 version: "1.0.0"
 name: "Disable Cloud Content and Settings Sync"
 category: Telemetry

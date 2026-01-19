@@ -5,7 +5,7 @@
 # Prevents Windows and apps from accessing location data
 # ============================================================================
 
-policyId: "tel-010"
+policyId: "tel-013"
 version: "1.0.0"
 name: "Disable Windows Location Tracking"
 category: Telemetry

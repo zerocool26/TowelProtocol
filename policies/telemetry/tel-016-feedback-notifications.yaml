@@ -1,4 +1,4 @@
-policyId: "tel-007"
+policyId: "tel-016"
 version: "1.0.0"
 name: "Disable Windows Feedback Notifications"
 category: Telemetry

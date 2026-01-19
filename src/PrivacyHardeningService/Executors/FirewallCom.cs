@@ -34,7 +34,9 @@ internal static class FirewallCom
                 throw new InvalidOperationException("Windows Firewall COM API (HNetCfg.FwPolicy2) is not available.");
             }
 
-            dynamic policy2 = Activator.CreateInstance(policy2Type) ?? throw new InvalidOperationException("Failed to create HNetCfg.FwPolicy2 COM object.");
+            // Fix possible null assignment warning
+            var instance = Activator.CreateInstance(policy2Type);
+            dynamic policy2 = instance ?? throw new InvalidOperationException("Failed to create HNetCfg.FwPolicy2 COM object.");
             policy2Obj = policy2;
 
             int currentProfiles = (int)policy2.CurrentProfileTypes;
@@ -106,7 +108,10 @@ internal static class FirewallCom
             var policy2Type = Type.GetTypeFromProgID("HNetCfg.FwPolicy2");
             if (policy2Type == null) return false;
 
-            dynamic policy2 = Activator.CreateInstance(policy2Type);
+            var instance = Activator.CreateInstance(policy2Type);
+            if (instance == null) return false;
+            
+            dynamic policy2 = instance;
             policy2Obj = policy2;
             dynamic rules = policy2.Rules;
             rulesObj = rules;
@@ -147,43 +152,52 @@ internal static class FirewallCom
         object? policy2Obj = null;
         object? rulesObj = null;
         object? ruleObj = null;
+
         try
         {
             var policy2Type = Type.GetTypeFromProgID("HNetCfg.FwPolicy2");
-            var ruleType = Type.GetTypeFromProgID("HNetCfg.FWRule");
-            if (policy2Type == null || ruleType == null)
-            {
-                error = "Windows Firewall COM API is not available.";
-                return false;
-            }
+            if (policy2Type == null) return false;
+            
+            var instance = Activator.CreateInstance(policy2Type);
+            if (instance == null) return false;
 
-            dynamic policy2 = Activator.CreateInstance(policy2Type);
+            dynamic policy2 = instance;
             policy2Obj = policy2;
-
             dynamic rules = policy2.Rules;
             rulesObj = rules;
 
-            dynamic rule = Activator.CreateInstance(ruleType);
+            var ruleType = Type.GetTypeFromProgID("HNetCfg.FWRule");
+            if (ruleType == null) return false;
+            
+            var ruleInstance = Activator.CreateInstance(ruleType);
+            if (ruleInstance == null) return false;
+
+            dynamic rule = ruleInstance;
             ruleObj = rule;
 
             rule.Name = target.DisplayName;
-            rule.Description = target.Description ?? $"Privacy Hardening Framework policy {target.DisplayName}";
-            rule.Grouping = target.Group;
+            rule.Description = target.Description ?? "Blocked by Privacy Hardening Framework";
+            rule.Action = target.Action.Equals("Allow", StringComparison.OrdinalIgnoreCase) ? NetFwActionAllow : NetFwActionBlock;
+            rule.Direction = target.Direction.Equals("Outbound", StringComparison.OrdinalIgnoreCase) ? NetFwDirectionOut : NetFwDirectionIn;
             rule.Enabled = target.Enabled;
             rule.Profiles = NetFwProfile2All;
-
-            rule.Direction = target.Direction.Equals("Inbound", StringComparison.OrdinalIgnoreCase)
-                ? NetFwDirectionIn
-                : NetFwDirectionOut;
-
-            rule.Action = target.Action.Equals("Allow", StringComparison.OrdinalIgnoreCase)
-                ? NetFwActionAllow
-                : NetFwActionBlock;
-
+            rule.GroupName = target.Group;
             rule.Protocol = ParseProtocol(target.Protocol);
             rule.RemoteAddresses = target.RemoteAddress;
 
+            if (!string.IsNullOrEmpty(target.Program))
+            {
+                rule.ApplicationName = target.Program;
+            }
+
+            if (!string.IsNullOrEmpty(target.Service))
+            {
+                rule.ServiceName = target.Service;
+            }
+            
+            // Add to Firewall
             rules.Add(rule);
+            
             return true;
         }
         catch (Exception ex)
@@ -193,22 +207,13 @@ internal static class FirewallCom
         }
         finally
         {
-            if (ruleObj != null && Marshal.IsComObject(ruleObj))
-            {
-                Marshal.FinalReleaseComObject(ruleObj);
-            }
-
-            if (rulesObj != null && Marshal.IsComObject(rulesObj))
-            {
-                Marshal.FinalReleaseComObject(rulesObj);
-            }
-
-            if (policy2Obj != null && Marshal.IsComObject(policy2Obj))
-            {
-                Marshal.FinalReleaseComObject(policy2Obj);
-            }
+             if (ruleObj != null && Marshal.IsComObject(ruleObj)) Marshal.FinalReleaseComObject(ruleObj);
+             if (rulesObj != null && Marshal.IsComObject(rulesObj)) Marshal.FinalReleaseComObject(rulesObj);
+             if (policy2Obj != null && Marshal.IsComObject(policy2Obj)) Marshal.FinalReleaseComObject(policy2Obj);
         }
     }
+
+
 
     internal static bool TryRemoveRule(string displayName, string? requiredGrouping, out bool removed, out string? error)
     {
@@ -232,7 +237,8 @@ internal static class FirewallCom
                 return false;
             }
 
-            dynamic policy2 = Activator.CreateInstance(policy2Type);
+            var instance = Activator.CreateInstance(policy2Type);
+            dynamic policy2 = instance ?? throw new InvalidOperationException("Failed to create HNetCfg.FwPolicy2 COM object.");
             policy2Obj = policy2;
             dynamic rules = policy2.Rules;
             rulesObj = rules;
