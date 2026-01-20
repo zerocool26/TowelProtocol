@@ -34,7 +34,7 @@ jobs:
         pwsh -NoProfile -Command "& { .\scripts\package_elevated_helper.ps1 -Configuration Release }"
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: PrivacyHardeningElevated
         path: dist/PrivacyHardeningElevated.zip
