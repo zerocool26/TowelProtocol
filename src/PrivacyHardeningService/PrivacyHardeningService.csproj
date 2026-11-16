@@ -18,7 +18,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.0" />
     <PackageReference Include="YamlDotNet" Version="15.1.0" />
     <PackageReference Include="TaskScheduler" Version="2.11.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.15" />
     <PackageReference Include="System.Management" Version="8.0.0" />
     <PackageReference Include="System.DirectoryServices" Version="8.0.0" />
   </ItemGroup>
